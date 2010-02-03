@@ -1,0 +1,339 @@
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) 2010 Taesun Moon, The University of Texas at Austin
+// 
+//  This library is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU Lesser General Public
+//  License as published by the Free Software Foundation; either
+//  version 3 of the License, or (at your option) any later version.
+// 
+//  This library is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Lesser General Public License for more details.
+// 
+//  You should have received a copy of the GNU Lesser General Public
+//  License along with this program; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+///////////////////////////////////////////////////////////////////////////////
+package tikka.models.hhl;
+
+import tikka.models.hhl.m1.HDPHMMLDAm1;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.HashMap;
+
+/**
+ * Object where model parameters are saved. Includes both constant parameters
+ * and inferred parameters.
+ * 
+ * @author tsmoon
+ */
+public class SerializableModel implements Serializable {
+
+    static private final long serialVersionUID = 42L;
+    /**
+     * Model buffer for loading from file. Fields are read to loadBuffer than
+     * copied to the enclosing class (this).
+     */
+    protected SerializableModel loadBuffer = null;
+    /**
+     * Seed for random number generator.
+     */
+    protected int randomSeed;
+    /**
+     * Number of topic types.
+     */
+    protected int topicK;
+    /**
+     * Number of iterations
+     */
+    protected int iterations;
+    /**
+     * Number of documents
+     */
+    protected int documentD;
+    /**
+     * Number of word types
+     */
+    protected int wordW;
+    /**
+     * Number of word tokens
+     */
+    protected int wordN;
+    /**
+     * Hyperparameter for topic-by-document prior.
+     */
+    protected double alpha;
+    /**
+     * Hyperparameter for word/stem-by-topic prior
+     */
+    protected double beta;
+    /**
+     * Hashtable from word to index.
+     */
+    protected HashMap<String, Integer> wordIdx;
+    /**
+     * Array of document indexes. Of length {@link #wordN}.
+     */
+    protected int[] documentVector;
+    /**
+     * Array of topic indexes. Of length {@link #wordN}.
+     */
+    protected int[] topicVector;
+    /**
+     * Array of word indexes. Of length {@link #wordN}.
+     */
+    protected int[] wordVector;
+    /**
+     * Temperature at which to start annealing process
+     */
+    protected double initialTemperature;
+    /**
+     * Decrement at which to reduce the temperature in annealing process
+     */
+    protected double temperatureDecrement;
+    /**
+     * Stop changing temperature after the following temp has been reached.
+     */
+    protected double targetTemperature;
+    /**
+     * Hyperparameter for state emissions
+     */
+    protected double gamma;
+    /**
+     * Number of states including topic states and sentence boundary state
+     */
+    protected int stateS;
+    /**
+     * Token indexes for sentence boundaries; sentences begin here
+     */
+    protected int[] sentenceVector;
+    /**
+     * Array of states over tokens
+     */
+    protected int[] stateVector;
+    /**
+     * Number of topic states. This is a less than {@link #stateS} and entails
+     * that the topic states are a subset of the full states. A count of one
+     * must be added to whatever number is passed from {@link HybridHMMLDAOptions}
+     * since state 0 is always the sentence boundary.
+     */
+    protected int topicSubStates;
+    /**
+     * Hyperparameter for state by affix by stem DP
+     */
+    protected double muStem;
+    /**
+     * Hyperparameter for state by affix by stem HDP base distribution
+     */
+    protected double muStemBase;
+    /**
+     * Hyperparameter for state by affix DP
+     */
+    protected double muAffix;
+    /**
+     * Hyperparameter for state by affix HDP base distribution
+     */
+    protected double muAffixBase;
+    /**
+     * Hyperparameter for topic by affix by stem DP
+     */
+    protected double betaStem;
+    /**
+     * Hyperparameter for topic by affix by stem HDP base distribution
+     */
+    protected double betaStemBase;
+    /**
+     * Hyperparameter for state transition prior. This overrides
+     * {@link HMMLDA#gamma} to reflect notation in the paper. See
+     * {@link HMMLDA#thirdOrderTransitions} and {@link HMMLDA#secondOrderTransitions}.
+     */
+    protected double psi;
+    /**
+     * Hyperparameter for "switch" prior. See {@link  #switchVector}
+     * and {@link #fourthOrderSwitches}.
+     */
+    protected double xi;
+    /**
+     * Prior probability of a morpheme boundary for affixes. Equivalent to
+     * <pre>P(#)</pre> in the model.
+     */
+    protected double affixBoundaryProb;
+    /**
+     * Prior probability of a morpheme boundary for stems. Equivalent to
+     * <pre>P(#)</pre> in the model.
+     */
+    protected double stemBoundaryProb;
+    /**
+     * Prior probability of a morpheme non-boundary for affixes. Equivalent to
+     * <pre>1-P(#)</pre> in the model.
+     */
+    protected double notAffixBoundaryProb;
+    /**
+     * Prior probability of a morpheme non-boundary for stems. Equivalent to
+     * <pre>1-P(#)</pre> in the model.
+     */
+    protected double notStemBoundaryProb;
+    /**
+     * Array of where each token was segmented. For use in reconstruction
+     * in the serializableModel.
+     */
+    protected int[] splitVector;
+    
+    protected int[] switchVector;
+    /**
+     * Path of training data.
+     */
+    protected String rootDir;
+    /**
+     * Type of model that is being run.
+     */
+    protected String modelName;
+
+    public SerializableModel(HDPHMMLDA m) {
+        affixBoundaryProb = m.affixBoundaryProb;
+        alpha = m.alpha;
+        beta = m.beta;
+        betaStem = m.betaStem;
+        betaStemBase = m.betaStemBase;
+        documentD = m.documentD;
+        documentVector = m.documentVector;
+        gamma = m.gamma;
+        initialTemperature = m.initialTemperature;
+        iterations = m.iterations;
+        modelName = m.modelName;
+        muAffix = m.muAffix;
+        muAffixBase = m.muAffixBase;
+        muStem = m.muStem;
+        muStemBase = m.muStemBase;
+        notAffixBoundaryProb = m.notAffixBoundaryProb;
+        notStemBoundaryProb = m.notStemBoundaryProb;
+        psi = m.psi;
+        randomSeed = m.randomSeed;
+        rootDir = m.rootDir;
+        sentenceVector = m.sentenceVector;
+        stemBoundaryProb = m.stemBoundaryProb;
+        targetTemperature = m.targetTemperature;
+        temperatureDecrement = m.temperatureDecrement;
+        topicK = m.topicK;
+        topicSubStates = m.topicSubStates;
+        topicVector = m.topicVector;
+        wordIdx = m.wordIdx;
+        wordN = m.wordN;
+        wordVector = m.wordVector;
+        wordW = m.wordW;
+        xi = m.xi;
+    }
+
+    /**
+     * Load a previously trained model.
+     *
+     * @param filename  Full path of model location.
+     * @param m Model to load to
+     * @throws IOException
+     * @throws FileNotFoundException
+     */
+    public void loadModel(String filename, HDPHMMLDA m) throws IOException,
+            FileNotFoundException {
+        ObjectInputStream modelIn =
+                new ObjectInputStream(new FileInputStream(filename));
+        try {
+            loadBuffer = (SerializableModel) modelIn.readObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        copy(loadBuffer);
+        modelIn.close();
+
+        if (modelName.equals("m1")) {
+            m = new HDPHMMLDAm1();
+        }
+
+        m.affixBoundaryProb = affixBoundaryProb;
+        m.alpha = alpha;
+        m.beta = beta;
+        m.betaStem = betaStem;
+        m.betaStemBase = betaStemBase;
+        m.documentD = documentD;
+        m.documentVector = documentVector;
+        m.gamma = gamma;
+        m.initialTemperature = initialTemperature;
+        m.iterations = iterations;
+        m.modelName = modelName;
+        m.muAffix = muAffix;
+        m.muAffixBase = muAffixBase;
+        m.muStem = muStem;
+        m.muStemBase = muStemBase;
+        m.notAffixBoundaryProb = notAffixBoundaryProb;
+        m.notStemBoundaryProb = notStemBoundaryProb;
+        m.psi = psi;
+        m.randomSeed = randomSeed;
+        m.rootDir = rootDir;
+        m.sentenceVector = sentenceVector;
+        m.stemBoundaryProb = stemBoundaryProb;
+        m.targetTemperature = targetTemperature;
+        m.temperatureDecrement = temperatureDecrement;
+        m.topicK = topicK;
+        m.topicSubStates = topicSubStates;
+        m.topicVector = topicVector;
+        m.wordIdx = wordIdx;
+        m.wordN = wordN;
+        m.wordVector = wordVector;
+        m.wordW = wordW;
+        m.xi = xi;
+    }
+
+    /**
+     * Save the trained model.
+     *
+     * @param filename  Full path of model location.
+     * @throws IOException
+     */
+    public void saveModel(String filename) throws IOException {
+        ObjectOutputStream modelOut =
+                new ObjectOutputStream(new FileOutputStream(filename));
+        modelOut.writeObject(this);
+        modelOut.close();
+    }
+
+    protected void copy(SerializableModel sm) {
+        affixBoundaryProb = sm.affixBoundaryProb;
+        alpha = sm.alpha;
+        beta = sm.beta;
+        betaStem = sm.betaStem;
+        betaStemBase = sm.betaStemBase;
+        documentD = sm.documentD;
+        documentVector = sm.documentVector;
+        gamma = sm.gamma;
+        initialTemperature = sm.initialTemperature;
+        iterations = sm.iterations;
+        modelName = sm.modelName;
+        muAffix = sm.muAffix;
+        muAffixBase = sm.muAffixBase;
+        muStem = sm.muStem;
+        muStemBase = sm.muStemBase;
+        notAffixBoundaryProb = sm.notAffixBoundaryProb;
+        notStemBoundaryProb = sm.notStemBoundaryProb;
+        psi = sm.psi;
+        randomSeed = sm.randomSeed;
+        rootDir = sm.rootDir;
+        sentenceVector = sm.sentenceVector;
+        stemBoundaryProb = sm.stemBoundaryProb;
+        targetTemperature = sm.targetTemperature;
+        temperatureDecrement = sm.temperatureDecrement;
+        topicK = sm.topicK;
+        topicSubStates = sm.topicSubStates;
+        topicVector = sm.topicVector;
+        wordIdx = sm.wordIdx;
+        wordN = sm.wordN;
+        wordVector = sm.wordVector;
+        wordW = sm.wordW;
+        xi = sm.xi;
+    }
+}
