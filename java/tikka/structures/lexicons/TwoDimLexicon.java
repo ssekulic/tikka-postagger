@@ -18,7 +18,7 @@
 package tikka.structures.lexicons;
 
 import tikka.exceptions.EmptyCountException;
-import tikka.exceptions.emptyTwoDimLexiconException;
+import tikka.exceptions.EmptyTwoDimLexiconException;
 import java.util.HashMap;
 
 /**
@@ -54,16 +54,16 @@ public class TwoDimLexicon extends HashMap<Integer, Integer> {
     /**
      * Decrement counts of an index. Remove key if index count is zero. 
      * Decrement cumulative count as well. Throw
-     * {@link #emptyTwoDimLexiconException} if cumulative count is zero so entire
+     * {@link #EmptyTwoDimLexiconException} if cumulative count is zero so entire
      * table may be removed.
      *
      * @param idx   Index of type to decrement
      * @return  Count of index
      * @throws EmptyCountException Thrown if count of an index is negative
-     * @throws emptyTwoDimLexiconException  Thrown if cumulative count is zero
+     * @throws EmptyTwoDimLexiconException  Thrown if cumulative count is zero
      */
     public int dec(int idx) throws EmptyCountException,
-            emptyTwoDimLexiconException {
+            EmptyTwoDimLexiconException {
         cumCount--;
         int val = get(idx) - 1;
         if (val > 0) {
@@ -74,7 +74,7 @@ public class TwoDimLexicon extends HashMap<Integer, Integer> {
             throw new EmptyCountException();
         }
         if (cumCount == 0) {
-            throw new emptyTwoDimLexiconException();
+            throw new EmptyTwoDimLexiconException();
         }
         return val;
     }

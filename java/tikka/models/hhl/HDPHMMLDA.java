@@ -721,7 +721,7 @@ public abstract class HDPHMMLDA {
      * Each derived class uses a different set of DP and HDP combinations for
      * training. This should be specified for each model.
      */
-    public abstract void initalizeDistributions();
+    protected abstract void initalizeDistributions();
 
     /**
      * Train the model.
@@ -747,7 +747,7 @@ public abstract class HDPHMMLDA {
      * segmentations. The parameters for the segmentation were learned during 
      * the training stage.
      */
-    public abstract void normalizeWords();
+    protected abstract void normalizeWords();
 
     /**
      * Normalize the sample counts for words given topic.  This is NOT
@@ -1001,7 +1001,7 @@ public abstract class HDPHMMLDA {
     /**
      * Print text that has been segmented/tagged in a sample to output.
      */
-    protected abstract void printAnnotatedText(BufferedWriter out);
+    public abstract void printAnnotatedText(String outDir);
 
     /**
      * Copy a sequence of numbers from @ta to array @ia.

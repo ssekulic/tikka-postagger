@@ -19,7 +19,7 @@ package tikka.structures.lexicons;
 
 import tikka.exceptions.EmptyCountException;
 import tikka.exceptions.KeyRemovedException;
-import tikka.exceptions.emptyTwoDimLexiconException;
+import tikka.exceptions.EmptyTwoDimLexiconException;
 import java.util.HashMap;
 
 /**
@@ -66,10 +66,10 @@ public class ThreeDimLexicon extends HashMap<Integer, TwoDimLexicon> {
      * @param idx  Index of conditioned string
      * @return  Count of conditioned string after decrement
      * @throws EmptyCountException  Thrown if count of a conditioned string is negative
-     * @throws emptyTwoDimLexiconException  Thrown if cumulative count of subtable is zero
+     * @throws EmptyTwoDimLexiconException  Thrown if cumulative count of subtable is zero
      */
     public int dec(int cls, int idx) throws EmptyCountException,
-            emptyTwoDimLexiconException {
+            EmptyTwoDimLexiconException {
         cumCount--;
         return get(cls).dec(idx);
     }

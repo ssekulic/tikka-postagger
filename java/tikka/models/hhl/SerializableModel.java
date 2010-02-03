@@ -185,7 +185,9 @@ public class SerializableModel implements Serializable {
      * in the serializableModel.
      */
     protected int[] splitVector;
-    
+    /**
+     * Array of switch indexes.
+     */
     protected int[] switchVector;
     /**
      * Path of training data.
@@ -196,6 +198,11 @@ public class SerializableModel implements Serializable {
      */
     protected String modelName;
 
+    /**
+     * Constructor to use when model is being saved.
+     * 
+     * @param m Model to be saved
+     */
     public SerializableModel(HDPHMMLDA m) {
         affixBoundaryProb = m.affixBoundaryProb;
         alpha = m.alpha;
@@ -219,6 +226,7 @@ public class SerializableModel implements Serializable {
         rootDir = m.rootDir;
         sentenceVector = m.sentenceVector;
         stemBoundaryProb = m.stemBoundaryProb;
+        switchVector = m.switchVector;
         targetTemperature = m.targetTemperature;
         temperatureDecrement = m.temperatureDecrement;
         topicK = m.topicK;
@@ -229,6 +237,12 @@ public class SerializableModel implements Serializable {
         wordVector = m.wordVector;
         wordW = m.wordW;
         xi = m.xi;
+    }
+
+    /**
+     * Constructor to use when model is being loaded
+     */
+    public SerializableModel() {
     }
 
     /**
@@ -277,6 +291,7 @@ public class SerializableModel implements Serializable {
         m.rootDir = rootDir;
         m.sentenceVector = sentenceVector;
         m.stemBoundaryProb = stemBoundaryProb;
+        m.switchVector = switchVector;
         m.targetTemperature = targetTemperature;
         m.temperatureDecrement = temperatureDecrement;
         m.topicK = topicK;
@@ -325,6 +340,7 @@ public class SerializableModel implements Serializable {
         rootDir = sm.rootDir;
         sentenceVector = sm.sentenceVector;
         stemBoundaryProb = sm.stemBoundaryProb;
+        switchVector = sm.switchVector;
         targetTemperature = sm.targetTemperature;
         temperatureDecrement = sm.temperatureDecrement;
         topicK = sm.topicK;

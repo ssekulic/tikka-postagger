@@ -56,6 +56,18 @@ public class CommandLineOptions {
      */
     protected String dataDir;
     /**
+     * full path of model to be loaded
+     */
+    protected String modelInputPath = null;
+    /**
+     * full path to save model to
+     */
+    protected String modelOutputPath = null;
+    /**
+     * Root of path to output annotated texts to
+     */
+    protected String annotatedTextDir = null;
+    /**
      * Number of training iterations
      */
     protected int numIterations = 100;
@@ -197,16 +209,13 @@ public class CommandLineOptions {
                     numIterations = Integer.parseInt(value);
                     break;
                 case 'l':
-                    System.err.println("Model loading capabilities not " +
-                            "yet supported");
+                    modelInputPath = value;
                     break;
                 case 'm':
-                    System.err.println("Model saving capabilities not " +
-                            "yet supported");
+                    modelOutputPath = value;
                     break;
                 case 'n':
-                    System.err.println("Annotated text saving capabilities not " +
-                            "yet supported");
+                    annotatedTextDir = value;
                     break;
                 case 'o':
                     out.close();
@@ -365,5 +374,17 @@ public class CommandLineOptions {
 
     public int getTopicSubStates() {
         return topicSubStates;
+    }
+
+    public String getModelInputPath() {
+        return modelInputPath;
+    }
+
+    public String getModelOutputPath() {
+        return modelOutputPath;
+    }
+
+    public String getAnnotatedTextDir() {
+        return annotatedTextDir;
     }
 }

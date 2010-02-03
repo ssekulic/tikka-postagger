@@ -19,7 +19,7 @@ package tikka.structures.distributions;
 
 import tikka.exceptions.EmptyCountException;
 import tikka.exceptions.KeyRemovedException;
-import tikka.exceptions.emptyTwoDimLexiconException;
+import tikka.exceptions.EmptyTwoDimLexiconException;
 import tikka.structures.lexicons.FourDimLexicon;
 import tikka.structures.lexicons.FourDimProbLexicon;
 import tikka.structures.lexicons.Lexicon;
@@ -64,7 +64,7 @@ public class FourDimHierarchicalDirichletProcess extends FourDimDirichletProcess
         } catch (EmptyCountException e) {
             e.printMessage(lexicon.getString(stem), stem);
             System.exit(1);
-        } catch (emptyTwoDimLexiconException e) {
+        } catch (EmptyTwoDimLexiconException e) {
             clsAffixStemCounts.get(cls).remove(affix);
         }
 

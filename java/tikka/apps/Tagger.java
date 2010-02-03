@@ -30,7 +30,7 @@ import tikka.models.hhl.SerializableModel;
  *
  * @author tsmoon
  */
-public class Train {
+public class Tagger {
 
     public static void main(String[] args) {
         CommandLineParser optparse = new PosixParser();
@@ -88,7 +88,7 @@ public class Train {
 
             if (cline.hasOption('h')) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("java HybridHMMLDA Model", options);
+                formatter.printHelp("java Tag Model", options);
                 System.exit(0);
             }
 
@@ -97,28 +97,37 @@ public class Train {
             HDPHMMLDA hhl = null;
             String experimentModel = modelOptions.getExperimentModel();
 
-            if (experimentModel.equals("m1")) {
-                hhl = new HDPHMMLDAm1(modelOptions);
-            } else {
-                hhl = new HDPHMMLDAm1(modelOptions);
-            }
+            String modelInputPath = modelOptions.getModelInputPath();
 
-            hhl.initialize();
-            hhl.train();
-            hhl.normalize();
+            if (modelInputPath != null) {
+                SerializableModel serializableModel = new SerializableModel();
+                serializableModel.loadModel(modelInputPath, hhl);
+                hhl.initializeFromModel();
+            } else {
+                if (experimentModel.equals("m1")) {
+                    hhl = new HDPHMMLDAm1(modelOptions);
+                } else {
+                    hhl = new HDPHMMLDAm1(modelOptions);
+                }
+                hhl.initialize();
+                hhl.train();
+                hhl.normalize();
+            }
 
             hhl.print(modelOptions.getOutput());
 
             String modelOutputPath = modelOptions.getModelOutputPath();
-            if(modelOutputPath != null) {
+            if (modelOutputPath != null) {
                 SerializableModel serializableModel = new SerializableModel(hhl);
                 serializableModel.saveModel(modelOutputPath);
             }
 
             String annotatedTextDir = modelOptions.getAnnotatedTextDir();
-            if(annotatedTextDir != null) {
+            if (annotatedTextDir != null) {
                 hhl.printAnnotatedText(annotatedTextDir);
             }
+
+
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:" +
                     exp.getMessage());

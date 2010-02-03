@@ -18,7 +18,7 @@
 package tikka.structures.lexicons;
 
 import tikka.exceptions.EmptyCountException;
-import tikka.exceptions.emptyTwoDimLexiconException;
+import tikka.exceptions.EmptyTwoDimLexiconException;
 import java.util.HashMap;
 
 /**
@@ -58,10 +58,10 @@ public class FourDimLexicon extends HashMap<Integer, ThreeDimLexicon> {
      * @param stem
      * @return
      * @throws EmptyCountException
-     * @throws emptyTwoDimLexiconException
+     * @throws EmptyTwoDimLexiconException
      */
     public int dec(int cls, int affix, int stem) throws
-            EmptyCountException, emptyTwoDimLexiconException {
+            EmptyCountException, EmptyTwoDimLexiconException {
         return get(cls).dec(affix, stem);
     }
 
