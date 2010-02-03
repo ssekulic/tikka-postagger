@@ -68,7 +68,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      * Initialize the distributions that will be used in this model.
      */
     @Override
-    public void initalizeDistributions() {
+    protected void initalizeDistributions() {
         stemTopicHierarchicalBaseDistribution =
                 new HierarchicalDirichletBaseDistribution(stemLexicon,
                 stemBoundaryProb, betaStemBase);
@@ -572,7 +572,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      * the training stage.
      */
     @Override
-    public void normalizeWords() {
+    protected void normalizeWords() {
         Double sum = 0.;
         double[] StateByWordProbs = new double[wordW * stateS];
         try {
@@ -706,7 +706,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      * @param out
      */
     @Override
-    protected void printAnnotatedText(BufferedWriter out) {
+    public void printAnnotatedText(String outDir) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

@@ -19,7 +19,7 @@ package tikka.structures.distributions;
 
 import tikka.exceptions.EmptyCountException;
 import tikka.exceptions.KeyRemovedException;
-import tikka.exceptions.emptyTwoDimLexiconException;
+import tikka.exceptions.EmptyTwoDimLexiconException;
 import tikka.structures.StringDoublePair;
 import tikka.structures.lexicons.Lexicon;
 import tikka.structures.lexicons.ThreeDimLexicon;
@@ -74,7 +74,7 @@ public abstract class ThreeDimHierarchicalDirichletProcess extends ThreeDimDiric
         } catch (EmptyCountException e) {
             e.printMessage(lexicon.getString(morph), morph);
             System.exit(1);
-        } catch (emptyTwoDimLexiconException e) {
+        } catch (EmptyTwoDimLexiconException e) {
         }
 
         try {
