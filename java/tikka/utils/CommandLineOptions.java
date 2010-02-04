@@ -215,7 +215,12 @@ public class CommandLineOptions {
                     modelOutputPath = value;
                     break;
                 case 'n':
-                    annotatedTextDir = value;
+                    if (value.endsWith("" + File.separator)) {
+                        annotatedTextDir =
+                                value.substring(0, value.length() - 1);
+                    } else {
+                        annotatedTextDir = value;
+                    }
                     break;
                 case 'o':
                     out.close();

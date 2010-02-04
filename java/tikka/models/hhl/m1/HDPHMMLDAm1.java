@@ -33,10 +33,14 @@ import tikka.utils.CommandLineOptions;
 
 import tikka.utils.ec.util.MersenneTwisterFast;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import tikka.opennlp.io.DirWriter;
 
 /**
  * This is a pure HDPHMMLDA model. This model assumes that only a few states
@@ -701,12 +705,13 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
         }
     }
 
-    /**
-     * 
-     * @param out
-     */
-    @Override
-    public void printAnnotatedText(String outDir) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    /**
+//     * Print text that has been segmented/tagged in a sample to output.
+//     *
+//     * @param outDir Root of path to generate output to
+//     * @throws IOException
+//     */
+//    @Override
+//    public void printAnnotatedText(String outDir) throws IOException {
+//    }
 }
