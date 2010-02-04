@@ -99,9 +99,11 @@ public class Tagger {
 
             String modelInputPath = modelOptions.getModelInputPath();
 
+            boolean normalized = false;
+
             if (modelInputPath != null) {
                 SerializableModel serializableModel = new SerializableModel();
-                serializableModel.loadModel(modelInputPath, hhl);
+                hhl = serializableModel.loadModel(modelInputPath);
                 hhl.initializeFromModel();
             } else {
                 if (experimentModel.equals("m1")) {
@@ -111,10 +113,16 @@ public class Tagger {
                 }
                 hhl.initialize();
                 hhl.train();
+                normalized = true;
                 hhl.normalize();
             }
 
-            hhl.print(modelOptions.getOutput());
+            if (modelOptions.getTabularOutputFilename() != null) {
+                if (!normalized) {
+                    hhl.normalize();
+                }
+                hhl.print(modelOptions.getOutput());
+            }
 
             String modelOutputPath = modelOptions.getModelOutputPath();
             if (modelOutputPath != null) {

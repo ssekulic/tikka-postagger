@@ -40,6 +40,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import tikka.opennlp.io.DirReader;
 import tikka.opennlp.io.DirWriter;
 
 /**
@@ -124,11 +125,20 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
         mtfRand = new MersenneTwisterFast(randomSeed);
 
         /**
+         * Revive dirReader
+         */
+        try {
+            dirReader = new DirReader(rootDir, dataFormat);
+        } catch (IOException e) {
+        }
+
+        /**
          * Revive some constants that will be used often
          */
         wbeta = beta * wordW;
         wgamma = gamma * wordW;
         spsi = stateS * psi;
+        qxi = xi * switchQ;
         S3 = stateS * stateS * stateS;
         S2 = stateS * stateS;
 
@@ -704,7 +714,6 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
             }
         }
     }
-
 //    /**
 //     * Print text that has been segmented/tagged in a sample to output.
 //     *

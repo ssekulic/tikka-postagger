@@ -61,8 +61,19 @@ public class DirWriter {
         files = new Vector<String>();
         inRoot = dirReader.root;
         this.outRoot = outRoot;
-        for (String file : files) {
+        for (String file : dirReader.files) {
             file.replaceFirst(inRoot, outRoot);
+            files.add(file);
+        }
+    }
+
+    public DirWriter(String outRoot, String inRoot, DirReader dirReader) throws
+            IOException {
+        files = new Vector<String>();
+        this.inRoot = inRoot;
+        this.outRoot = outRoot;
+        for (String file : dirReader.files) {
+            file = file.replaceFirst(inRoot, outRoot);
             files.add(file);
         }
     }
@@ -84,7 +95,7 @@ public class DirWriter {
             String parent = f.getParent();
             (new File(parent)).mkdir();
             return nextOutputBuffer();
-        } 
+        }
     }
 
     public void reset() {

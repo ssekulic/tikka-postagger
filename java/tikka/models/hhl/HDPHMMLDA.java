@@ -1008,7 +1008,7 @@ public abstract class HDPHMMLDA {
      * @throws IOException
      */
     public void printAnnotatedText(String outDir) throws IOException {
-        DirWriter dirWriter = new DirWriter(outDir, dirReader);
+        DirWriter dirWriter = new DirWriter(outDir, rootDir, dirReader);
         String root = dirWriter.getRoot();
 
         BufferedWriter bufferedWriter;
@@ -1019,7 +1019,8 @@ public abstract class HDPHMMLDA {
         for (int i = 0; i < wordN; ++i) {
             if (docid != documentVector[i]) {
                 bufferedWriter.close();
-                bufferedWriter = bufferedWriter = dirWriter.nextOutputBuffer();
+                bufferedWriter = dirWriter.nextOutputBuffer();
+                docid = documentVector[i];
             }
             int wordid = wordVector[i];
             if (wordid != EOSi) {
@@ -1044,22 +1045,23 @@ public abstract class HDPHMMLDA {
         bufferedWriter = new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(root + File.separator + "PARAMETERS")));
 
-        String line = String.format("randomSeed:%f", randomSeed);
+        String line = null;
+        line = String.format("stateS:%d", stateS);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("topicK:%f", topicK);
+        line = String.format("topicSubStates:%d", topicSubStates);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("iterations:%f", iterations);
+        line = String.format("topicK:%d", topicK);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("documentD:%f", documentD);
+        line = String.format("documentD:%d", documentD);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("wordW:%f", wordW);
+        line = String.format("wordW:%d", wordW);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("wordN:%f", wordN);
+        line = String.format("wordN:%d", wordN);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
         line = String.format("alpha:%f", alpha);
@@ -1071,25 +1073,22 @@ public abstract class HDPHMMLDA {
         line = String.format("wbeta:%f", wbeta);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("initialTemperature:%f", initialTemperature);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("temperatureDecrement:%f", temperatureDecrement);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("targetTemperature:%f", targetTemperature);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
         line = String.format("gamma:%f", gamma);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
         line = String.format("wgamma:%f", wgamma);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("stateS:%f", stateS);
+        line = String.format("psi:%f", psi);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("topicSubStates:%f", topicSubStates);
+        line = String.format("spsi:%f", spsi);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("xi:%f", xi);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("qxi:%f", qxi);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
         line = String.format("muStem:%f", muStem);
@@ -1110,18 +1109,25 @@ public abstract class HDPHMMLDA {
         line = String.format("betaStemBase:%f", betaStemBase);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("psi:%f", psi);
+        line = String.format("initialTemperature:%f", initialTemperature);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("spsi:%f", spsi);
+        line = String.format("temperatureDecrement:%f", temperatureDecrement);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("xi:%f", xi);
+        line = String.format("targetTemperature:%f", targetTemperature);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
-        line = String.format("qxi:%f", qxi);
+        line = String.format("iterations:%d", iterations);
         bufferedWriter.write(line);
         bufferedWriter.newLine();
+        line = String.format("randomSeed:%d", randomSeed);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("rootDir:%s", rootDir);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+
 
         bufferedWriter.close();
     }

@@ -110,13 +110,13 @@ public class Train {
             hhl.print(modelOptions.getOutput());
 
             String modelOutputPath = modelOptions.getModelOutputPath();
-            if(modelOutputPath != null) {
+            if (modelOutputPath != null) {
                 SerializableModel serializableModel = new SerializableModel(hhl);
                 serializableModel.saveModel(modelOutputPath);
             }
 
             String annotatedTextDir = modelOptions.getAnnotatedTextDir();
-            if(annotatedTextDir != null) {
+            if (annotatedTextDir != null) {
                 hhl.printAnnotatedText(annotatedTextDir);
             }
         } catch (ParseException exp) {
