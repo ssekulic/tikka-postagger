@@ -27,6 +27,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import tikka.opennlp.io.DataFormatEnum;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters
@@ -42,6 +45,10 @@ public class SerializableModel implements Serializable {
      * copied to the enclosing class (this).
      */
     protected SerializableModel loadBuffer = null;
+    /**
+     * Format of the input data
+     */
+    protected DataFormatEnum.DataFormat dataFormat;
     /**
      * Seed for random number generator.
      */
@@ -181,6 +188,10 @@ public class SerializableModel implements Serializable {
      */
     protected double notStemBoundaryProb;
     /**
+     * Number of types to print per class (topic and/or state)
+     */
+    protected int outputPerClass;
+    /**
      * Array of where each token was segmented. For use in reconstruction
      * in the serializableModel.
      */
@@ -201,7 +212,7 @@ public class SerializableModel implements Serializable {
     /**
      * Constructor to use when model is being saved.
      * 
-     * @param m Model to be saved
+     * @param hhl Model to be saved
      */
     public SerializableModel(HDPHMMLDA m) {
         affixBoundaryProb = m.affixBoundaryProb;
@@ -209,6 +220,7 @@ public class SerializableModel implements Serializable {
         beta = m.beta;
         betaStem = m.betaStem;
         betaStemBase = m.betaStemBase;
+        dataFormat = m.dataFormat;
         documentD = m.documentD;
         documentVector = m.documentVector;
         gamma = m.gamma;
@@ -221,10 +233,14 @@ public class SerializableModel implements Serializable {
         muStemBase = m.muStemBase;
         notAffixBoundaryProb = m.notAffixBoundaryProb;
         notStemBoundaryProb = m.notStemBoundaryProb;
+        outputPerClass = m.outputPerClass;
         psi = m.psi;
         randomSeed = m.randomSeed;
         rootDir = m.rootDir;
         sentenceVector = m.sentenceVector;
+        splitVector = m.splitVector;
+        stateVector = m.stateVector;
+        stateS = m.stateS;
         stemBoundaryProb = m.stemBoundaryProb;
         switchVector = m.switchVector;
         targetTemperature = m.targetTemperature;
@@ -249,59 +265,71 @@ public class SerializableModel implements Serializable {
      * Load a previously trained model.
      *
      * @param filename  Full path of model location.
-     * @param m Model to load to
+     * @return  The model that has been loaded.
      * @throws IOException
      * @throws FileNotFoundException
      */
-    public void loadModel(String filename, HDPHMMLDA m) throws IOException,
+    public HDPHMMLDA loadModel(String filename) throws IOException,
             FileNotFoundException {
         ObjectInputStream modelIn =
-                new ObjectInputStream(new FileInputStream(filename));
+                new ObjectInputStream(new GZIPInputStream(new FileInputStream(
+                filename)));
+//        ObjectInputStream modelIn =
+//                new ObjectInputStream(new FileInputStream(filename));
         try {
             loadBuffer = (SerializableModel) modelIn.readObject();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         copy(loadBuffer);
+        loadBuffer = null;
         modelIn.close();
 
+        HDPHMMLDA hhl = null;
         if (modelName.equals("m1")) {
-            m = new HDPHMMLDAm1();
+            hhl = new HDPHMMLDAm1();
         }
 
-        m.affixBoundaryProb = affixBoundaryProb;
-        m.alpha = alpha;
-        m.beta = beta;
-        m.betaStem = betaStem;
-        m.betaStemBase = betaStemBase;
-        m.documentD = documentD;
-        m.documentVector = documentVector;
-        m.gamma = gamma;
-        m.initialTemperature = initialTemperature;
-        m.iterations = iterations;
-        m.modelName = modelName;
-        m.muAffix = muAffix;
-        m.muAffixBase = muAffixBase;
-        m.muStem = muStem;
-        m.muStemBase = muStemBase;
-        m.notAffixBoundaryProb = notAffixBoundaryProb;
-        m.notStemBoundaryProb = notStemBoundaryProb;
-        m.psi = psi;
-        m.randomSeed = randomSeed;
-        m.rootDir = rootDir;
-        m.sentenceVector = sentenceVector;
-        m.stemBoundaryProb = stemBoundaryProb;
-        m.switchVector = switchVector;
-        m.targetTemperature = targetTemperature;
-        m.temperatureDecrement = temperatureDecrement;
-        m.topicK = topicK;
-        m.topicSubStates = topicSubStates;
-        m.topicVector = topicVector;
-        m.wordIdx = wordIdx;
-        m.wordN = wordN;
-        m.wordVector = wordVector;
-        m.wordW = wordW;
-        m.xi = xi;
+        hhl.affixBoundaryProb = affixBoundaryProb;
+        hhl.alpha = alpha;
+        hhl.beta = beta;
+        hhl.betaStem = betaStem;
+        hhl.betaStemBase = betaStemBase;
+        hhl.dataFormat = dataFormat;
+        hhl.documentD = documentD;
+        hhl.documentVector = documentVector;
+        hhl.gamma = gamma;
+        hhl.initialTemperature = initialTemperature;
+        hhl.iterations = iterations;
+        hhl.modelName = modelName;
+        hhl.muAffix = muAffix;
+        hhl.muAffixBase = muAffixBase;
+        hhl.muStem = muStem;
+        hhl.muStemBase = muStemBase;
+        hhl.notAffixBoundaryProb = notAffixBoundaryProb;
+        hhl.notStemBoundaryProb = notStemBoundaryProb;
+        hhl.outputPerClass = outputPerClass;
+        hhl.psi = psi;
+        hhl.randomSeed = randomSeed;
+        hhl.rootDir = rootDir;
+        hhl.sentenceVector = sentenceVector;
+        hhl.splitVector = splitVector;
+        hhl.stateVector = stateVector;
+        hhl.stateS = stateS;
+        hhl.stemBoundaryProb = stemBoundaryProb;
+        hhl.switchVector = switchVector;
+        hhl.targetTemperature = targetTemperature;
+        hhl.temperatureDecrement = temperatureDecrement;
+        hhl.topicK = topicK;
+        hhl.topicSubStates = topicSubStates;
+        hhl.topicVector = topicVector;
+        hhl.wordIdx = wordIdx;
+        hhl.wordN = wordN;
+        hhl.wordVector = wordVector;
+        hhl.wordW = wordW;
+        hhl.xi = xi;
+
+        return hhl;
     }
 
     /**
@@ -312,7 +340,8 @@ public class SerializableModel implements Serializable {
      */
     public void saveModel(String filename) throws IOException {
         ObjectOutputStream modelOut =
-                new ObjectOutputStream(new FileOutputStream(filename));
+                new ObjectOutputStream(new GZIPOutputStream(
+                new FileOutputStream(filename)));
         modelOut.writeObject(this);
         modelOut.close();
     }
@@ -323,6 +352,7 @@ public class SerializableModel implements Serializable {
         beta = sm.beta;
         betaStem = sm.betaStem;
         betaStemBase = sm.betaStemBase;
+        dataFormat = sm.dataFormat;
         documentD = sm.documentD;
         documentVector = sm.documentVector;
         gamma = sm.gamma;
@@ -335,10 +365,14 @@ public class SerializableModel implements Serializable {
         muStemBase = sm.muStemBase;
         notAffixBoundaryProb = sm.notAffixBoundaryProb;
         notStemBoundaryProb = sm.notStemBoundaryProb;
+        outputPerClass = sm.outputPerClass;
         psi = sm.psi;
         randomSeed = sm.randomSeed;
         rootDir = sm.rootDir;
         sentenceVector = sm.sentenceVector;
+        splitVector = sm.splitVector;
+        stateVector = sm.stateVector;
+        stateS = sm.stateS;
         stemBoundaryProb = sm.stemBoundaryProb;
         switchVector = sm.switchVector;
         targetTemperature = sm.targetTemperature;

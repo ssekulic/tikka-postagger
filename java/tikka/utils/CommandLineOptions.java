@@ -81,6 +81,10 @@ public class CommandLineOptions {
     protected DataFormatEnum.DataFormat dataFormat =
             DataFormatEnum.DataFormat.CONLL2K;
     /**
+     * Name of file to generate tabulated output to
+     */
+    protected String tabularOutputFilename = null;
+    /**
      * Output buffer to write normalized data to.
      */
     protected BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
@@ -224,8 +228,9 @@ public class CommandLineOptions {
                     break;
                 case 'o':
                     out.close();
+                    tabularOutputFilename = value;
                     out = new BufferedWriter(new OutputStreamWriter(
-                            new FileOutputStream(value)));
+                            new FileOutputStream(tabularOutputFilename)));
                     break;
                 case 'p':
                     opt = option.getOpt();
@@ -295,6 +300,10 @@ public class CommandLineOptions {
 
     public int getNumIterations() {
         return numIterations;
+    }
+
+    public String getTabularOutputFilename() {
+        return tabularOutputFilename;
     }
 
     public BufferedWriter getOutput() {
