@@ -25,22 +25,29 @@ import java.io.OutputStreamWriter;
 import java.util.Vector;
 
 /**
- *
+ * Class object for walking through and writing to annotated files that mirror
+ * the structure of the input directory.
+ * 
  * @author tsmoon
  */
 public class DirWriter {
 
+    /**
+     * Writer object to return at each iteration
+     */
     protected BufferedWriter outputWriter;
+    /**
+     * Name of current file being written to
+     */
     protected String currentFileName;
+    /**
+     * Index of current file being written to
+     */
     protected Integer currentFileIdx = 0;
     /**
      * Vector of files in input with full path
      */
     protected Vector<String> files;
-    /**
-     * Reader for the specific format
-     */
-    protected DataReader dataReader;
     /**
      * Root of input files
      */
@@ -85,6 +92,6 @@ public class DirWriter {
     }
 
     public String getRoot() {
-        return inRoot;
+        return outRoot;
     }
 }

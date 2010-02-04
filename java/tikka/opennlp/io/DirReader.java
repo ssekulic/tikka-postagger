@@ -15,26 +15,42 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-
 package tikka.opennlp.io;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
 
 /**
- *
+ * Class object for walking through directory with training files.
+ * 
  * @author tsmoon
  */
 public class DirReader {
 
-    protected BufferedReader inputReader;
+    /**
+     * File handle of current file being read from
+     */
     protected File currentFile;
+    /**
+     * Index of current file being read from
+     */
     protected Integer currentFileIdx = 0;
+    /**
+     * Vector of files in input with full path
+     */
     protected Vector<String> files;
+    /**
+     * Reader for the specific format
+     */
     protected DataReader dataReader;
+    /**
+     * Format of input data (CONLL2K for now)
+     */
     protected DataFormatEnum.DataFormat dataFormat;
+    /**
+     * Root of input files
+     */
     protected String root;
 
     public DirReader() {
