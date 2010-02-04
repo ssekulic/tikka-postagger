@@ -36,16 +36,19 @@ import tikka.utils.ec.util.MersenneTwisterFast;
 import tikka.utils.normalizer.WordNormalizer;
 import tikka.utils.normalizer.WordNormalizerToLowerNoNum;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import tikka.opennlp.io.DirWriter;
 
 /**
  * This is a hybrid between the HDPHMMLDA model and the HMMLDA model. It assumes
@@ -1000,8 +1003,128 @@ public abstract class HDPHMMLDA {
 
     /**
      * Print text that has been segmented/tagged in a sample to output.
+     * 
+     * @param outDir Root of path to generate output to
+     * @throws IOException
      */
-    public abstract void printAnnotatedText(String outDir);
+    public void printAnnotatedText(String outDir) throws IOException {
+        DirWriter dirWriter = new DirWriter(outDir, dirReader);
+        String root = dirWriter.getRoot();
+
+        BufferedWriter bufferedWriter;
+
+        int docid = 0;
+        bufferedWriter = dirWriter.nextOutputBuffer();
+
+        for (int i = 0; i < wordN; ++i) {
+            if (docid != documentVector[i]) {
+                bufferedWriter.close();
+                bufferedWriter = bufferedWriter = dirWriter.nextOutputBuffer();
+            }
+            int wordid = wordVector[i];
+            if (wordid != EOSi) {
+                String stem = stemLexicon.getString(stemVector[i]);
+                String affix = affixLexicon.getString(affixVector[i]);
+                bufferedWriter.write(stem + "+" + affix);
+                bufferedWriter.write("\t");
+                int stateid = stateVector[i];
+                int topicid = topicVector[i];
+                String line = null;
+                if (stateid < topicSubStates) {
+                    line = String.format("S:%d,T:%d", stateid, topicid);
+                } else {
+                    line = String.format("S:%d,T:%d", stateid, -1);
+                }
+                bufferedWriter.write(line);
+            }
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.close();
+
+        bufferedWriter = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(root + File.separator + "PARAMETERS")));
+
+        String line = String.format("randomSeed:%f", randomSeed);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("topicK:%f", topicK);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("iterations:%f", iterations);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("documentD:%f", documentD);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("wordW:%f", wordW);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("wordN:%f", wordN);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("alpha:%f", alpha);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("beta:%f", beta);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("wbeta:%f", wbeta);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("initialTemperature:%f", initialTemperature);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("temperatureDecrement:%f", temperatureDecrement);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("targetTemperature:%f", targetTemperature);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("gamma:%f", gamma);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("wgamma:%f", wgamma);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("stateS:%f", stateS);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("topicSubStates:%f", topicSubStates);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("muStem:%f", muStem);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("muStemBase:%f", muStemBase);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("muAffix:%f", muAffix);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("muAffixBase:%f", muAffixBase);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("betaStem:%f", betaStem);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("betaStemBase:%f", betaStemBase);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("psi:%f", psi);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("spsi:%f", spsi);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("xi:%f", xi);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+        line = String.format("qxi:%f", qxi);
+        bufferedWriter.write(line);
+        bufferedWriter.newLine();
+
+        bufferedWriter.close();
+    }
 
     /**
      * Copy a sequence of numbers from @ta to array @ia.
