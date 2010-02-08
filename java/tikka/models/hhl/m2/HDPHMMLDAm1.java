@@ -15,7 +15,7 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.models.hhl.m1;
+package tikka.models.hhl.m2;
 
 import tikka.exceptions.EmptyCountException;
 import tikka.models.hhl.HDPHMMLDA;
@@ -226,34 +226,67 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
                 wordtopicoff = wordid * topicK;
 
                 word = idxToWord.get(wordid);
-                int wlength = word.length();
 
-                topicid = mtfRand.nextInt(topicK);
-                topicVector[i] = topicid;
-
-                splitid = mtfRand.nextInt(wlength + 1);
-                stem = word.substring(0, splitid);
-                affix = word.substring(splitid, wlength);
-                stemid = stemLexicon.getOrPutIdx(stem);
-                affixid = affixLexicon.getOrPutIdx(affix);
-                stemVector[i] = stemid;
-                affixVector[i] = affixid;
-
-                /**
-                 * Randomly assign half to topic states and half to non-topic
-                 * states
-                 */
-                if (mtfRand.nextBoolean()) {
-                    stateid = mtfRand.nextInt(topicSubStates - 1) + 1;
-                    stemAffixTopicHDP.inc(topicid, affixid, stemid);
-                    DocumentByTopic[docoff + topicid]++;
-                    topicCounts[topicid]++;
-                    TopicByWord[wordtopicoff + topicid]++;
+                if (mtfRand.nextDouble() > 0.5) {
+                    stateVector[i] = 1;
                 } else {
-                    stateid =
-                            mtfRand.nextInt(stateS - topicSubStates) + topicSubStates;
-                    stemAffixStateDP.inc(stateid, affixid, stemid);
+                    stateVector[i] = 0;
                 }
+
+                try {
+                    for (int j = 0;; ++j) {
+                        topicProbs[j] = DocumentByTopic[docid * topicK + j] +
+                                alpha;
+                        if (stateVector[i] == 1) {
+                            topicProbs[j] *=
+                                    (TopicByWord[wordtopicoff + j] + beta) /
+                                    (topicCounts[j] + wbeta);
+                        }
+                        totalprob += topicProbs[j];
+                    }
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                }
+
+                max = topicProbs[0];
+                topicid = 0;
+                r = mtfRand.nextDouble() * totalprob;
+                while (r > max) {
+                    topicid++;
+                    max += topicProbs[topicid];
+                }
+                topicVector[i] = topicid;
+                max = 0;
+
+                thirdstateoff = preprev * S3 + prev * S2 + current * stateS;
+                secondstateoff = prev * S2 + current * stateS;
+                if (stateVector[i] == 0) {
+                    stateProbs[1] =
+                            (TopicByWord[wordtopicoff + topicid] + beta) /
+                            (topicCounts[topicid] + wbeta) *
+                            (thirdOrderTransitions[thirdstateoff + 1] + gamma);
+                    totalprob = stateProbs[1];
+                    try {
+                        for (int j = 2;; j++) {
+                            stateProbs[j] =
+                                    (StateByWord[wordstateoff + j] + beta) /
+                                    (stateCounts[j] + wbeta) *
+                                    (thirdOrderTransitions[thirdstateoff + j] +
+                                    gamma);
+                            totalprob += stateProbs[j];
+                        }
+                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                    }
+                    r = mtfRand.nextDouble() * totalprob;
+                    max = stateProbs[1];
+                    stateid = 1;
+                    while (r > max) {
+                        stateid++;
+                        max += stateProbs[stateid];
+                    }
+                    stateVector[i] = stateid;
+                }
+
+
                 affixStateDP.inc(stateid, affixid);
                 stateVector[i] = stateid;
                 StateByWord[wordstateoff + stateid]++;

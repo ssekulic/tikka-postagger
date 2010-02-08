@@ -19,7 +19,6 @@ package tikka.apps;
 
 import tikka.models.hhl.HDPHMMLDA;
 import tikka.models.hhl.m1.HDPHMMLDAm1;
-import tikka.utils.CommandLineOptions;
 
 import java.io.IOException;
 
@@ -27,61 +26,22 @@ import org.apache.commons.cli.*;
 import tikka.models.hhl.SerializableModel;
 
 /**
- *
+ * This is a module for tagging test data sets. Parameters may be trained from
+ * a training set or may be loaded from a previously trained model.
+ * 
  * @author tsmoon
  */
-public class Tagger {
+public class Tagger extends MainBase {
 
+    /**
+     * Default main
+     * 
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         CommandLineParser optparse = new PosixParser();
         Options options = new Options();
-        options.addOption("a", "alpha", true, "alpha value (default=50/topics)");
-        options.addOption("c", "data-format", true,
-                "format of input data [conll2k, hashslash, pipesep, raw; default=conll2k]");
-        options.addOption("d", "data-dir", true,
-                "full path to directory containing training documents");
-        options.addOption("e", "experiment-model", true,
-                "model to use [m1,m2; default=m1]");
-        options.addOption("i", "iterations", true,
-                "number of training iterations (default=100)");
-        options.addOption("l", "model-input-path", true,
-                "full path of model to be loaded");
-        options.addOption("m", "model-output-path", true,
-                "full path to save model to");
-        options.addOption("n", "annotated-text", true,
-                "full path to save annotated text to");
-        options.addOption("o", "output", true,
-                "path of output (default=stdout)");
-        options.addOption("pi", "initial-temperature", true,
-                "initial temperature for annealing regime (default=0.1)");
-        options.addOption("pr", "target-temperature", true,
-                "temperature at which to stop annealing (default=1)");
-        options.addOption("pt", "temperature-increment", true,
-                "temperature increment steps (default=0.1)");
-        options.addOption("s", "states", true,
-                "number of states in HMM (default=15)");
-        options.addOption("r", "random-seed", true,
-                "seed random number generator (default=false)");
-        options.addOption("t", "topics", true, "number of topics (default=50)");
-        options.addOption("u", "topic-substates", true, "number of substates given to topics " +
-                "(default=1)");
-        options.addOption("w", "words-class", true,
-                "number of words to print per class (default=50)");
-        options.addOption("h", "help", false, "print help");
-        options.addOption("xmustembase", "mu-stem-base", true, "(default=3000)");
-        options.addOption("xmustem", "mu-stem", true, "(default=300)");
-        options.addOption("xbetastembase", "beta-stem-base", true,
-                "(default=3000)");
-        options.addOption("xbetastem", "beta-stem", true, "(default=300)");
-        options.addOption("xmuaffixbase", "mu-affix-base", true,
-                "(default=3000)");
-        options.addOption("xmuaffix", "mu-affix", true, "(default=300)");
-        options.addOption("xxi", "xi", true, "(default=0.1)");
-        options.addOption("xpsi", "psi", true, "(default=0.1)");
-        options.addOption("xstemboundaryprob", "stem-boundary-prob", true,
-                "(default=0.2)");
-        options.addOption("xaffixboundaryprob", "affix-boundary-prob", true,
-                "(default=0.2)");
+        setOptions(options);
 
         try {
             CommandLine cline = optparse.parse(options, args);
@@ -104,7 +64,7 @@ public class Tagger {
             if (modelInputPath != null) {
                 SerializableModel serializableModel = new SerializableModel();
                 hhl = serializableModel.loadModel(modelInputPath);
-                hhl.initializeFromModel();
+                hhl.initializeFromModel(modelOptions);
             } else {
                 if (experimentModel.equals("m1")) {
                     hhl = new HDPHMMLDAm1(modelOptions);
@@ -135,7 +95,15 @@ public class Tagger {
                 hhl.printAnnotatedText(annotatedTextDir);
             }
 
+            String testDataDir = modelOptions.getTestDataDir();
+            if (testDataDir != null) {
+                hhl.tagTestText(testDataDir);
+            }
 
+            String annotatedTestTextDir = modelOptions.getAnnotatedTestTextDir();
+            if (annotatedTestTextDir != null) {
+                hhl.printAnnotatedTestText(annotatedTestTextDir);
+            }
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:" +
                     exp.getMessage());
