@@ -30,7 +30,7 @@ import tikka.structures.distributions.StemAffixStateHDP;
 import tikka.structures.distributions.StemAffixTopicDP;
 import tikka.structures.distributions.StemAffixTopicHDP;
 import tikka.structures.lexicons.Lexicon;
-import tikka.utils.CommandLineOptions;
+import tikka.apps.CommandLineOptions;
 
 import tikka.utils.ec.util.MersenneTwisterFast;
 import tikka.utils.normalizer.WordNormalizer;
@@ -185,9 +185,13 @@ public abstract class HDPHMMLDA {
      */
     protected DataReader dataReader;
     /**
-     * Reader for walking through directories
+     * Reader for walking through training directories
      */
     protected DirReader dirReader;
+    /**
+     * Reader for walking through test directories
+     */
+    protected DirReader testDirReader = null;
     /**
      * Format of the input data
      */
@@ -481,6 +485,10 @@ public abstract class HDPHMMLDA {
      */
     protected String rootDir;
     /**
+     * Path of test data.
+     */
+    protected String testRootDir;
+    /**
      * Type of model that is being run.
      */
     protected String modelName;
@@ -497,6 +505,10 @@ public abstract class HDPHMMLDA {
         dataFormat = options.getDataFormat();
         rootDir = options.getDataDir();
         dirReader = new DirReader(rootDir, dataFormat);
+        testRootDir = options.getTestDataDir();
+        if (testRootDir != null) {
+            testDirReader = new DirReader(testRootDir, dataFormat);
+        }
 
         /**
          * Setting lexicons
@@ -557,6 +569,9 @@ public abstract class HDPHMMLDA {
          * Initializing random number generator, etc.
          */
         randomSeed = options.getRandomSeed();
+        if (randomSeed == -1) {
+            randomSeed = 0;
+        }
         mtfRand = new MersenneTwisterFast(randomSeed);
         wordNormalizer = new WordNormalizerToLowerNoNum();
 
@@ -718,7 +733,116 @@ public abstract class HDPHMMLDA {
      * Initializes from a pretrained, loaded model. Use this if the model has
      * been loaded from a pretrained model.
      */
-    public abstract void initializeFromModel();
+    public void initializeFromModel(CommandLineOptions options) {
+        /**
+         * Initialize random number generator
+         */
+        if (options.getRandomSeed() != -1) {
+            randomSeed = options.getRandomSeed();
+        }
+        mtfRand = new MersenneTwisterFast(randomSeed);
+
+        /**
+         * Revive dirReader
+         */
+        try {
+            dirReader = new DirReader(rootDir, dataFormat);
+        } catch (IOException e) {
+        }
+
+        /**
+         * Revive some constants that will be used often
+         */
+        wbeta = beta * wordW;
+        wgamma = gamma * wordW;
+        spsi = stateS * psi;
+        qxi = xi * switchQ;
+        S3 = stateS * stateS * stateS;
+        S2 = stateS * stateS;
+
+        /**
+         * Revive the annealing regime
+         */
+        temperature = initialTemperature;
+        temperatureReciprocal = 1 / temperature;
+        innerIterations = iterations;
+        outerIterations =
+                (int) Math.round(
+                (initialTemperature - targetTemperature) / temperatureDecrement) + 1;
+
+        /**
+         * These are not saved in the model so must be revived
+         */
+        stemVector = new int[wordN];
+        affixVector = new int[wordN];
+
+        first = new int[wordN];
+        second = new int[wordN];
+        third = new int[wordN];
+
+        idxToWord = new HashMap<Integer, String>();
+        for (String word : wordIdx.keySet()) {
+            idxToWord.put(wordIdx.get(word), word);
+        }
+
+        StemToIdx = new HashMap<String, Integer>();
+        AffixToIdx = new HashMap<String, Integer>();
+        stemLexicon = new Lexicon(StemToIdx);
+        affixLexicon = new Lexicon(AffixToIdx);
+
+        topicCounts = new int[topicK];
+        topicProbs = new double[topicK];
+        for (int i = 0; i < topicK; ++i) {
+            topicCounts[i] = 0;
+            topicProbs[i] = 0.;
+        }
+
+        TopicByWord = new int[topicK * wordW];
+        try {
+            for (int i = 0;; ++i) {
+                TopicByWord[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
+        DocumentByTopic = new int[documentD * topicK];
+        try {
+            for (int i = 0;; ++i) {
+                DocumentByTopic[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
+        stateCounts = new int[stateS];
+        stateProbs = new double[stateS];
+        for (int i = 0; i < stateS; ++i) {
+            stateCounts[i] = 0;
+            stateProbs[i] = 0;
+        }
+
+        StateByWord = new int[stateS * wordW];
+        try {
+            for (int i = 0;; ++i) {
+                StateByWord[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
+        thirdOrderTransitions = new int[stateS * stateS * stateS * stateS];
+        secondOrderTransitions = new int[stateS * stateS * stateS];
+        try {
+            for (int i = 0;; ++i) {
+                thirdOrderTransitions[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+        try {
+            for (int i = 0;; ++i) {
+                secondOrderTransitions[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+    }
 
     /**
      * Each derived class uses a different set of DP and HDP combinations for
@@ -1257,5 +1381,17 @@ public abstract class HDPHMMLDA {
         for (int i = 0; i < n; ++i) {
             out.newLine();
         }
+    }
+
+    /**
+     * Tag, annotate and split data in a test directory.
+     * 
+     * @param testDataDir
+     * @throws IOException
+     */
+    public abstract void tagTestText(String testDataDir) throws IOException;
+
+    public void printAnnotatedTestText(String annotatedTestTextDir) {
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 }

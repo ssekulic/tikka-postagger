@@ -15,7 +15,7 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.utils;
+package tikka.apps;
 
 import tikka.opennlp.io.DataFormatEnum;
 
@@ -56,6 +56,10 @@ public class CommandLineOptions {
      */
     protected String dataDir;
     /**
+     * Path for test data. Should be a full directory
+     */
+    private String testDataDir = null;
+    /**
      * full path of model to be loaded
      */
     protected String modelInputPath = null;
@@ -68,13 +72,20 @@ public class CommandLineOptions {
      */
     protected String annotatedTextDir = null;
     /**
+     * Root of path to output annotated test set texts to
+     */
+    private String annotatedTestTextDir = null;
+    /**
      * Number of training iterations
      */
     protected int numIterations = 100;
     /**
-     * Number to seed random number generator
+     * Number to seed random number generator. This is set to -1 so it may be
+     * checked during the initialization stages. If the value is -1 from the
+     * calling function, it means the randomSeed must be set to 0. Otherwise,
+     * use whatever value has been passed to it from the command line.
      */
-    protected int randomSeed = 0;
+    protected int randomSeed = -1;
     /**
      * Specifier of training data format.
      */
@@ -104,8 +115,8 @@ public class CommandLineOptions {
     /**
      * Hyperparameters for (hierarchical) dirichlet processes
      */
-    protected double muStemBase = 3000, muAffixBase = 3000, muStem = 300,
-            muAffix = 300, betaStemBase = 3000, betaStem = 300;
+    protected double muStemBase = 300, muAffixBase = 300, muStem = 30,
+            muAffix = 30, betaStemBase = 300, betaStem = 30;
     /**
      * Probability of null morph or ,equivalently, the probability of a
      * morpheme boundary
@@ -209,8 +220,18 @@ public class CommandLineOptions {
                 case 'e':
                     experimentModel = value;
                     break;
+                case 'f':
+                    if (value.endsWith("" + File.separator)) {
+                        testDataDir = value.substring(0, value.length() - 1);
+                    } else {
+                        testDataDir = value;
+                    }
+                    break;
                 case 'i':
                     numIterations = Integer.parseInt(value);
+                    break;
+                case 'j':
+                    annotatedTestTextDir = value;
                     break;
                 case 'l':
                     modelInputPath = value;
@@ -292,6 +313,10 @@ public class CommandLineOptions {
 
     public String getDataDir() {
         return dataDir;
+    }
+
+    public String getTestDataDir() {
+        return testDataDir;
     }
 
     public DataFormatEnum.DataFormat getDataFormat() {
@@ -400,5 +425,9 @@ public class CommandLineOptions {
 
     public String getAnnotatedTextDir() {
         return annotatedTextDir;
+    }
+
+    public String getAnnotatedTestTextDir() {
+        return annotatedTestTextDir;
     }
 }
