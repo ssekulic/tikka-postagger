@@ -17,9 +17,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.models.hhl;
 
+import tikka.apps.CommandLineOptions;
+
 import tikka.opennlp.io.DataFormatEnum;
 import tikka.opennlp.io.DataReader;
 import tikka.opennlp.io.DirReader;
+import tikka.opennlp.io.DirWriter;
+
 import tikka.structures.DoubleStringPair;
 import tikka.structures.StringDoublePair;
 import tikka.structures.distributions.AffixStateDP;
@@ -30,25 +34,21 @@ import tikka.structures.distributions.StemAffixStateHDP;
 import tikka.structures.distributions.StemAffixTopicDP;
 import tikka.structures.distributions.StemAffixTopicHDP;
 import tikka.structures.lexicons.Lexicon;
-import tikka.apps.CommandLineOptions;
 
 import tikka.utils.ec.util.MersenneTwisterFast;
 import tikka.utils.normalizer.WordNormalizer;
 import tikka.utils.normalizer.WordNormalizerToLowerNoNum;
+
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import tikka.opennlp.io.DirWriter;
 
 /**
  * This is a hybrid between the HDPHMMLDA model and the HMMLDA model. It assumes
@@ -80,6 +80,10 @@ public abstract class HDPHMMLDA {
      */
     protected int documentD;
     /**
+     * Number of documents in the test set
+     */
+    protected int testDocumentD;
+    /**
      * Number of word types
      */
     protected int wordW;
@@ -88,13 +92,18 @@ public abstract class HDPHMMLDA {
      */
     protected int wordN;
     /**
-     * Number of types to print per class (topic and/or state)
+     * Number of types to printTabulatedProbabilities per class (topic and/or state)
      */
     protected int outputPerClass;
     /**
      * Hyperparameter for topic-by-document prior.
      */
     protected double alpha;
+//    /**
+//     * Normalization term for doc by topic table. Set to
+//     * <pre>alpha*topicK</pre>
+//     */
+//    protected double talpha;
     /**
      * Hyperparameter for word/stem-by-topic prior
      */
@@ -111,6 +120,12 @@ public abstract class HDPHMMLDA {
      * Counts of topics.
      */
     protected int[] topicCounts;
+//    /**
+//     * Count of documents. Only needed in sampling stages. Nonetheless, should
+//     * be populated early on. Also, it includes a normalization term for the
+//     * hyperparameter and is thus not a true count but a normalized count
+//     */
+//    protected double[] documentCounts;
     /**
      * Posterior probabilities for topics.
      */
@@ -200,10 +215,6 @@ public abstract class HDPHMMLDA {
      * Specifies how to normalize words
      */
     protected WordNormalizer wordNormalizer;
-    /**
-     * Object for serializing model
-     */
-    private SerializableModel serializableModel;
     /**
      * Hyperparameter for state emissions
      */
@@ -334,6 +345,10 @@ public abstract class HDPHMMLDA {
      * Machine epsilon for comparing equality in floating point numbers.
      */
     protected final double EPSILON = 1e-12;
+    /**
+     * OS neutral newline character
+     */
+    protected final static String newline = System.getProperty("line.separator");
     /**
      * Hyperparameter for state by affix by stem DP
      */
@@ -487,11 +502,27 @@ public abstract class HDPHMMLDA {
     /**
      * Path of test data.
      */
-    protected String testRootDir;
+    protected String testRootDir = null;
     /**
      * Type of model that is being run.
      */
     protected String modelName;
+    /**
+     * Number of samples to take
+     */
+    protected int samples;
+    /**
+     * Number of iterations between samples
+     */
+    protected int lag;
+    /**
+     * Probability table of tokens per sample.
+     */
+    protected double[] SampleProbs;
+    /**
+     * String for maintaining all model parameters. Only for printing purposes.
+     */
+    protected StringBuilder modelParameterStringBuilder;
 
     /**
      * Default constructor.
@@ -508,6 +539,8 @@ public abstract class HDPHMMLDA {
         testRootDir = options.getTestDataDir();
         if (testRootDir != null) {
             testDirReader = new DirReader(testRootDir, dataFormat);
+        } else {
+            testRootDir = "";
         }
 
         /**
@@ -545,13 +578,16 @@ public abstract class HDPHMMLDA {
         targetTemperature = options.getTargetTemperature();
         innerIterations = iterations;
         outerIterations =
-                (int) Math.round(
-                (initialTemperature - targetTemperature) / temperatureDecrement) + 1;
+              (int) Math.round((initialTemperature - targetTemperature)
+              / temperatureDecrement) + 1;
+        samples = options.getSamples();
+        lag = options.getLag();
 
         /**
          * Setting hyperparameters
          */
         alpha = options.getAlpha();
+//        talpha = alpha * topicK;
         beta = options.getBeta();
         gamma = options.getGamma();
         muStem = options.getMuStem();
@@ -601,11 +637,11 @@ public abstract class HDPHMMLDA {
         switchProbs = new double[switchQ];
 
         fourthOrderSwitches =
-                new int[stateS * stateS * stateS * stateS * stateS * switchQ];
+              new int[stateS * stateS * stateS * stateS * stateS * switchQ];
 
         try {
             for (int i = 0;;
-                    ++i) {
+                  ++i) {
                 fourthOrderSwitches[i] = 0;
             }
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
@@ -628,8 +664,8 @@ public abstract class HDPHMMLDA {
         }
 
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
-                documentVectorT = new ArrayList<Integer>(),
-                sentenceVectorT = new ArrayList<Integer>();
+              documentVectorT = new ArrayList<Integer>(),
+              sentenceVectorT = new ArrayList<Integer>();
         while ((dataReader = dirReader.nextDocumentReader()) != null) {
             try {
                 String[][] sentence;
@@ -693,6 +729,19 @@ public abstract class HDPHMMLDA {
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
         }
 
+//        documentCounts = new double[documentD];
+//        try {
+//            for (int i = 0;; ++i) {
+//                documentCounts[i] = talpha;
+//            }
+//        } catch (ArrayIndexOutOfBoundsException e) {
+//        }
+//        try {
+//            for (int i = 0;; ++i) {
+//                documentCounts[documentVector[i]]++;
+//            }
+//        } catch (ArrayIndexOutOfBoundsException e) {
+//        }
         DocumentByTopic = new int[documentD * topicK];
         try {
             for (int i = 0;; ++i) {
@@ -726,6 +775,14 @@ public abstract class HDPHMMLDA {
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
         }
 
+        SampleProbs = new double[samples * wordN];
+        try {
+            for (int i = 0;; ++i) {
+                SampleProbs[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+
         initalizeDistributions();
     }
 
@@ -753,6 +810,7 @@ public abstract class HDPHMMLDA {
         /**
          * Revive some constants that will be used often
          */
+//        talpha = alpha * topicK;
         wbeta = beta * wordW;
         wgamma = gamma * wordW;
         spsi = stateS * psi;
@@ -767,8 +825,8 @@ public abstract class HDPHMMLDA {
         temperatureReciprocal = 1 / temperature;
         innerIterations = iterations;
         outerIterations =
-                (int) Math.round(
-                (initialTemperature - targetTemperature) / temperatureDecrement) + 1;
+              (int) Math.round(
+              (initialTemperature - targetTemperature) / temperatureDecrement) + 1;
 
         /**
          * These are not saved in the model so must be revived
@@ -853,16 +911,31 @@ public abstract class HDPHMMLDA {
     /**
      * Train the model.
      */
-    public abstract void train();
+    public void train() {
+        randomInitialize();
+
+        /**
+         * Training iterations
+         */
+        for (int outiter = 0; outiter < outerIterations;
+              ++outiter) {
+            System.err.print("\nouter iteration " + outiter + ":");
+            System.err.print("annealing temperature " + temperature);
+            stabilizeTemperature();
+            trainInnerIter(innerIterations, "inner iteration");
+            temperature -= temperatureDecrement;
+            temperatureReciprocal = 1 / temperature;
+        }
+    }
 
     /**
      * Normalize a sample.
      */
     public void normalize() {
         affixStateDP.normalize(topicSubStates, stateS, outputPerClass,
-                stateProbs);
+              stateProbs);
         stemAffixTopicHDP.normalize(topicK, outputPerClass, affixStateDP,
-                affixLexicon);
+              affixLexicon);
 
         normalizeWords();
         normalizeRawTopics();
@@ -891,20 +964,20 @@ public abstract class HDPHMMLDA {
         for (int i = 0; i < topicK; ++i) {
             sum += topicProbs[i] = topicCounts[i] + wbeta;
             ArrayList<DoubleStringPair> topWords =
-                    new ArrayList<DoubleStringPair>();
+                  new ArrayList<DoubleStringPair>();
             /**
              * Start at one to leave out EOSi
              */
             for (int j = EOSi + 1; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                        TopicByWord[j * topicK + i] + beta, idxToWord.get(
-                        j)));
+                      TopicByWord[j * topicK + i] + beta, idxToWord.get(
+                      j)));
             }
             Collections.sort(topWords);
             for (int j = 0; j < outputPerClass; ++j) {
                 TopWordsPerTopicFromRaw[i][j] = new StringDoublePair(
-                        topWords.get(j).stringValue, topWords.get(j).doubleValue /
-                        topicProbs[i]);
+                      topWords.get(j).stringValue, topWords.get(j).doubleValue
+                      / topicProbs[i]);
             }
         }
 
@@ -928,21 +1001,21 @@ public abstract class HDPHMMLDA {
         for (int i = topicSubStates; i < stateS; ++i) {
             sum += stateProbs[i] = stateCounts[i] + wbeta;
             ArrayList<DoubleStringPair> topWords =
-                    new ArrayList<DoubleStringPair>();
+                  new ArrayList<DoubleStringPair>();
             /**
              * Start at one to leave out EOSi
              */
             for (int j = EOSi + 1; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                        StateByWord[j * stateS + i] + beta, idxToWord.get(
-                        j)));
+                      StateByWord[j * stateS + i] + beta, idxToWord.get(
+                      j)));
             }
             Collections.sort(topWords);
             for (int j = 0; j < outputPerClass; ++j) {
                 TopWordsPerStateFromRaw[i][j] =
-                        new StringDoublePair(
-                        topWords.get(j).stringValue,
-                        topWords.get(j).doubleValue / stateProbs[i]);
+                      new StringDoublePair(
+                      topWords.get(j).stringValue,
+                      topWords.get(j).doubleValue / stateProbs[i]);
             }
         }
 
@@ -958,13 +1031,14 @@ public abstract class HDPHMMLDA {
      * @param out   Buffer to write to.
      * @throws IOException
      */
-    public void print(BufferedWriter out) throws IOException {
+    public void printTabulatedProbabilities(BufferedWriter out) throws
+          IOException {
         printTopics(out);
         printNewlines(out, 4);
         printStates(out);
         printNewlines(out, 4);
         affixStateDP.print(topicSubStates, stateS, outputPerClass, stateProbs,
-                out);
+              out);
         printNewlines(out, 4);
         stemAffixTopicHDP.print(topicK, outputPerClass, topicProbs, out);
         printNewlines(out, 4);
@@ -999,8 +1073,8 @@ public abstract class HDPHMMLDA {
             for (int i = 0; i < outputPerClass; ++i) {
                 for (int c = startt; c < endt; ++c) {
                     String line = String.format("%25s\t%6.5f\t",
-                            TopWordsPerTopicFromRaw[c][i].stringValue,
-                            TopWordsPerTopicFromRaw[c][i].doubleValue);
+                          TopWordsPerTopicFromRaw[c][i].stringValue,
+                          TopWordsPerTopicFromRaw[c][i].doubleValue);
                     out.write(line);
                 }
                 out.newLine();
@@ -1037,8 +1111,8 @@ public abstract class HDPHMMLDA {
             for (int i = 0; i < outputPerClass; ++i) {
                 for (int c = startt; c < endt; ++c) {
                     String line = String.format("%25s\t%6.5f\t",
-                            TopWordsPerStateFromRaw[c][i].stringValue,
-                            TopWordsPerStateFromRaw[c][i].doubleValue);
+                          TopWordsPerStateFromRaw[c][i].stringValue,
+                          TopWordsPerStateFromRaw[c][i].doubleValue);
                     out.write(line);
                 }
                 out.newLine();
@@ -1074,8 +1148,8 @@ public abstract class HDPHMMLDA {
             for (int i = 0; i < outputPerClass; ++i) {
                 for (int c = startt; c < endt; ++c) {
                     String line = String.format("%25s\t%6.5f\t",
-                            TopWordsPerTopic[c][i].stringValue,
-                            TopWordsPerTopic[c][i].doubleValue);
+                          TopWordsPerTopic[c][i].stringValue,
+                          TopWordsPerTopic[c][i].doubleValue);
                     out.write(line);
                 }
                 out.newLine();
@@ -1111,8 +1185,8 @@ public abstract class HDPHMMLDA {
             for (int i = 0; i < outputPerClass; ++i) {
                 for (int c = startt; c < endt; ++c) {
                     String line = String.format("%25s\t%6.5f\t",
-                            TopWordsPerState[c][i].stringValue,
-                            TopWordsPerState[c][i].doubleValue);
+                          TopWordsPerState[c][i].stringValue,
+                          TopWordsPerState[c][i].doubleValue);
                     out.write(line);
                 }
                 out.newLine();
@@ -1167,93 +1241,133 @@ public abstract class HDPHMMLDA {
         bufferedWriter.close();
 
         bufferedWriter = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(root + File.separator + "PARAMETERS")));
+              new FileOutputStream(root + File.separator + "PARAMETERS")));
 
-        String line = null;
-        line = String.format("stateS:%d", stateS);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("topicSubStates:%d", topicSubStates);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("topicK:%d", topicK);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("documentD:%d", documentD);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("wordW:%d", wordW);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("wordN:%d", wordN);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("alpha:%f", alpha);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("beta:%f", beta);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("wbeta:%f", wbeta);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("gamma:%f", gamma);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("wgamma:%f", wgamma);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("psi:%f", psi);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("spsi:%f", spsi);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("xi:%f", xi);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("qxi:%f", qxi);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("muStem:%f", muStem);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("muStemBase:%f", muStemBase);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("muAffix:%f", muAffix);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("muAffixBase:%f", muAffixBase);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("betaStem:%f", betaStem);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("betaStemBase:%f", betaStemBase);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("initialTemperature:%f", initialTemperature);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("temperatureDecrement:%f", temperatureDecrement);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("targetTemperature:%f", targetTemperature);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("iterations:%d", iterations);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("randomSeed:%d", randomSeed);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-        line = String.format("rootDir:%s", rootDir);
-        bufferedWriter.write(line);
-        bufferedWriter.newLine();
-
-
+        bufferedWriter.write(modelParameterStringBuilder.toString());
         bufferedWriter.close();
+    }
+
+    /**
+     * Creates a string stating the parameters used in the model. The
+     * string is used for pretty printing purposes and clarity in other
+     * output routines.
+     */
+    public void setModelParameterStringBuilder() {
+        modelParameterStringBuilder = new StringBuilder();
+        String line = null;
+        line = String.format("stateS:%d", stateS) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("topicSubStates:%d", topicSubStates) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("topicK:%d", topicK) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("documentD:%d", documentD) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordW:%d", wordW) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordN:%d", wordN) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("alpha:%f", alpha) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("beta:%f", beta) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wbeta:%f", wbeta) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("gamma:%f", gamma) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wgamma:%f", wgamma) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("psi:%f", psi) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("spsi:%f", spsi) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("xi:%f", xi) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("qxi:%f", qxi) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("muStem:%f", muStem) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("muStemBase:%f", muStemBase) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("muAffix:%f", muAffix) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("muAffixBase:%f", muAffixBase) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("betaStem:%f", betaStem) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("betaStemBase:%f", betaStemBase) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("initialTemperature:%f", initialTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("temperatureDecrement:%f", temperatureDecrement) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("targetTemperature:%f", targetTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("iterations:%d", iterations) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("randomSeed:%d", randomSeed) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("rootDir:%s", rootDir) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("testRootDir:%s", testRootDir) + newline;
+        modelParameterStringBuilder.append(line);
+    }
+
+    /**
+     * Generates output for use in generating graphs and tables. Will generate
+     * output in terms of matlab matrices and latex tables. Has no header
+     * 
+     * @param outputPath Destination of output
+     * @throws IOException
+     */
+    public void printSampleScoreData(BufferedWriter out) throws IOException {
+        printSampleScoreData(out, "");
+    }
+
+    /**
+     * Generates output for use in generating graphs and tables. Will generate
+     * output in terms of matlab matrices and latex tables.
+     *
+     * @param outputPath Destination of output
+     * @param header Header of output indicating what kind of output it is
+     * @throws IOException
+     */
+    public void printSampleScoreData(BufferedWriter out, String header) throws
+          IOException {
+        double[] logsum = new double[samples];
+        for (int i = 0; i < samples; ++i) {
+            logsum[i] = 0;
+        }
+        for (int i = 0; i < samples; ++i) {
+            logsum[i] += Math.log(SampleProbs[i]);
+        }
+
+        out.write(String.format("%% ***** %s *****", header + newline));
+        out.write(modelParameterStringBuilder.toString());
+        out.newLine();
+        out.write("%% For use in matlab" + newline);
+        out.write("%% log probabilities of each sample in row vector format" + newline);
+        String nums = "[";
+        for (int i = 0; i < samples; ++i) {
+            nums += String.format("%.8f ", logsum[i]);
+        }
+        nums += "]" + newline + newline;
+        out.write(nums);
+
+        out.write("%% For use in latex" + newline);
+        out.write("%% probabilities of each sample in row vector format" + newline);
+        nums = "";
+        double bayesfactor = 0, sum = 0;
+        for (int i = 0; i < samples; ++i) {
+            sum += logsum[i];
+        }
+        bayesfactor = Math.exp(sum / samples);
+        nums = String.format("%.2f ", bayesfactor);
+        for (int i = 0; i < samples; ++i) {
+            nums += String.format("& %.2f ", Math.exp(logsum[i]));
+        }
+        out.write(nums + newline);
+        out.close();
     }
 
     /**
@@ -1306,7 +1420,7 @@ public abstract class HDPHMMLDA {
                 for (int i = 0;; ++i) {
                     classes[i] /= sum;
                     sumw += classes[i] = Math.pow(classes[i],
-                            temperatureReciprocal);
+                          temperatureReciprocal);
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
             }
@@ -1337,7 +1451,7 @@ public abstract class HDPHMMLDA {
                 for (int i = starti;; ++i) {
                     classes[i] /= sum;
                     sumw += classes[i] = Math.pow(classes[i],
-                            temperatureReciprocal);
+                          temperatureReciprocal);
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
             }
@@ -1389,9 +1503,49 @@ public abstract class HDPHMMLDA {
      * @param testDataDir
      * @throws IOException
      */
-    public abstract void tagTestText(String testDataDir) throws IOException;
+    public abstract void tagTestText() throws IOException;
 
     public void printAnnotatedTestText(String annotatedTestTextDir) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    /**
+     * Randomly set the model parameters for use in training
+     */
+    protected abstract void randomInitialize();
+
+    /**
+     * Training routine for the inner iterations
+     *
+     * @param itermax Maximum number of iterations to perform
+     * @param message Message to generate
+     */
+    protected abstract void trainInnerIter(int itermax, String message);
+
+    /**
+     * Method for setting probability of tokens per sample.
+     * 
+     * @param outiter Number of sample run
+     */
+    protected abstract void obtainSample(int outiter);
+
+    /**
+     * Sample model output. Take {@link #sample} samples ever {@link #lag}
+     * iterations.
+     */
+    public void sampleFromTrain() {
+        /**
+         * Sampling iterations
+         */
+        for (int outiter = 0; outiter < samples; ++outiter) {
+            System.err.print("\nTaking sample #" + outiter + ": ");
+            System.err.print("annealing temperature " + temperature);
+            trainInnerIter(lag, "Lag");
+            obtainSample(outiter);
+        }
+    }
+
+    public void sampleFromTest() {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 }

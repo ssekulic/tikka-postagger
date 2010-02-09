@@ -61,6 +61,9 @@ public class Tagger extends MainBase {
 
             boolean normalized = false;
 
+            /**
+             * Choose whether to load from previously saved model or train on new
+             */
             if (modelInputPath != null) {
                 SerializableModel serializableModel = new SerializableModel();
                 hhl = serializableModel.loadModel(modelInputPath);
@@ -77,36 +80,82 @@ public class Tagger extends MainBase {
                 hhl.normalize();
             }
 
+            /**
+             * Set the string of parameters.
+             */
+            hhl.setModelParameterStringBuilder();
+
+            /**
+             * Output scores for the training samples
+             */
+            if (modelOptions.getSampleScoreOutputFilename() != null) {
+                hhl.sampleFromTrain();
+                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                      "Scores from TRAINING data");
+            }
+
+            /**
+             * Output normalized parameters in tabular form to output if
+             * specified
+             */
             if (modelOptions.getTabularOutputFilename() != null) {
                 if (!normalized) {
                     hhl.normalize();
                 }
-                hhl.print(modelOptions.getOutput());
+                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
             }
 
+            /**
+             * Save model if specified
+             */
             String modelOutputPath = modelOptions.getModelOutputPath();
             if (modelOutputPath != null) {
                 SerializableModel serializableModel = new SerializableModel(hhl);
                 serializableModel.saveModel(modelOutputPath);
             }
 
+            /**
+             * Save training text which has been tagged and segmented to output if
+             * specified
+             */
             String annotatedTextDir = modelOptions.getAnnotatedTextDir();
             if (annotatedTextDir != null) {
                 hhl.printAnnotatedText(annotatedTextDir);
             }
 
+            /**
+             * Tag and segment test files if specified
+             */
             String testDataDir = modelOptions.getTestDataDir();
             if (testDataDir != null) {
-                hhl.tagTestText(testDataDir);
+                if (!normalized) {
+                    hhl.normalize();
+                }
+                hhl.tagTestText();
+
+                /**
+                 * Save test text which has been tagged and segmented to output
+                 * if specified
+                 */
+                String annotatedTestTextDir = modelOptions.getAnnotatedTestTextDir();
+                if (annotatedTestTextDir != null) {
+                    hhl.printAnnotatedTestText(annotatedTestTextDir);
+                }
             }
 
-            String annotatedTestTextDir = modelOptions.getAnnotatedTestTextDir();
-            if (annotatedTestTextDir != null) {
-                hhl.printAnnotatedTestText(annotatedTestTextDir);
+            /**
+             * Output scores for the test samples
+             */
+            if (modelOptions.getSampleScoreOutputFilename() != null) {
+                hhl.sampleFromTest();
+                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                      "Scores from TEST data");
             }
+
+
         } catch (ParseException exp) {
-            System.out.println("Unexpected exception parsing command line options:" +
-                    exp.getMessage());
+            System.out.println("Unexpected exception parsing command line options:"
+                  + exp.getMessage());
         } catch (IOException exp) {
             System.out.println("IOException:" + exp.getMessage());
             System.exit(0);
