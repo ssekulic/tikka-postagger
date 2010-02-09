@@ -62,21 +62,42 @@ public class Train extends MainBase {
             hhl.train();
             hhl.normalize();
 
-            hhl.print(modelOptions.getOutput());
+            /**
+             * Set the string of parameters.
+             */
+            hhl.setModelParameterStringBuilder();
+            if (modelOptions.getSampleScoreOutputFilename() != null) {
+                hhl.sampleFromTrain();
+                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                      "Scores from TRAINING data");
+            }
 
+            /**
+             * Save tabulated probabilities
+             */
+            if (modelOptions.getTabularOutputFilename() != null) {
+                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
+            }
+
+            /**
+             * Save model if specified
+             */
             String modelOutputPath = modelOptions.getModelOutputPath();
             if (modelOutputPath != null) {
                 SerializableModel serializableModel = new SerializableModel(hhl);
                 serializableModel.saveModel(modelOutputPath);
             }
 
+            /**
+             * Tag and segment test files if specified
+             */
             String annotatedTextDir = modelOptions.getAnnotatedTextDir();
             if (annotatedTextDir != null) {
                 hhl.printAnnotatedText(annotatedTextDir);
             }
         } catch (ParseException exp) {
-            System.out.println("Unexpected exception parsing command line options:" +
-                    exp.getMessage());
+            System.out.println("Unexpected exception parsing command line options:"
+                  + exp.getMessage());
         } catch (IOException exp) {
             System.out.println("IOException:" + exp.getMessage());
             System.exit(0);

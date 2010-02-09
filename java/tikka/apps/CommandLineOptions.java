@@ -90,16 +90,23 @@ public class CommandLineOptions {
      * Specifier of training data format.
      */
     protected DataFormatEnum.DataFormat dataFormat =
-            DataFormatEnum.DataFormat.CONLL2K;
+          DataFormatEnum.DataFormat.CONLL2K;
     /**
      * Name of file to generate tabulated output to
      */
     protected String tabularOutputFilename = null;
     /**
-     * Output buffer to write normalized data to.
+     * Name of file to generate tabulated output to
      */
-    protected BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
-            System.out));
+    protected String sampleScoreOutputFilename = null;
+    /**
+     * Output buffer to write normalized, tabulated data to.
+     */
+    protected BufferedWriter tabulatedOutput;
+    /**
+     * Output buffer to write normalized, sample tagging data to.
+     */
+    protected BufferedWriter sampleScoreOutput;
     /**
      * Temperature at which to start annealing process
      */
@@ -115,8 +122,8 @@ public class CommandLineOptions {
     /**
      * Hyperparameters for (hierarchical) dirichlet processes
      */
-    protected double muStemBase = 300, muAffixBase = 300, muStem = 30,
-            muAffix = 30, betaStemBase = 300, betaStem = 30;
+    protected double muStem = 30, muStemBase = 300, muAffixBase = 100,
+          muAffix = 10, betaStemBase = 300, betaStem = 30;
     /**
      * Probability of null morph or ,equivalently, the probability of a
      * morpheme boundary
@@ -169,7 +176,7 @@ public class CommandLineOptions {
     /**
      * Hyperparameter for word emission priors
      */
-    protected double gamma = 0.01;
+    protected double gamma = 0.0001;
     /**
      * Number of states in HMM.
      */
@@ -179,6 +186,14 @@ public class CommandLineOptions {
      * that the topic states are a subset of the full states.
      */
     protected int topicSubStates = 1;
+    /**
+     * Number of samples to take
+     */
+    protected int samples = 100;
+    /**
+     * Number of iterations between samples
+     */
+    protected int lag = 10;
 
     /**
      * 
@@ -206,7 +221,7 @@ public class CommandLineOptions {
                         dataFormat = DataFormatEnum.DataFormat.RAW;
                     } else {
                         System.err.println(
-                                "\"" + value + "\" is an unknown data format option.");
+                              "\"" + value + "\" is an unknown data format option.");
                         System.exit(1);
                     }
                     break;
@@ -233,6 +248,14 @@ public class CommandLineOptions {
                 case 'j':
                     annotatedTestTextDir = value;
                     break;
+                case 'k':
+                    opt = option.getOpt();
+                    if (opt.equals("ks")) {
+                        samples = Integer.parseInt(value);
+                    } else if (opt.equals("kl")) {
+                        lag = Integer.parseInt(value);
+                    }
+                    break;
                 case 'l':
                     modelInputPath = value;
                     break;
@@ -242,16 +265,22 @@ public class CommandLineOptions {
                 case 'n':
                     if (value.endsWith("" + File.separator)) {
                         annotatedTextDir =
-                                value.substring(0, value.length() - 1);
+                              value.substring(0, value.length() - 1);
                     } else {
                         annotatedTextDir = value;
                     }
                     break;
                 case 'o':
-                    out.close();
-                    tabularOutputFilename = value;
-                    out = new BufferedWriter(new OutputStreamWriter(
-                            new FileOutputStream(tabularOutputFilename)));
+                    opt = option.getOpt();
+                    if (opt.equals("ot")) {
+                        tabularOutputFilename = value;
+                        tabulatedOutput = new BufferedWriter(new OutputStreamWriter(
+                              new FileOutputStream(tabularOutputFilename)));
+                    } else if (opt.equals("os")) {
+                        sampleScoreOutputFilename = value;
+                        sampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
+                              new FileOutputStream(sampleScoreOutputFilename)));
+                    }
                     break;
                 case 'p':
                     opt = option.getOpt();
@@ -331,8 +360,8 @@ public class CommandLineOptions {
         return tabularOutputFilename;
     }
 
-    public BufferedWriter getOutput() {
-        return out;
+    public BufferedWriter getTabulatedOutput() {
+        return tabulatedOutput;
     }
 
     public int getOutputPerClass() {
@@ -429,5 +458,33 @@ public class CommandLineOptions {
 
     public String getAnnotatedTestTextDir() {
         return annotatedTestTextDir;
+    }
+
+    /**
+     * @return the number of samples take
+     */
+    public int getSamples() {
+        return samples;
+    }
+
+    /**
+     * @return the number of iterations per sample
+     */
+    public int getLag() {
+        return lag;
+    }
+
+    /**
+     * @return the sampleScoreOutput
+     */
+    public BufferedWriter getSampleScoreOutput() {
+        return sampleScoreOutput;
+    }
+
+    /**
+     * @return the sampleScoreOutputFilename
+     */
+    public String getSampleScoreOutputFilename() {
+        return sampleScoreOutputFilename;
     }
 }

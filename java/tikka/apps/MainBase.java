@@ -41,18 +41,26 @@ public class MainBase {
                 "full path to directory containing training documents");
         options.addOption("e", "experiment-model", true,
                 "model to use [m1,m2; default=m1]");
+        options.addOption("h", "help", false, "print help");
         options.addOption("i", "iterations", true,
                 "number of training iterations (default=100)");
         options.addOption("j", "annotated-test-text", true,
                 "full path to save annotated test set text to");
+        options.addOption("ks", "samples", true,
+                "number of samples to take (default=100)");
+        options.addOption("kl", "lag", true,
+                "number of iterations between samples (default=100)");
         options.addOption("l", "model-input-path", true,
                 "full path of model to be loaded");
         options.addOption("m", "model-output-path", true,
                 "full path to save model to");
         options.addOption("n", "annotated-text", true,
                 "full path to save annotated text to");
-        options.addOption("o", "output", true,
-                "path of output (default=stdout)");
+        options.addOption("os", "output-sample-score", true,
+                "path of output for bayes factors and perplexity measures for " +
+                "samples taken for the training and/or training data");
+        options.addOption("ot", "output-tabulated-probabilities", true,
+                "path of tabulated probability output");
         options.addOption("pi", "initial-temperature", true,
                 "initial temperature for annealing regime (default=0.1)");
         options.addOption("pr", "target-temperature", true,
@@ -68,7 +76,6 @@ public class MainBase {
                 "(default=1)");
         options.addOption("w", "words-class", true,
                 "number of words to print per class (default=50)");
-        options.addOption("h", "help", false, "print help");
         options.addOption("xmustembase", "mu-stem-base", true, "(default=3000)");
         options.addOption("xmustem", "mu-stem", true, "(default=300)");
         options.addOption("xbetastembase", "beta-stem-base", true,
