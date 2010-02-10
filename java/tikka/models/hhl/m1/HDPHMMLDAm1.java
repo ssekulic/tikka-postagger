@@ -769,6 +769,10 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
          * Essentially rewriting all the global tracking variables
          */
         int testWordN = wordVectorT.size();
+        /**
+         * Need to provide global access to wordN in later pretty printing stage
+         */
+        wordN = testWordN;
 
         wordVector = new int[testWordN];
         documentVector = new int[testWordN];

@@ -29,10 +29,11 @@ public class BayesFactorEval extends SampleEval {
      * the harmonic mean.
      * 
      * @param probs Array of log probabilities
+     * @param tokens Dummy variable
      * @return the harmonic mean
      */
     @Override
-    public double average(double[] probs) {
+    public double average(double[] probs, int tokens) {
         double ave = 0;
         for (int i = 0; i < probs.length; ++i) {
             ave += Math.exp(0 - probs[i]);
