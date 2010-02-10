@@ -1334,7 +1334,8 @@ public abstract class HDPHMMLDA {
      * @param outputPath Destination of output
      * @throws IOException
      */
-    public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval) throws IOException {
+    public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval)
+          throws IOException {
         printSampleScoreData(out, sampleEval, "");
     }
 
@@ -1346,14 +1347,18 @@ public abstract class HDPHMMLDA {
      * @param header Header of output indicating what kind of output it is
      * @throws IOException
      */
-    public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval, String header) throws
+    public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval,
+          String header) throws
           IOException {
         double[] logsum = new double[samples];
         for (int i = 0; i < samples; ++i) {
             logsum[i] = 0;
         }
         for (int i = 0; i < samples; ++i) {
-            logsum[i] += Math.log(SampleProbs[i]);
+            int sampleoff = i * wordN;
+            for (int j = 0; j < wordN; ++j) {
+                logsum[i] += Math.log(SampleProbs[sampleoff + i]);
+            }
         }
 
         out.write(String.format("%% ***** %s *****", header + newline));
@@ -1371,7 +1376,7 @@ public abstract class HDPHMMLDA {
         out.write("%% For use in latex" + newline);
         out.write("%% probabilities of each sample in row vector format" + newline);
         nums = "";
-        double average = sampleEval.average(logsum);
+        double average = sampleEval.average(logsum, wordN);
         nums = String.format("%.2f ", average);
         for (int i = 0; i < samples; ++i) {
             nums += String.format("& %.2f ", Math.exp(logsum[i]));

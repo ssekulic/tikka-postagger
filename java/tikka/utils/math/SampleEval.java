@@ -26,5 +26,5 @@ package tikka.utils.math;
  */
 public abstract class SampleEval {
 
-    public abstract double average(double[] probs);
+    public abstract double average(double[] probs, int tokens);
 }
