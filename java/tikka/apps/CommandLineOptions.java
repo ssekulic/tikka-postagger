@@ -80,6 +80,10 @@ public class CommandLineOptions {
      */
     protected int numIterations = 100;
     /**
+     * Number of iterations for test set burnin
+     */
+    protected int testSetBurninIterations = 10;
+    /**
      * Number to seed random number generator. This is set to -1 so it may be
      * checked during the initialization stages. If the value is -1 from the
      * calling function, it means the randomSeed must be set to 0. Otherwise,
@@ -243,7 +247,12 @@ public class CommandLineOptions {
                     }
                     break;
                 case 'i':
-                    numIterations = Integer.parseInt(value);
+                    opt = option.getOpt();
+                    if (opt.equals("itr")) {
+                        numIterations = Integer.parseInt(value);
+                    } else if (opt.equals("ite")) {
+                        testSetBurninIterations = Integer.parseInt(value);
+                    }
                     break;
                 case 'j':
                     annotatedTestTextDir = value;
@@ -486,5 +495,9 @@ public class CommandLineOptions {
      */
     public String getSampleScoreOutputFilename() {
         return sampleScoreOutputFilename;
+    }
+
+    public int getTestSetBurninIterations() {
+        return testSetBurninIterations;
     }
 }

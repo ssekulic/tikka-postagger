@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import tikka.utils.math.SampleEval;
 
 /**
  * This is a hybrid between the HDPHMMLDA model and the HMMLDA model. It assumes
@@ -59,6 +60,14 @@ import java.util.List;
  */
 public abstract class HDPHMMLDA {
 
+    /**
+     * Machine epsilon for comparing equality in floating point numbers.
+     */
+    protected static final double EPSILON = 1e-12;
+    /**
+     * Maximum length of certain arrays (e.g. word splitting)
+     */
+    protected static final int MAXLEN = 100;
     /**
      * Random number generator. Preferred over Java native Rand.
      */
@@ -162,6 +171,10 @@ public abstract class HDPHMMLDA {
      */
     protected int[] wordVector;
     /**
+     * The temperature setting for approximating MAP estimation.
+     */
+    protected static final double MAPTEMP = 0.1;
+    /**
      * Temperature at which to start annealing process
      */
     protected double initialTemperature;
@@ -195,6 +208,10 @@ public abstract class HDPHMMLDA {
      * </pre>
      */
     protected int outerIterations;
+    /**
+     * Number of iterations for test set burnin
+     */
+    protected int testSetBurninIterations;
     /**
      * Reader for each document
      */
@@ -341,10 +358,6 @@ public abstract class HDPHMMLDA {
      * since state 0 is always the sentence boundary.
      */
     protected int topicSubStates;
-    /**
-     * Machine epsilon for comparing equality in floating point numbers.
-     */
-    protected final double EPSILON = 1e-12;
     /**
      * OS neutral newline character
      */
@@ -582,6 +595,7 @@ public abstract class HDPHMMLDA {
               / temperatureDecrement) + 1;
         samples = options.getSamples();
         lag = options.getLag();
+        testSetBurninIterations = options.getTestSetBurninIterations();
 
         /**
          * Setting hyperparameters
@@ -790,7 +804,7 @@ public abstract class HDPHMMLDA {
      * Initializes from a pretrained, loaded model. Use this if the model has
      * been loaded from a pretrained model.
      */
-    public void initializeFromModel(CommandLineOptions options) {
+    public void initializeFromLoadedModel(CommandLineOptions options) {
         /**
          * Initialize random number generator
          */
@@ -912,7 +926,7 @@ public abstract class HDPHMMLDA {
      * Train the model.
      */
     public void train() {
-        randomInitialize();
+        randomInitializeParameters();
 
         /**
          * Training iterations
@@ -1320,8 +1334,8 @@ public abstract class HDPHMMLDA {
      * @param outputPath Destination of output
      * @throws IOException
      */
-    public void printSampleScoreData(BufferedWriter out) throws IOException {
-        printSampleScoreData(out, "");
+    public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval) throws IOException {
+        printSampleScoreData(out, sampleEval, "");
     }
 
     /**
@@ -1332,7 +1346,7 @@ public abstract class HDPHMMLDA {
      * @param header Header of output indicating what kind of output it is
      * @throws IOException
      */
-    public void printSampleScoreData(BufferedWriter out, String header) throws
+    public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval, String header) throws
           IOException {
         double[] logsum = new double[samples];
         for (int i = 0; i < samples; ++i) {
@@ -1357,12 +1371,8 @@ public abstract class HDPHMMLDA {
         out.write("%% For use in latex" + newline);
         out.write("%% probabilities of each sample in row vector format" + newline);
         nums = "";
-        double bayesfactor = 0, sum = 0;
-        for (int i = 0; i < samples; ++i) {
-            sum += logsum[i];
-        }
-        bayesfactor = Math.exp(sum / samples);
-        nums = String.format("%.2f ", bayesfactor);
+        double average = sampleEval.average(logsum);
+        nums = String.format("%.2f ", average);
         for (int i = 0; i < samples; ++i) {
             nums += String.format("& %.2f ", Math.exp(logsum[i]));
         }
@@ -1408,26 +1418,7 @@ public abstract class HDPHMMLDA {
      * @return  Sum of annealed probabilities. Is not 1.
      */
     protected double annealProbs(double[] classes) {
-        double sum = 0, sumw = 0;
-        try {
-            for (int i = 0;; ++i) {
-                sum += classes[i];
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
-        if (temperatureReciprocal != 1) {
-            try {
-                for (int i = 0;; ++i) {
-                    classes[i] /= sum;
-                    sumw += classes[i] = Math.pow(classes[i],
-                          temperatureReciprocal);
-                }
-            } catch (ArrayIndexOutOfBoundsException e) {
-            }
-        } else {
-            sumw = sum;
-        }
-        return sumw;
+        return annealProbs(0, classes);
     }
 
     /**
@@ -1458,7 +1449,16 @@ public abstract class HDPHMMLDA {
         } else {
             sumw = sum;
         }
-        return sumw;
+        try {
+            for (int i = starti;; ++i) {
+                classes[i] /= sumw;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+        /**
+         * For now, we set everything so that it sums to one.
+         */
+        return 1;
     }
 
     /**
@@ -1481,7 +1481,13 @@ public abstract class HDPHMMLDA {
         } else {
             sumw = sum;
         }
-        return sumw;
+        for (int i = 0; i < len; ++i) {
+            classes[i] /= sumw;
+        }
+        /**
+         * For now, we set everything so that it sums to one.
+         */
+        return 1;
     }
 
     /**
@@ -1512,7 +1518,7 @@ public abstract class HDPHMMLDA {
     /**
      * Randomly set the model parameters for use in training
      */
-    protected abstract void randomInitialize();
+    protected abstract void randomInitializeParameters();
 
     /**
      * Training routine for the inner iterations
