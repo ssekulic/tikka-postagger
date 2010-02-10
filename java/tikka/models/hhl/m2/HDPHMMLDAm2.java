@@ -115,8 +115,8 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
      * been loaded from a pretrained model.
      */
     @Override
-    public void initializeFromModel(CommandLineOptions options) {
-        super.initializeFromModel(options);
+    public void initializeFromLoadedModel(CommandLineOptions options) {
+        super.initializeFromLoadedModel(options);
 
         initalizeDistributions();
 
@@ -199,7 +199,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
         int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
         String word = "", stem = "", affix = "";
 
-        double[] splitProbs = new double[100];
+        double[] splitProbs = new double[MAXLEN];
 
         /**
          * Initialize by assigning random topic indices to words
@@ -762,7 +762,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
         int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
         String word = "", stem = "", affix = "";
 
-        double[] splitProbs = new double[100];
+        double[] splitProbs = new double[MAXLEN];
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
@@ -989,7 +989,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
     }
 
     @Override
-    protected void randomInitialize() {
+    protected void randomInitializeParameters() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

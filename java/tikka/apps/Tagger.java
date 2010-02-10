@@ -24,6 +24,9 @@ import java.io.IOException;
 
 import org.apache.commons.cli.*;
 import tikka.models.hhl.SerializableModel;
+import tikka.utils.math.BayesFactorEval;
+import tikka.utils.math.PerplexityEval;
+import tikka.utils.math.SampleEval;
 
 /**
  * This is a module for tagging test data sets. Parameters may be trained from
@@ -67,7 +70,7 @@ public class Tagger extends MainBase {
             if (modelInputPath != null) {
                 SerializableModel serializableModel = new SerializableModel();
                 hhl = serializableModel.loadModel(modelInputPath);
-                hhl.initializeFromModel(modelOptions);
+                hhl.initializeFromLoadedModel(modelOptions);
             } else {
                 if (experimentModel.equals("m1")) {
                     hhl = new HDPHMMLDAm1(modelOptions);
@@ -90,8 +93,9 @@ public class Tagger extends MainBase {
              */
             if (modelOptions.getSampleScoreOutputFilename() != null) {
                 hhl.sampleFromTrain();
+                sampleEval = new BayesFactorEval();
                 hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
-                      "Scores from TRAINING data");
+                      sampleEval, "Scores from TRAINING data");
             }
 
             /**
@@ -148,8 +152,9 @@ public class Tagger extends MainBase {
              */
             if (modelOptions.getSampleScoreOutputFilename() != null) {
                 hhl.sampleFromTest();
+                sampleEval = new PerplexityEval();
                 hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
-                      "Scores from TEST data");
+                      sampleEval, "Scores from TEST data");
             }
 
 

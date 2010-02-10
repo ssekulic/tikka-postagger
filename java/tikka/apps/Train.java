@@ -24,6 +24,7 @@ import java.io.IOException;
 
 import org.apache.commons.cli.*;
 import tikka.models.hhl.SerializableModel;
+import tikka.utils.math.BayesFactorEval;
 
 /**
  * Command line module for learning parameters for HDPHMMLDA from training text.
@@ -58,24 +59,19 @@ public class Train extends MainBase {
                 hhl = new HDPHMMLDAm1(modelOptions);
             }
 
+            System.err.println("Randomly initializing values!");
             hhl.initialize();
+            System.err.println("Beginning training!");
             hhl.train();
+            System.err.println("Normalizing parameters!");
             hhl.normalize();
-
-            /**
-             * Set the string of parameters.
-             */
-            hhl.setModelParameterStringBuilder();
-            if (modelOptions.getSampleScoreOutputFilename() != null) {
-                hhl.sampleFromTrain();
-                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
-                      "Scores from TRAINING data");
-            }
 
             /**
              * Save tabulated probabilities
              */
             if (modelOptions.getTabularOutputFilename() != null) {
+                System.err.println("Printing tabulated output to :"
+                      + modelOptions.getTabularOutputFilename());
                 hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
             }
 
@@ -84,15 +80,36 @@ public class Train extends MainBase {
              */
             String modelOutputPath = modelOptions.getModelOutputPath();
             if (modelOutputPath != null) {
+                System.err.println("Saving model to :"
+                      + modelOutputPath);
                 SerializableModel serializableModel = new SerializableModel(hhl);
                 serializableModel.saveModel(modelOutputPath);
             }
 
             /**
-             * Tag and segment test files if specified
+             * Set the string of parameters.
+             */
+            hhl.setModelParameterStringBuilder();
+            /**
+             * Calculate sample score, aka Bayes factor
+             */
+            if (modelOptions.getSampleScoreOutputFilename() != null) {
+                System.err.println("Beginning sampling");
+                hhl.sampleFromTrain();
+                System.err.println("Saving sample scores to :" +
+                      modelOptions.getSampleScoreOutputFilename());
+                sampleEval = new BayesFactorEval();
+                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                      sampleEval, "Scores from TRAINING data");
+            }
+
+            /**
+             * Tag and segment training files from last iteration if specified
              */
             String annotatedTextDir = modelOptions.getAnnotatedTextDir();
             if (annotatedTextDir != null) {
+                System.err.println("Printing annotated text to :" +
+                      annotatedTextDir);
                 hhl.printAnnotatedText(annotatedTextDir);
             }
         } catch (ParseException exp) {
