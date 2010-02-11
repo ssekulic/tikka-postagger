@@ -23,10 +23,18 @@ import tikka.exceptions.EmptyTwoDimLexiconException;
 import tikka.structures.lexicons.Lexicon;
 
 /**
- *
+ * Distribution for affixes conditioned on stems and affixes. The base distribution
+ * for the affixes is not the usual base distribution but another conditional
+ * DP.
+ * 
  * @author tsmoon
  */
 public class AffixStemStateHDP extends AffixStemStateDP {
+
+    /**
+     * Distribution for maintaining prob of affix given state.
+     */
+    protected AffixStateDP affixStateDP;
 
     /**
      *
@@ -35,9 +43,10 @@ public class AffixStemStateHDP extends AffixStemStateDP {
      * @param hyper
      */
     public AffixStemStateHDP(
-            HierarchicalDirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper, int states) {
-        super(baseDistribution, lexicon, hyper, states);
+          HierarchicalDirichletBaseDistribution baseDistribution,
+          Lexicon lexicon, double hyper, int states) {
+        super(null, null, hyper, states);
+        affixStateDP = new AffixStateDP(baseDistribution, lexicon, hyper);
     }
 
     /**

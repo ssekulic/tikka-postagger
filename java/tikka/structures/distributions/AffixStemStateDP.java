@@ -79,67 +79,68 @@ public class AffixStemStateDP extends FourDimDirichletProcess {
      */
     public void normalize(int topicS, int stateS, int outputPerTopic,
             ThreeDimDirichletProcess affixStateDP, Lexicon affixLexicon) {
-        int maxid = 0;
-        for (int stemid : lexicon.keySet()) {
-            if (stemid > maxid) {
-                maxid = stemid;
-            }
-        }
-        maxid++;
-        double[] stemProbs = new double[maxid];
-
-        TopAffixesPerState = new StringDoublePair[stateS][];
-        for (int i = topicS; i < stateS; ++i) {
-            TopAffixesPerState[i] = new StringDoublePair[outputPerTopic];
-        }
-
-        for (int i = topicS; i < stateS; ++i) {
-            try {
-                for (int j = 0;; ++j) {
-                    stemProbs[j] = 0;
-                }
-            } catch (ArrayIndexOutOfBoundsException e) {
-            }
-            ArrayList<DoubleStringPair> topStems =
-                    new ArrayList<DoubleStringPair>();
-            ThreeDimProbLexicon stemAffixProbLexicon = new ThreeDimProbLexicon();
-            clsAffixStemProbs.put(i, stemAffixProbLexicon);
-
-            for (int affixid : clsAffixStemCounts.get(i).keySet()) {
-                double affixStateProb = affixStateDP.getConstProb(i, affixid);
-                TwoDimLexicon stemCounts =
-                        clsAffixStemCounts.get(i).get(affixid);
-                TwoDimProbLexicon stemProbLexicon = new TwoDimProbLexicon();
-                stemAffixProbLexicon.put(affixid, stemProbLexicon);
-
-                for (int stemid : stemCounts.keySet()) {
-                    double p = affixStateProb *
-                            prob(i, affixid, stemid);
-                    stemProbs[stemid] += p;
-                    stemProbLexicon.put(stemid, p);
-                }
-            }
-            try {
-                for (int j = 0;; ++j) {
-                    double d = stemProbs[j];
-                    if (d > 0) {
-                        topStems.add(new DoubleStringPair(d,
-                                lexicon.getString(j)));
-                    }
-                }
-            } catch (ArrayIndexOutOfBoundsException e) {
-            }
-            Collections.sort(topStems);
-            for (int j = 0; j < outputPerTopic; ++j) {
-                try {
-                    TopAffixesPerState[i][j] =
-                            new StringDoublePair(topStems.get(j).stringValue,
-                            topStems.get(j).doubleValue);
-                } catch (IndexOutOfBoundsException e) {
-//                    e.printStackTrace();
-                }
-            }
-        }
+        throw new UnsupportedOperationException("Don't forget to implement this!");
+//        int maxid = 0;
+//        for (int stemid : lexicon.keySet()) {
+//            if (stemid > maxid) {
+//                maxid = stemid;
+//            }
+//        }
+//        maxid++;
+//        double[] stemProbs = new double[maxid];
+//
+//        TopAffixesPerState = new StringDoublePair[stateS][];
+//        for (int i = topicS; i < stateS; ++i) {
+//            TopAffixesPerState[i] = new StringDoublePair[outputPerTopic];
+//        }
+//
+//        for (int i = topicS; i < stateS; ++i) {
+//            try {
+//                for (int j = 0;; ++j) {
+//                    stemProbs[j] = 0;
+//                }
+//            } catch (ArrayIndexOutOfBoundsException e) {
+//            }
+//            ArrayList<DoubleStringPair> topStems =
+//                    new ArrayList<DoubleStringPair>();
+//            ThreeDimProbLexicon stemAffixProbLexicon = new ThreeDimProbLexicon();
+//            clsAffixStemProbs.put(i, stemAffixProbLexicon);
+//
+//            for (int affixid : clsAffixStemCounts.get(i).keySet()) {
+//                double affixStateProb = affixStateDP.getConstProb(i, affixid);
+//                TwoDimLexicon stemCounts =
+//                        clsAffixStemCounts.get(i).get(affixid);
+//                TwoDimProbLexicon stemProbLexicon = new TwoDimProbLexicon();
+//                stemAffixProbLexicon.put(affixid, stemProbLexicon);
+//
+//                for (int stemid : stemCounts.keySet()) {
+//                    double p = affixStateProb *
+//                            prob(i, affixid, stemid);
+//                    stemProbs[stemid] += p;
+//                    stemProbLexicon.put(stemid, p);
+//                }
+//            }
+//            try {
+//                for (int j = 0;; ++j) {
+//                    double d = stemProbs[j];
+//                    if (d > 0) {
+//                        topStems.add(new DoubleStringPair(d,
+//                                lexicon.getString(j)));
+//                    }
+//                }
+//            } catch (ArrayIndexOutOfBoundsException e) {
+//            }
+//            Collections.sort(topStems);
+//            for (int j = 0; j < outputPerTopic; ++j) {
+//                try {
+//                    TopAffixesPerState[i][j] =
+//                            new StringDoublePair(topStems.get(j).stringValue,
+//                            topStems.get(j).doubleValue);
+//                } catch (IndexOutOfBoundsException e) {
+////                    e.printStackTrace();
+//                }
+//            }
+//        }
     }
 
     /**
