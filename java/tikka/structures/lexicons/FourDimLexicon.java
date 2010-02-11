@@ -31,6 +31,18 @@ import java.util.HashMap;
 public class FourDimLexicon extends HashMap<Integer, ThreeDimLexicon> {
 
     /**
+     * Create a sublexicon for every class
+     * 
+     * @param classes Number of classes to hand over
+     */
+    public FourDimLexicon(int classes) {
+        for (int cls = 0; cls < classes; ++cls) {
+            ThreeDimLexicon lex = new ThreeDimLexicon();
+            put(cls, lex);
+        }
+    }
+
+    /**
      * Increment counts of a stem index given an affix index and a class index.
      * If the class has not been observed previously, create new subtable
      * for the class. Then increment.
@@ -61,7 +73,7 @@ public class FourDimLexicon extends HashMap<Integer, ThreeDimLexicon> {
      * @throws EmptyTwoDimLexiconException
      */
     public int dec(int cls, int affix, int stem) throws
-            EmptyCountException, EmptyTwoDimLexiconException {
+          EmptyCountException, EmptyTwoDimLexiconException {
         return get(cls).dec(affix, stem);
     }
 

@@ -36,8 +36,8 @@ public class AffixStemStateHDP extends AffixStemStateDP {
      */
     public AffixStemStateHDP(
             HierarchicalDirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper) {
-        super(baseDistribution, lexicon, hyper);
+            Lexicon lexicon, double hyper, int states) {
+        super(baseDistribution, lexicon, hyper, states);
     }
 
     /**

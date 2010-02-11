@@ -36,8 +36,8 @@ public class StemAffixTopicHDP extends StemAffixTopicDP {
      */
     public StemAffixTopicHDP(
             HierarchicalDirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper) {
-        super(baseDistribution, lexicon, hyper);
+            Lexicon lexicon, double hyper, int topics) {
+        super(baseDistribution, lexicon, hyper, topics);
     }
 
     /**

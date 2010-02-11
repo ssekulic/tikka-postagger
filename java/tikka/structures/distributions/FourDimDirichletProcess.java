@@ -47,11 +47,11 @@ public class FourDimDirichletProcess extends DirichletProcess {
      * @param hyper
      */
     public FourDimDirichletProcess(DirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper) {
+            Lexicon lexicon, double hyper, int classes) {
         this.lexicon = lexicon;
         this.hyper = hyper;
         this.baseDistribution = baseDistribution;
-        clsAffixStemCounts = new FourDimLexicon();
+        clsAffixStemCounts = new FourDimLexicon(classes);
         clsAffixStemProbs = new FourDimProbLexicon();
         stringProbs = baseDistribution.getStringProbs();
     }

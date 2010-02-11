@@ -85,9 +85,9 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
               stemLexicon, stemBoundaryProb, wgamma);
 
         stemAffixTopicHDP = new StemAffixTopicHDP(
-              stemTopicHierarchicalBaseDistribution, stemLexicon, wbeta);
+              stemTopicHierarchicalBaseDistribution, stemLexicon, wbeta, topicK);
         stemAffixStateDP = new StemAffixStateDP(
-              stemBaseDistribution, stemLexicon, wgamma);
+              stemBaseDistribution, stemLexicon, wgamma, stateS);
         affixStateDP = new AffixStateDP(affixBaseDistribution,
               affixLexicon, muAffix);
     }
