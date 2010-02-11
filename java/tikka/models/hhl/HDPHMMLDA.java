@@ -957,6 +957,11 @@ public abstract class HDPHMMLDA {
             temperature -= temperatureDecrement;
             temperatureReciprocal = 1 / temperature;
         }
+        /**
+         * Increment it so sampling resumes at same temperature if it is loaded
+         * from a model
+         */
+        temperature += temperatureDecrement;
     }
 
     /**
@@ -1419,7 +1424,6 @@ public abstract class HDPHMMLDA {
             nums += String.format("& %.2f ", logsum[i]);
         }
         out.write(nums + newline);
-        out.close();
     }
 
     /**
@@ -1832,7 +1836,7 @@ public abstract class HDPHMMLDA {
              */
             int samplenum = iter - testSetBurninIterations;
             if (samplenum > -1) {
-
+                System.err.print("\nObtain final test sample");
                 System.err.print("\nSample " + samplenum + ":");
                 stabilizeTemperature();
                 int sampleoff = samplenum * wordN;

@@ -165,6 +165,7 @@ public class Tagger extends MainBase {
                     sampleEval = new PerplexityEval();
                     hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
                           sampleEval, "Scores from TEST data");
+                    modelOptions.getSampleScoreOutput().close();
                 }
 
                 /**

@@ -103,6 +103,7 @@ public class Train extends MainBase {
                 sampleEval = new BayesFactorEval();
                 hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
                       sampleEval, "Scores from TRAINING data");
+                modelOptions.getSampleScoreOutput().close();
             }
 
             /**
