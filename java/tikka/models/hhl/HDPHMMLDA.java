@@ -129,12 +129,12 @@ public abstract class HDPHMMLDA {
      * Counts of topics.
      */
     protected int[] topicCounts;
-//    /**
-//     * Count of documents. Only needed in sampling stages. Nonetheless, should
-//     * be populated early on. Also, it includes a normalization term for the
-//     * hyperparameter and is thus not a true count but a normalized count
-//     */
-//    protected double[] documentCounts;
+    /**
+     * Count of documents. Only needed in sampling stages. Nonetheless, should
+     * be populated early on. Also, it includes a normalization term for the
+     * hyperparameter and is thus not a true count but a normalized count
+     */
+    protected double[] DocumentCounts;
     /**
      * Posterior probabilities for topics.
      */
@@ -151,13 +151,21 @@ public abstract class HDPHMMLDA {
      */
     protected int[] TopicByWord;
     /**
-     * Hashtable from word to index.
+     * Hashtable from word to index for training data.
      */
-    protected HashMap<String, Integer> wordIdx;
+    protected HashMap<String, Integer> trainWordIdx;
     /**
-     * Hashtable from index to word
+     * Hashtable from index to word for training data.
      */
-    protected HashMap<Integer, String> idxToWord;
+    protected HashMap<Integer, String> trainIdxToWord;
+    /**
+     * Hashtable from word to index for test data.
+     */
+    protected HashMap<String, Integer> testWordIdx;
+    /**
+     * Hashtable from index to word for test data.
+     */
+    protected HashMap<Integer, String> testIdxToWord;
     /**
      * Array of document indexes. Of length {@link #wordN}.
      */
@@ -173,7 +181,7 @@ public abstract class HDPHMMLDA {
     /**
      * The temperature setting for approximating MAP estimation.
      */
-    protected static final double MAPTEMP = 0.1;
+    protected static final double MAPTEMP = 0.01;
     /**
      * Temperature at which to start annealing process
      */
@@ -219,7 +227,7 @@ public abstract class HDPHMMLDA {
     /**
      * Reader for walking through training directories
      */
-    protected DirReader dirReader;
+    protected DirReader trainDirReader;
     /**
      * Reader for walking through test directories
      */
@@ -511,11 +519,11 @@ public abstract class HDPHMMLDA {
     /**
      * Path of training data.
      */
-    protected String rootDir;
+    protected String trainDataDir;
     /**
      * Path of test data.
      */
-    protected String testRootDir = null;
+    protected String testDataDir = null;
     /**
      * Type of model that is being run.
      */
@@ -543,26 +551,53 @@ public abstract class HDPHMMLDA {
      * @param options   Options from the command line.
      */
     public HDPHMMLDA(CommandLineOptions options) throws IOException {
+        initializeFromOptions(options);
+    }
+
+//    /**
+//     * Constructor used when model is loaded from a previous training session.
+//     */
+//    public HDPHMMLDA() {
+//    }
+    /**
+     * Initialize basic parameters from the command line. Depending on need
+     * many parameters will be overwritten in subsequent initialization stages.
+     *
+     * @param options Command line options
+     * @throws IOException
+     */
+    protected void initializeFromOptions(CommandLineOptions options) throws
+          IOException {
         /**
          * Setting input data
          */
         dataFormat = options.getDataFormat();
-        rootDir = options.getDataDir();
-        dirReader = new DirReader(rootDir, dataFormat);
-        testRootDir = options.getTestDataDir();
-        if (testRootDir != null) {
-            testDirReader = new DirReader(testRootDir, dataFormat);
+        trainDataDir = options.getTrainDataDir();
+        if (trainDataDir != null) {
+            trainDirReader = new DirReader(trainDataDir, dataFormat);
         } else {
-            testRootDir = "";
+            trainDataDir = "";
+        }
+
+        testDataDir = options.getTestDataDir();
+        if (testDataDir != null) {
+            testDirReader = new DirReader(testDataDir, dataFormat);
+        } else {
+            testDataDir = "";
         }
 
         /**
          * Setting lexicons
          */
-        wordIdx = new HashMap<String, Integer>();
-        idxToWord = new HashMap<Integer, String>();
-        wordIdx.put(EOSw, EOSi);
-        idxToWord.put(EOSi, EOSw);
+        trainWordIdx = new HashMap<String, Integer>();
+        trainIdxToWord = new HashMap<Integer, String>();
+        trainWordIdx.put(EOSw, EOSi);
+        trainIdxToWord.put(EOSi, EOSw);
+
+        testWordIdx = new HashMap<String, Integer>();
+        testIdxToWord = new HashMap<Integer, String>();
+        testWordIdx.put(EOSw, EOSi);
+        testIdxToWord.put(EOSi, EOSw);
 
         StemToIdx = new HashMap<String, Integer>();
         AffixToIdx = new HashMap<String, Integer>();
@@ -634,49 +669,26 @@ public abstract class HDPHMMLDA {
     }
 
     /**
-     * Constructor used when model is loaded from a previous training session.
+     * Initialize data structures needed for inference from training data.
      */
-    public HDPHMMLDA() {
+    public void initializeFromTrainingData() {
+        initializeTokenArrays(trainDirReader, trainWordIdx, trainIdxToWord);
+        initializeCountArrays();
+        initalizeDistributions();
     }
 
     /**
-     * Randomly assign topics to words, documents and states.
+     * Initialize arrays that will be used to track the state, topic, split
+     * position and switch of each token. The DocumentByTopic array is also
+     * rewritten in sampling for test sets.
+     *
+     * @param dirReader Object to walk through files and directories
+     * @param wordIdx   Dictionary from word to index
+     * @param idxToWord Dictionary from index to word
      */
-    public void initialize() {
-
-        switchCounts = new int[switchQ];
-        for (int i = 0; i < switchQ; ++i) {
-            switchCounts[i] = 0;
-        }
-        switchProbs = new double[switchQ];
-
-        fourthOrderSwitches =
-              new int[stateS * stateS * stateS * stateS * stateS * switchQ];
-
-        try {
-            for (int i = 0;;
-                  ++i) {
-                fourthOrderSwitches[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-
-        stateCounts = new int[stateS];
-        thirdOrderTransitions = new int[stateS * stateS * stateS * stateS];
-        secondOrderTransitions = new int[stateS * stateS * stateS];
-        try {
-            for (int i = 0;; ++i) {
-                thirdOrderTransitions[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-        try {
-            for (int i = 0;; ++i) {
-                secondOrderTransitions[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-
+    protected void initializeTokenArrays(DirReader dirReader,
+          HashMap<String, Integer> wordIdx, HashMap<Integer, String> idxToWord) {
+        documentD = 0;
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
               documentVectorT = new ArrayList<Integer>(),
               sentenceVectorT = new ArrayList<Integer>();
@@ -725,10 +737,25 @@ public abstract class HDPHMMLDA {
         topicVector = new int[wordN];
         sentenceVector = new int[sentenceVectorT.size()];
 
+        DocumentByTopic = new int[documentD * topicK];
+        try {
+            for (int i = 0;; ++i) {
+                DocumentByTopic[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
         copyToArray(wordVector, wordVectorT);
         copyToArray(documentVector, documentVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
+    }
 
+    /**
+     * Initializes arrays for counting occurrences. These need to be initialized
+     * regardless of whether the model being trained from raw data or whether
+     * it is loaded from a saved model.
+     */
+    protected void initializeCountArrays() {
         topicCounts = new int[topicK];
         topicProbs = new double[topicK];
         for (int i = 0; i < topicK; ++i) {
@@ -756,13 +783,6 @@ public abstract class HDPHMMLDA {
 //            }
 //        } catch (ArrayIndexOutOfBoundsException e) {
 //        }
-        DocumentByTopic = new int[documentD * topicK];
-        try {
-            for (int i = 0;; ++i) {
-                DocumentByTopic[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
 
         stateCounts = new int[stateS];
         stateProbs = new double[stateS];
@@ -789,6 +809,39 @@ public abstract class HDPHMMLDA {
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
         }
 
+        switchCounts = new int[switchQ];
+        for (int i = 0; i < switchQ; ++i) {
+            switchCounts[i] = 0;
+        }
+        switchProbs = new double[switchQ];
+
+        fourthOrderSwitches =
+              new int[stateS * stateS * stateS * stateS * stateS * switchQ];
+
+        try {
+            for (int i = 0;;
+                  ++i) {
+                fourthOrderSwitches[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
+        thirdOrderTransitions = new int[stateS * stateS * stateS * stateS];
+        secondOrderTransitions = new int[stateS * stateS * stateS];
+
+        try {
+            for (int i = 0;; ++i) {
+                thirdOrderTransitions[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+        try {
+            for (int i = 0;; ++i) {
+                secondOrderTransitions[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
         SampleProbs = new double[samples * wordN];
         try {
             for (int i = 0;; ++i) {
@@ -796,8 +849,6 @@ public abstract class HDPHMMLDA {
             }
         } catch (ArrayIndexOutOfBoundsException e) {
         }
-
-        initalizeDistributions();
     }
 
     /**
@@ -812,14 +863,6 @@ public abstract class HDPHMMLDA {
             randomSeed = options.getRandomSeed();
         }
         mtfRand = new MersenneTwisterFast(randomSeed);
-
-        /**
-         * Revive dirReader
-         */
-        try {
-            dirReader = new DirReader(rootDir, dataFormat);
-        } catch (IOException e) {
-        }
 
         /**
          * Revive some constants that will be used often
@@ -852,68 +895,11 @@ public abstract class HDPHMMLDA {
         second = new int[wordN];
         third = new int[wordN];
 
-        idxToWord = new HashMap<Integer, String>();
-        for (String word : wordIdx.keySet()) {
-            idxToWord.put(wordIdx.get(word), word);
+        for (String word : trainWordIdx.keySet()) {
+            trainIdxToWord.put(trainWordIdx.get(word), word);
         }
 
-        StemToIdx = new HashMap<String, Integer>();
-        AffixToIdx = new HashMap<String, Integer>();
-        stemLexicon = new Lexicon(StemToIdx);
-        affixLexicon = new Lexicon(AffixToIdx);
-
-        topicCounts = new int[topicK];
-        topicProbs = new double[topicK];
-        for (int i = 0; i < topicK; ++i) {
-            topicCounts[i] = 0;
-            topicProbs[i] = 0.;
-        }
-
-        TopicByWord = new int[topicK * wordW];
-        try {
-            for (int i = 0;; ++i) {
-                TopicByWord[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-
-        DocumentByTopic = new int[documentD * topicK];
-        try {
-            for (int i = 0;; ++i) {
-                DocumentByTopic[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-
-        stateCounts = new int[stateS];
-        stateProbs = new double[stateS];
-        for (int i = 0; i < stateS; ++i) {
-            stateCounts[i] = 0;
-            stateProbs[i] = 0;
-        }
-
-        StateByWord = new int[stateS * wordW];
-        try {
-            for (int i = 0;; ++i) {
-                StateByWord[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-
-        thirdOrderTransitions = new int[stateS * stateS * stateS * stateS];
-        secondOrderTransitions = new int[stateS * stateS * stateS];
-        try {
-            for (int i = 0;; ++i) {
-                thirdOrderTransitions[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-        try {
-            for (int i = 0;; ++i) {
-                secondOrderTransitions[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
+        initializeCountArrays();
     }
 
     /**
@@ -984,7 +970,7 @@ public abstract class HDPHMMLDA {
              */
             for (int j = EOSi + 1; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                      TopicByWord[j * topicK + i] + beta, idxToWord.get(
+                      TopicByWord[j * topicK + i] + beta, trainIdxToWord.get(
                       j)));
             }
             Collections.sort(topWords);
@@ -1021,7 +1007,7 @@ public abstract class HDPHMMLDA {
              */
             for (int j = EOSi + 1; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                      StateByWord[j * stateS + i] + beta, idxToWord.get(
+                      StateByWord[j * stateS + i] + beta, trainIdxToWord.get(
                       j)));
             }
             Collections.sort(topWords);
@@ -1220,7 +1206,7 @@ public abstract class HDPHMMLDA {
      * @throws IOException
      */
     public void printAnnotatedText(String outDir) throws IOException {
-        DirWriter dirWriter = new DirWriter(outDir, rootDir, dirReader);
+        DirWriter dirWriter = new DirWriter(outDir, trainDataDir, trainDirReader);
         String root = dirWriter.getRoot();
 
         BufferedWriter bufferedWriter;
@@ -1321,9 +1307,9 @@ public abstract class HDPHMMLDA {
         modelParameterStringBuilder.append(line);
         line = String.format("randomSeed:%d", randomSeed) + newline;
         modelParameterStringBuilder.append(line);
-        line = String.format("rootDir:%s", rootDir) + newline;
+        line = String.format("rootDir:%s", trainDataDir) + newline;
         modelParameterStringBuilder.append(line);
-        line = String.format("testRootDir:%s", testRootDir) + newline;
+        line = String.format("testRootDir:%s", testDataDir) + newline;
         modelParameterStringBuilder.append(line);
     }
 
@@ -1357,7 +1343,7 @@ public abstract class HDPHMMLDA {
         for (int i = 0; i < samples; ++i) {
             int sampleoff = i * wordN;
             for (int j = 0; j < wordN; ++j) {
-                logsum[i] += Math.log(SampleProbs[sampleoff + i]);
+                logsum[i] += Math.log(SampleProbs[sampleoff + j]);
             }
         }
 
@@ -1379,7 +1365,7 @@ public abstract class HDPHMMLDA {
         double average = sampleEval.average(logsum, wordN);
         nums = String.format("%.2f ", average);
         for (int i = 0; i < samples; ++i) {
-            nums += String.format("& %.2f ", Math.exp(logsum[i]));
+            nums += String.format("& %.2f ", logsum[i]);
         }
         out.write(nums + newline);
         out.close();

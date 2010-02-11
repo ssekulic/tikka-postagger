@@ -61,12 +61,6 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
     }
 
     /**
-     * 
-     */
-    public HDPHMMLDAm2() {
-    }
-
-    /**
      * Initialize the distributions that will be used in this model.
      */
     @Override
@@ -144,7 +138,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
                 wordstateoff = wordid * stateS;
                 wordtopicoff = wordid * topicK;
 
-                word = idxToWord.get(wordid);
+                word = trainIdxToWord.get(wordid);
 
                 topicid = topicVector[i];
                 stateid = stateVector[i];
@@ -222,7 +216,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
                 wordstateoff = wordid * stateS;
                 wordtopicoff = wordid * topicK;
 
-                word = idxToWord.get(wordid);
+                word = trainIdxToWord.get(wordid);
 
                 if (mtfRand.nextDouble() > 0.5) {
                     stateVector[i] = 1;
@@ -330,7 +324,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
                         third[i] = pprev;
                         current = prev = pprev = 0;
                     } else {
-                        word = idxToWord.get(wordVector[i]);
+                        word = trainIdxToWord.get(wordVector[i]);
                         docid = documentVector[i];
                         stateid = stateVector[i];
                         topicid = topicVector[i];
@@ -533,7 +527,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
         double[] nonexistentStateAffixProbs = affixStateDP.
                 getNonexistentStateAffixProbs();
         for (int wordid = 0; wordid < wordW; ++wordid) {
-            String word = idxToWord.get(wordid);
+            String word = trainIdxToWord.get(wordid);
             int wordtopicoff = wordid * topicK;
             int wlength = word.length();
             String[] stems = new String[wlength + 1];
@@ -581,7 +575,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
                     new ArrayList<DoubleStringPair>();
             for (int j = 0; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                        StateByWordProbs[j * stateS + i], idxToWord.get(
+                        StateByWordProbs[j * stateS + i], trainIdxToWord.get(
                         j)));
             }
             Collections.sort(topWords);
@@ -599,7 +593,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
                     new ArrayList<DoubleStringPair>();
             for (int j = 0; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                        StateByWord[j * stateS + i] + beta, idxToWord.get(
+                        StateByWord[j * stateS + i] + beta, trainIdxToWord.get(
                         j)));
             }
             Collections.sort(topWords);
@@ -625,7 +619,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
             for (int j = 0; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
                         TopicByWordProbs[j * topicK + i],
-                        idxToWord.get(j)));
+                        trainIdxToWord.get(j)));
             }
             Collections.sort(topWords);
             for (int j = 0; j < outputPerClass; ++j) {
@@ -648,8 +642,8 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
      * @throws IOException
      */
     public void tagTestText(String testDataDir) throws IOException {
-        testRootDir = testDataDir;
-        testDirReader = new DirReader(testRootDir, dataFormat);
+        this.testDataDir = testDataDir;
+        testDirReader = new DirReader(this.testDataDir, dataFormat);
 
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
                 documentVectorT = new ArrayList<Integer>();
@@ -667,11 +661,11 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
                     for (String[] line : sentence) {
                         String word = wordNormalizer.normalize(line)[0];
                         if (!word.isEmpty()) {
-                            if (!wordIdx.containsKey(word)) {
-                                wordIdx.put(word, wordIdx.size());
-                                idxToWord.put(idxToWord.size(), word);
+                            if (!trainWordIdx.containsKey(word)) {
+                                trainWordIdx.put(word, trainWordIdx.size());
+                                trainIdxToWord.put(trainIdxToWord.size(), word);
                             }
-                            wordVectorT.add(wordIdx.get(word));
+                            wordVectorT.add(trainWordIdx.get(word));
                             documentVectorT.add(testDocumentD);
                         }
                     }
@@ -684,7 +678,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
         }
 
         wordN = wordVectorT.size();
-        wordW = wordIdx.size();
+        wordW = trainWordIdx.size();
         wbeta = beta * wordW;
         wgamma = gamma * wordW;
 
@@ -847,7 +841,7 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
                         third[i] = pprev;
                         current = prev = pprev = 0;
                     } else {
-                        word = idxToWord.get(wordVector[i]);
+                        word = trainIdxToWord.get(wordVector[i]);
                         docid = documentVector[i];
                         stateid = stateVector[i];
                         topicid = topicVector[i];

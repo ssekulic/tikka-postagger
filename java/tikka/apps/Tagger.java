@@ -68,19 +68,49 @@ public class Tagger extends MainBase {
              * Choose whether to load from previously saved model or train on new
              */
             if (modelInputPath != null) {
+                System.err.println("Loading from model:" + modelInputPath);
                 SerializableModel serializableModel = new SerializableModel();
-                hhl = serializableModel.loadModel(modelInputPath);
+                hhl = serializableModel.loadModel(modelOptions, modelInputPath);
                 hhl.initializeFromLoadedModel(modelOptions);
             } else {
                 if (experimentModel.equals("m1")) {
+                    System.err.println("Using model 1!");
                     hhl = new HDPHMMLDAm1(modelOptions);
                 } else {
                     hhl = new HDPHMMLDAm1(modelOptions);
                 }
-                hhl.initialize();
+                System.err.println("Randomly initializing values!");
+                hhl.initializeFromTrainingData();
+                System.err.println("Beginning training!");
                 hhl.train();
+                System.err.println("Normalizing parameters!");
                 normalized = true;
                 hhl.normalize();
+            }
+
+            /**
+             * Output normalized parameters in tabular form to output if
+             * specified
+             */
+            if (modelOptions.getTabularOutputFilename() != null) {
+                if (!normalized) {
+                    System.err.println("Normalizing parameters!");
+                    hhl.normalize();
+                }
+                System.err.println("Printing tabulated output to :"
+                      + modelOptions.getTabularOutputFilename());
+                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
+            }
+
+            /**
+             * Save model if specified
+             */
+            String modelOutputPath = modelOptions.getModelOutputPath();
+            if (modelOutputPath != null) {
+                System.err.println("Saving model to :"
+                      + modelOutputPath);
+                SerializableModel serializableModel = new SerializableModel(hhl);
+                serializableModel.saveModel(modelOutputPath);
             }
 
             /**
@@ -91,39 +121,24 @@ public class Tagger extends MainBase {
             /**
              * Output scores for the training samples
              */
-            if (modelOptions.getSampleScoreOutputFilename() != null) {
-                hhl.sampleFromTrain();
-                sampleEval = new BayesFactorEval();
-                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
-                      sampleEval, "Scores from TRAINING data");
-            }
-
-            /**
-             * Output normalized parameters in tabular form to output if
-             * specified
-             */
-            if (modelOptions.getTabularOutputFilename() != null) {
-                if (!normalized) {
-                    hhl.normalize();
-                }
-                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
-            }
-
-            /**
-             * Save model if specified
-             */
-            String modelOutputPath = modelOptions.getModelOutputPath();
-            if (modelOutputPath != null) {
-                SerializableModel serializableModel = new SerializableModel(hhl);
-                serializableModel.saveModel(modelOutputPath);
-            }
+//            if (modelOptions.getSampleScoreOutputFilename() != null) {
+//                System.err.println("Beginning sampling train data");
+//                hhl.sampleFromTrain();
+//                System.err.println("Saving sample training scores to :"
+//                      + modelOptions.getSampleScoreOutputFilename());
+//                sampleEval = new BayesFactorEval();
+//                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+//                      sampleEval, "Scores from TRAINING data");
+//            }
 
             /**
              * Save training text which has been tagged and segmented to output if
              * specified
              */
-            String annotatedTextDir = modelOptions.getAnnotatedTextDir();
+            String annotatedTextDir = modelOptions.getAnnotatedTextOutDir();
             if (annotatedTextDir != null) {
+                System.err.println("Printing annotated training text to :"
+                      + annotatedTextDir);
                 hhl.printAnnotatedText(annotatedTextDir);
             }
 
@@ -132,31 +147,37 @@ public class Tagger extends MainBase {
              */
             String testDataDir = modelOptions.getTestDataDir();
             if (testDataDir != null) {
-                if (!normalized) {
-                    hhl.normalize();
-                }
+//                if (!normalized) {
+//                    System.err.println("Normalizing parameters!");
+//                    hhl.normalize();
+//                }
+                System.err.println("Tagging test text");
                 hhl.tagTestText();
 
                 /**
                  * Save test text which has been tagged and segmented to output
                  * if specified
                  */
-                String annotatedTestTextDir = modelOptions.getAnnotatedTestTextDir();
+                String annotatedTestTextDir = modelOptions.getAnnotatedTestTextOutDir();
                 if (annotatedTestTextDir != null) {
+                    System.err.println("Printing annotated test text to :"
+                          + annotatedTestTextDir);
                     hhl.printAnnotatedTestText(annotatedTestTextDir);
                 }
-            }
 
-            /**
-             * Output scores for the test samples
-             */
-            if (modelOptions.getSampleScoreOutputFilename() != null) {
-                hhl.sampleFromTest();
-                sampleEval = new PerplexityEval();
-                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
-                      sampleEval, "Scores from TEST data");
+                /**
+                 * Output scores for the test samples
+                 */
+                if (modelOptions.getSampleScoreOutputFilename() != null) {
+                    System.err.println("Beginning test sampling");
+                    hhl.sampleFromTest();
+                    System.err.println("Saving test sample scores to :"
+                          + modelOptions.getSampleScoreOutputFilename());
+                    sampleEval = new PerplexityEval();
+                    hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                          sampleEval, "Scores from TEST data");
+                }
             }
-
 
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:"

@@ -54,13 +54,15 @@ public class Train extends MainBase {
             String experimentModel = modelOptions.getExperimentModel();
 
             if (experimentModel.equals("m1")) {
+                System.err.println("Using model 1!");
                 hhl = new HDPHMMLDAm1(modelOptions);
             } else {
+                System.err.println("Using model 1!");
                 hhl = new HDPHMMLDAm1(modelOptions);
             }
 
             System.err.println("Randomly initializing values!");
-            hhl.initialize();
+            hhl.initializeFromTrainingData();
             System.err.println("Beginning training!");
             hhl.train();
             System.err.println("Normalizing parameters!");
@@ -96,8 +98,8 @@ public class Train extends MainBase {
             if (modelOptions.getSampleScoreOutputFilename() != null) {
                 System.err.println("Beginning sampling");
                 hhl.sampleFromTrain();
-                System.err.println("Saving sample scores to :" +
-                      modelOptions.getSampleScoreOutputFilename());
+                System.err.println("Saving sample scores to :"
+                      + modelOptions.getSampleScoreOutputFilename());
                 sampleEval = new BayesFactorEval();
                 hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
                       sampleEval, "Scores from TRAINING data");
@@ -106,10 +108,10 @@ public class Train extends MainBase {
             /**
              * Tag and segment training files from last iteration if specified
              */
-            String annotatedTextDir = modelOptions.getAnnotatedTextDir();
+            String annotatedTextDir = modelOptions.getAnnotatedTextOutDir();
             if (annotatedTextDir != null) {
-                System.err.println("Printing annotated text to :" +
-                      annotatedTextDir);
+                System.err.println("Printing annotated text to :"
+                      + annotatedTextDir);
                 hhl.printAnnotatedText(annotatedTextDir);
             }
         } catch (ParseException exp) {

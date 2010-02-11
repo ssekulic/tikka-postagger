@@ -54,7 +54,7 @@ public class CommandLineOptions {
     /**
      * Path for training data. Should be a full directory
      */
-    protected String dataDir;
+    protected String trainDataDir = null;
     /**
      * Path for test data. Should be a full directory
      */
@@ -70,11 +70,11 @@ public class CommandLineOptions {
     /**
      * Root of path to output annotated texts to
      */
-    protected String annotatedTextDir = null;
+    protected String annotatedTextOutDir = null;
     /**
      * Root of path to output annotated test set texts to
      */
-    private String annotatedTestTextDir = null;
+    private String annotatedTestTextOutDir = null;
     /**
      * Number of training iterations
      */
@@ -231,9 +231,9 @@ public class CommandLineOptions {
                     break;
                 case 'd':
                     if (value.endsWith("" + File.separator)) {
-                        dataDir = value.substring(0, value.length() - 1);
+                        trainDataDir = value.substring(0, value.length() - 1);
                     } else {
-                        dataDir = value;
+                        trainDataDir = value;
                     }
                     break;
                 case 'e':
@@ -255,7 +255,7 @@ public class CommandLineOptions {
                     }
                     break;
                 case 'j':
-                    annotatedTestTextDir = value;
+                    annotatedTestTextOutDir = value;
                     break;
                 case 'k':
                     opt = option.getOpt();
@@ -273,10 +273,10 @@ public class CommandLineOptions {
                     break;
                 case 'n':
                     if (value.endsWith("" + File.separator)) {
-                        annotatedTextDir =
+                        annotatedTextOutDir =
                               value.substring(0, value.length() - 1);
                     } else {
-                        annotatedTextDir = value;
+                        annotatedTextOutDir = value;
                     }
                     break;
                 case 'o':
@@ -349,8 +349,8 @@ public class CommandLineOptions {
         return beta;
     }
 
-    public String getDataDir() {
-        return dataDir;
+    public String getTrainDataDir() {
+        return trainDataDir;
     }
 
     public String getTestDataDir() {
@@ -461,12 +461,12 @@ public class CommandLineOptions {
         return modelOutputPath;
     }
 
-    public String getAnnotatedTextDir() {
-        return annotatedTextDir;
+    public String getAnnotatedTextOutDir() {
+        return annotatedTextOutDir;
     }
 
-    public String getAnnotatedTestTextDir() {
-        return annotatedTestTextDir;
+    public String getAnnotatedTestTextOutDir() {
+        return annotatedTestTextOutDir;
     }
 
     /**

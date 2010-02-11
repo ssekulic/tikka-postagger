@@ -29,6 +29,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import tikka.apps.CommandLineOptions;
 import tikka.opennlp.io.DataFormatEnum;
 
 /**
@@ -203,7 +204,7 @@ public class SerializableModel implements Serializable {
     /**
      * Path of training data.
      */
-    protected String rootDir;
+    protected String trainDataDir;
     /**
      * Type of model that is being run.
      */
@@ -236,7 +237,7 @@ public class SerializableModel implements Serializable {
         outputPerClass = m.outputPerClass;
         psi = m.psi;
         randomSeed = m.randomSeed;
-        rootDir = m.rootDir;
+        trainDataDir = m.trainDataDir;
         sentenceVector = m.sentenceVector;
         splitVector = m.splitVector;
         stateVector = m.stateVector;
@@ -248,7 +249,7 @@ public class SerializableModel implements Serializable {
         topicK = m.topicK;
         topicSubStates = m.topicSubStates;
         topicVector = m.topicVector;
-        wordIdx = m.wordIdx;
+        wordIdx = m.trainWordIdx;
         wordN = m.wordN;
         wordVector = m.wordVector;
         wordW = m.wordW;
@@ -269,11 +270,12 @@ public class SerializableModel implements Serializable {
      * @throws IOException
      * @throws FileNotFoundException
      */
-    public HDPHMMLDA loadModel(String filename) throws IOException,
-            FileNotFoundException {
+    public HDPHMMLDA loadModel(CommandLineOptions options, String filename)
+          throws IOException,
+          FileNotFoundException {
         ObjectInputStream modelIn =
-                new ObjectInputStream(new GZIPInputStream(new FileInputStream(
-                filename)));
+              new ObjectInputStream(new GZIPInputStream(new FileInputStream(
+              filename)));
 //        ObjectInputStream modelIn =
 //                new ObjectInputStream(new FileInputStream(filename));
         try {
@@ -287,7 +289,7 @@ public class SerializableModel implements Serializable {
 
         HDPHMMLDA hhl = null;
         if (modelName.equals("m1")) {
-            hhl = new HDPHMMLDAm1();
+            hhl = new HDPHMMLDAm1(options);
         }
 
         hhl.affixBoundaryProb = affixBoundaryProb;
@@ -311,7 +313,7 @@ public class SerializableModel implements Serializable {
         hhl.outputPerClass = outputPerClass;
         hhl.psi = psi;
         hhl.randomSeed = randomSeed;
-        hhl.rootDir = rootDir;
+        hhl.trainDataDir = trainDataDir;
         hhl.sentenceVector = sentenceVector;
         hhl.splitVector = splitVector;
         hhl.stateVector = stateVector;
@@ -323,7 +325,7 @@ public class SerializableModel implements Serializable {
         hhl.topicK = topicK;
         hhl.topicSubStates = topicSubStates;
         hhl.topicVector = topicVector;
-        hhl.wordIdx = wordIdx;
+        hhl.trainWordIdx = wordIdx;
         hhl.wordN = wordN;
         hhl.wordVector = wordVector;
         hhl.wordW = wordW;
@@ -340,8 +342,8 @@ public class SerializableModel implements Serializable {
      */
     public void saveModel(String filename) throws IOException {
         ObjectOutputStream modelOut =
-                new ObjectOutputStream(new GZIPOutputStream(
-                new FileOutputStream(filename)));
+              new ObjectOutputStream(new GZIPOutputStream(
+              new FileOutputStream(filename)));
         modelOut.writeObject(this);
         modelOut.close();
     }
@@ -368,7 +370,7 @@ public class SerializableModel implements Serializable {
         outputPerClass = sm.outputPerClass;
         psi = sm.psi;
         randomSeed = sm.randomSeed;
-        rootDir = sm.rootDir;
+        trainDataDir = sm.trainDataDir;
         sentenceVector = sm.sentenceVector;
         splitVector = sm.splitVector;
         stateVector = sm.stateVector;
