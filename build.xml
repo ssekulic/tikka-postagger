@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="BadMetaphor" default="compile" basedir=".">
+<project name="tikka" default="compile" basedir=".">
 
-  <description>Infltrait xml handler</description>
+  <description>tikka xml handler</description>
 
   <property environment="env"/>
-  <property name="src.dir"       value="java/BadMetaphor"/>
+  <property name="src.dir"       value="java/tikka"/>
   <property name="ext.dir"       value="lib"/>
 
   <property name="build.dir"     value="build"/>
