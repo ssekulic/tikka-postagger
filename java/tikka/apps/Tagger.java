@@ -121,15 +121,15 @@ public class Tagger extends MainBase {
             /**
              * Output scores for the training samples
              */
-//            if (modelOptions.getSampleScoreOutputFilename() != null) {
-//                System.err.println("Beginning sampling train data");
-//                hhl.sampleFromTrain();
-//                System.err.println("Saving sample training scores to :"
-//                      + modelOptions.getSampleScoreOutputFilename());
-//                sampleEval = new BayesFactorEval();
-//                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
-//                      sampleEval, "Scores from TRAINING data");
-//            }
+            if (modelOptions.getSampleScoreOutputFilename() != null) {
+                System.err.println("Beginning sampling train data");
+                hhl.sampleFromTrain();
+                System.err.println("Saving sample training scores to :"
+                      + modelOptions.getSampleScoreOutputFilename());
+                sampleEval = new BayesFactorEval();
+                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                      sampleEval, "Scores from TRAINING data");
+            }
 
             /**
              * Save training text which has been tagged and segmented to output if
