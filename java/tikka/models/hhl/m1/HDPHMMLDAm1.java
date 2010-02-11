@@ -17,14 +17,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.models.hhl.m1;
 
+import java.io.BufferedWriter;
 import tikka.apps.CommandLineOptions;
 
 import tikka.exceptions.EmptyCountException;
 
 import tikka.models.hhl.HDPHMMLDA;
-
-import tikka.opennlp.io.DirReader;
-import tikka.opennlp.io.DirWriter;
 
 import tikka.structures.DoubleStringPair;
 import tikka.structures.StringDoublePair;
@@ -32,22 +30,12 @@ import tikka.structures.distributions.AffixStateDP;
 import tikka.structures.distributions.DirichletBaseDistribution;
 import tikka.structures.distributions.HierarchicalDirichletBaseDistribution;
 import tikka.structures.distributions.StemAffixStateDP;
-import tikka.structures.distributions.StemAffixStateHDP;
-import tikka.structures.distributions.StemAffixTopicDP;
 import tikka.structures.distributions.StemAffixTopicHDP;
-import tikka.structures.lexicons.Lexicon;
 
-import tikka.utils.ec.util.MersenneTwisterFast;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 
 /**
  * This is a pure HDPHMMLDA model. This model assumes that only a few states
@@ -69,11 +57,6 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
         super(options);
     }
 
-//    /**
-//     *
-//     */
-//    public HDPHMMLDAm1() {
-//    }
     /**
      * Initialize the distributions that will be used in this model.
      */
@@ -89,7 +72,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
               new HierarchicalDirichletBaseDistribution(stemLexicon,
               stemBoundaryProb, wbeta * 10);
 
-        dirichletAffixBaseDistribution = new DirichletBaseDistribution(
+        affixBaseDistribution = new DirichletBaseDistribution(
               affixLexicon, affixBoundaryProb, muAffix) {
 
             @Override
@@ -109,7 +92,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
          * degenerate in the normalization process as well as to make it more
          * consistent with models that do not account for morphology
          */
-        dirichletStemBaseDistribution = new DirichletBaseDistribution(
+        stemBaseDistribution = new DirichletBaseDistribution(
               stemLexicon, stemBoundaryProb, wgamma) {
 
             @Override
@@ -126,8 +109,8 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
         stemAffixTopicHDP = new StemAffixTopicHDP(
               stemTopicHierarchicalBaseDistribution, stemLexicon, wbeta);
         stemAffixStateDP = new StemAffixStateDP(
-              dirichletStemBaseDistribution, stemLexicon, wgamma);
-        affixStateDP = new AffixStateDP(dirichletAffixBaseDistribution,
+              stemBaseDistribution, stemLexicon, wgamma);
+        affixStateDP = new AffixStateDP(affixBaseDistribution,
               affixLexicon, muAffix);
     }
 
@@ -778,7 +761,6 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
         }
     }
 
-
     /**
      * Set the arrays testWordTopicProbs and testWordStateProbs
      */
@@ -828,6 +810,97 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
                           * affixStateDP.prob(j, affixes[k]);
                 }
                 testWordStateProbs[wordstateoff + j] = totalprob;
+            }
+        }
+    }
+
+    /**
+     * Normalize the training sample
+     */
+    @Override
+    public void normalize() {
+        affixStateDP.normalize(topicSubStates, stateS, outputPerClass,
+              stateProbs);
+        stemAffixTopicHDP.normalize(topicK, outputPerClass, affixStateDP,
+              affixLexicon);
+        super.normalize();
+    }
+
+    /**
+     * Print normalized probabilities for each category to out. Print only
+     * the top {@link #outputPerClass} per category.
+     *
+     * @param out   Buffer to write to.
+     * @throws IOException
+     */
+    @Override
+    public void printTabulatedProbabilities(BufferedWriter out) throws
+          IOException {
+        affixStateDP.print(topicSubStates, stateS, outputPerClass, stateProbs,
+              out);
+        printNewlines(out, 4);
+        stemAffixTopicHDP.print(topicK, outputPerClass, topicProbs, out);
+        printNewlines(out, 4);
+        super.printTabulatedProbabilities(out);
+    }
+
+    /**
+     * Sample word segmentations. This is in the last stage of sampling
+     * after all classes have been sampled. It is only needed to print the
+     * annotated text
+     */
+    @Override
+    protected void sampleTestWordSplitLocations() {
+        int wordid = 0, topicid = 0, stateid = 0, splitid = 0;
+        double max = 0, totalprob = 0;
+        double r = 0;
+        String word = "";
+        int wlength = 0, splitmax = 0;
+        String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
+        int[] stemidxes = new int[MAXLEN], affixidxes = new int[MAXLEN];
+
+        double[] splitProbs = new double[MAXLEN];
+
+        System.err.println("\nSampling split locations");
+        for (int i = 0; i < wordN; i++) {
+            wordid = wordVector[i];
+            if (wordid != EOSi) // sentence marker
+            {
+                stateid = stateVector[i];
+                topicid = topicVector[i];
+
+                word = testIdxToWord.get(wordid);
+                wlength = word.length();
+                splitmax = wlength + 1;
+                for (int k = 0; k < splitmax; ++k) {
+                    stems[k] = word.substring(0, k);
+                    affixes[k] = word.substring(k, wlength);
+                    stemidxes[k] = stemLexicon.getIdx(stems[k]);
+                    affixidxes[k] = affixLexicon.getIdx(affixes[k]);
+                }
+
+                for (int j = 0; j < splitmax; ++j) {
+                    if (stateid < topicSubStates) {
+                        splitProbs[j] = stemAffixTopicHDP.prob(topicid,
+                              affixidxes[j], stems[j])
+                              * affixStateDP.probNumerator(stateid,
+                              affixes[j]);
+                    } else {
+                        splitProbs[j] = stemAffixStateDP.prob(stateid,
+                              affixidxes[j], stems[j])
+                              * affixStateDP.probNumerator(stateid,
+                              affixes[j]);
+                    }
+                }
+                totalprob = annealProbs(splitProbs, splitmax);
+                r = mtfRand.nextDouble() * totalprob;
+                max = splitProbs[0];
+                splitid = 0;
+                while (r > max) {
+                    splitid++;
+                    max += splitProbs[splitid];
+                }
+                splitVector[i] = splitid;
             }
         }
     }

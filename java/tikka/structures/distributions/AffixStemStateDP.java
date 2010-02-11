@@ -29,10 +29,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * 
+ * Dirichlet process that models dependency from affix to stem. Affixes are
+ * dependent on stems and the states.
+ *
  * @author tsmoon
  */
-public class StemAffixStateDP extends FourDimDirichletProcess {
+public class AffixStemStateDP extends FourDimDirichletProcess {
 
     /**
      * Array of probabilities for the stems. Allocated and populated in
@@ -45,7 +47,7 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
      * likelihoods in the given topic. Allocated and populated in
      * {@link #normalize(int, int, double[])}.
      */
-    protected StringDoublePair[][] TopStemsPerState;
+    protected StringDoublePair[][] TopAffixesPerState;
     /**
      * Table of top {@code N} words per state. Used in
      * normalization and printing. Calculated from the bookkeeping table
@@ -60,7 +62,7 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
      * @param lexicon
      * @param hyper
      */
-    public StemAffixStateDP(
+    public AffixStemStateDP(
             DirichletBaseDistribution baseDistribution,
             Lexicon lexicon, double hyper) {
         super(baseDistribution, lexicon, hyper);
@@ -86,9 +88,9 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
         maxid++;
         double[] stemProbs = new double[maxid];
 
-        TopStemsPerState = new StringDoublePair[stateS][];
+        TopAffixesPerState = new StringDoublePair[stateS][];
         for (int i = topicS; i < stateS; ++i) {
-            TopStemsPerState[i] = new StringDoublePair[outputPerTopic];
+            TopAffixesPerState[i] = new StringDoublePair[outputPerTopic];
         }
 
         for (int i = topicS; i < stateS; ++i) {
@@ -130,7 +132,7 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
             Collections.sort(topStems);
             for (int j = 0; j < outputPerTopic; ++j) {
                 try {
-                    TopStemsPerState[i][j] =
+                    TopAffixesPerState[i][j] =
                             new StringDoublePair(topStems.get(j).stringValue,
                             topStems.get(j).doubleValue);
                 } catch (IndexOutOfBoundsException e) {
@@ -171,8 +173,8 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
                     String line = String.format("%25s\t%7s\t", "", "");
                     try {
                         line = String.format("%25s\t%6.5f\t",
-                                TopStemsPerState[c][i].stringValue,
-                                TopStemsPerState[c][i].doubleValue);
+                                TopAffixesPerState[c][i].stringValue,
+                                TopAffixesPerState[c][i].doubleValue);
                     } catch (NullPointerException e) {
 //                        e.printStackTrace();
                     }

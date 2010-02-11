@@ -49,6 +49,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import tikka.structures.distributions.AffixStemStateHDP;
+import tikka.structures.distributions.StemStateDP;
+import tikka.structures.distributions.StemTopicDP;
 import tikka.utils.math.SampleEval;
 
 /**
@@ -358,6 +361,19 @@ public abstract class HDPHMMLDA {
      */
     protected StemAffixTopicDP stemAffixTopicDP;
     /**
+     * dirichlet process structure for stems given topics
+     */
+    protected StemTopicDP stemTopicDP;
+    /**
+     * Dirichlet process structure for stems given states
+     */
+    protected StemStateDP stemStateDP;
+    /**
+     * Hierarchical dirichlet process structure for affixes given stems and
+     * states.
+     */
+    protected AffixStemStateHDP affixStemStateHDP;
+    /**
      * Hierarchical dirichlet process structure for stems given affixes and
      * topics.
      */
@@ -491,12 +507,12 @@ public abstract class HDPHMMLDA {
      * Base distribution for the affixes given states. Equivalent to
      * <pre>G(affix)</pre> in the model.
      */
-    protected DirichletBaseDistribution dirichletAffixBaseDistribution;
+    protected DirichletBaseDistribution affixBaseDistribution;
     /**
      * Base distribution for the stems given states. Equivalent to
      * <pre>G_0(affix)</pre> in the model.
      */
-    protected DirichletBaseDistribution dirichletStemBaseDistribution;
+    protected DirichletBaseDistribution stemBaseDistribution;
     /**
      * Array of affix indexes.
      */
@@ -566,11 +582,6 @@ public abstract class HDPHMMLDA {
         initializeFromOptions(options);
     }
 
-//    /**
-//     * Constructor used when model is loaded from a previous training session.
-//     */
-//    public HDPHMMLDA() {
-//    }
     /**
      * Initialize basic parameters from the command line. Depending on need
      * many parameters will be overwritten in subsequent initialization stages.
@@ -952,11 +963,6 @@ public abstract class HDPHMMLDA {
      * Normalize a sample.
      */
     public void normalize() {
-        affixStateDP.normalize(topicSubStates, stateS, outputPerClass,
-              stateProbs);
-        stemAffixTopicHDP.normalize(topicK, outputPerClass, affixStateDP,
-              affixLexicon);
-
         normalizeWords();
         normalizeRawTopics();
         normalizeRawStates();
@@ -1057,16 +1063,10 @@ public abstract class HDPHMMLDA {
         printNewlines(out, 4);
         printStates(out);
         printNewlines(out, 4);
-        affixStateDP.print(topicSubStates, stateS, outputPerClass, stateProbs,
-              out);
-        printNewlines(out, 4);
-        stemAffixTopicHDP.print(topicK, outputPerClass, topicProbs, out);
-        printNewlines(out, 4);
         printTopicsRaw(out);
         printNewlines(out, 4);
         printStatesRaw(out);
         out.close();
-
     }
 
     /**
@@ -1248,6 +1248,8 @@ public abstract class HDPHMMLDA {
      * @param dirReader DirReader for data
      * @param idxToWord Dictionary from index to word
      * @throws IOException
+     * @see HDPHMMLDA#printAnnotatedTestText(java.lang.String)
+     * @see HDPHMMLDA#printAnnotatedTrainText(java.lang.String) 
      */
     public void printAnnotatedText(String outDir, String dataDir,
           DirReader dirReader, HashMap<Integer, String> idxToWord)
@@ -1560,6 +1562,7 @@ public abstract class HDPHMMLDA {
      *
      * @param itermax Maximum number of iterations to perform
      * @param message Message to generate
+     * @see HDPHMMLDA#sampleFromTrain() 
      */
     protected abstract void trainInnerIter(int itermax, String message);
 
@@ -1567,12 +1570,16 @@ public abstract class HDPHMMLDA {
      * Method for setting probability of tokens per sample.
      * 
      * @param outiter Number of sample run
+     * @see HDPHMMLDA#sampleFromTrain() 
      */
     protected abstract void obtainSample(int outiter);
 
     /**
      * Sample training model output. Take {@link #sample} samples ever {@link #lag}
      * iterations.
+     *
+     * @see HDPHMMLDA#trainInnerIter(int, java.lang.String)
+     * @see HDPHMMLDA#obtainSample(int) 
      */
     public void sampleFromTrain() {
         /**
@@ -1593,6 +1600,9 @@ public abstract class HDPHMMLDA {
 
     /**
      * Sample model output on test.
+     *
+     * @see HDPHMMLDA#setWordClassProbArrays()
+     * @see HDPHMMLDA#sampleTestWordSplitLocations()
      */
     public void sampleFromTest() {
         /**
@@ -1614,18 +1624,12 @@ public abstract class HDPHMMLDA {
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
         }
 
-        int wordid = 0, docid = 0, topicid = 0, stateid = 0, splitid = 0;
+        int wordid = 0, docid = 0, topicid = 0, stateid = 0;
         int current = 0, prev = 0, pprev = 0, next = 0,
               nnext = 0, nnnext = 0;
         double max = 0, totalprob = 0;
         double r = 0;
         int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
-        String word = "";
-        int wlength = 0, splitmax = 0;
-        String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
-        int[] stemidxes = new int[MAXLEN], affixidxes = new int[MAXLEN];
-
-        double[] splitProbs = new double[MAXLEN];
 
         setWordClassProbArrays();
 
@@ -1864,51 +1868,13 @@ public abstract class HDPHMMLDA {
             }
         }
 
-        System.err.println("\nSampling split locations");
-        current = 0;
-        prev = 0;
-        pprev = 0;
-        for (int i = 0; i < wordN; i++) {
-            wordid = wordVector[i];
-            if (wordid != EOSi) // sentence marker
-            {
-                docid = documentVector[i];
-                stateid = stateVector[i];
-                topicid = topicVector[i];
-
-                word = testIdxToWord.get(wordid);
-                wlength = word.length();
-                splitmax = wlength + 1;
-                for (int k = 0; k < splitmax; ++k) {
-                    stems[k] = word.substring(0, k);
-                    affixes[k] = word.substring(k, wlength);
-                    stemidxes[k] = stemLexicon.getIdx(stems[k]);
-                    affixidxes[k] = affixLexicon.getIdx(affixes[k]);
-                }
-
-                for (int j = 0; j < splitmax; ++j) {
-                    if (stateid < topicSubStates) {
-                        splitProbs[j] = stemAffixTopicHDP.prob(topicid,
-                              affixidxes[j], stems[j])
-                              * affixStateDP.probNumerator(stateid,
-                              affixes[j]);
-                    } else {
-                        splitProbs[j] = stemAffixStateDP.prob(stateid,
-                              affixidxes[j], stems[j])
-                              * affixStateDP.probNumerator(stateid,
-                              affixes[j]);
-                    }
-                }
-                totalprob = annealProbs(splitProbs, splitmax);
-                r = mtfRand.nextDouble() * totalprob;
-                max = splitProbs[0];
-                splitid = 0;
-                while (r > max) {
-                    splitid++;
-                    max += splitProbs[splitid];
-                }
-                splitVector[i] = splitid;
-            }
-        }
+        sampleTestWordSplitLocations();
     }
+
+    /**
+     * Sample word segmentations. This is in the last stage of sampling
+     * after all classes have been sampled. It is only needed to print the
+     * annotated text
+     */
+    protected abstract void sampleTestWordSplitLocations();
 }
