@@ -40,7 +40,7 @@ public class MainBase {
         options.addOption("a", "alpha", true, "alpha value (default=50/topics)");
         options.addOption("c", "data-format", true,
               "format of input data [conll2k, hashslash, pipesep, raw; default=conll2k]");
-        options.addOption("d", "data-dir", true,
+        options.addOption("d", "train-data-dir", true,
               "full path to directory containing training documents");
         options.addOption("e", "experiment-model", true,
               "model to use [m1,m2; default=m1]");
@@ -49,6 +49,8 @@ public class MainBase {
               "number of training iterations (default=100)");
         options.addOption("ite", "test-iterations", true,
               "number of test set burn in iterations (default=10)");
+        options.addOption("f", "test-data-dir", true,
+              "full path to directory containing test documents");
         options.addOption("j", "annotated-test-text", true,
               "full path to save annotated test set text to");
         options.addOption("ks", "samples", true,

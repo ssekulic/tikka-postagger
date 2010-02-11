@@ -36,7 +36,7 @@ public class BayesFactorEval extends SampleEval {
     public double average(double[] probs, int tokens) {
         double ave = 0;
         for (int i = 0; i < probs.length; ++i) {
-            ave += Math.exp(0 - probs[i]);
+            ave += 1/probs[i];
         }
         ave = probs.length / ave;
         return ave;
