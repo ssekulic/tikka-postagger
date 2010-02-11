@@ -734,7 +734,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
                               * affixStateDP.prob(stateid, affixes[k]);
                     }
                 }
-                SampleProbs[sampleoff + i] = totalprob;
+                SampleProbs[outiter] += Math.log(totalprob);
             }
         }
     }
