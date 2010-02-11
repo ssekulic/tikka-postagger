@@ -28,17 +28,17 @@ public class BayesFactorEval extends SampleEval {
      * Calculates the Bayes factor. Given an array of log probabilities, returns
      * the harmonic mean.
      * 
-     * @param probs Array of log probabilities
+     * @param logprobs Array of log probabilities
      * @param tokens Dummy variable
      * @return the harmonic mean
      */
     @Override
-    public double average(double[] probs, int tokens) {
+    public double average(double[] logprobs, int tokens) {
         double ave = 0;
-        for (int i = 0; i < probs.length; ++i) {
-            ave += 1/probs[i];
+        for (int i = 0; i < logprobs.length; ++i) {
+            ave += 1/logprobs[i];
         }
-        ave = probs.length / ave;
+        ave = logprobs.length / ave;
         return ave;
     }
 }

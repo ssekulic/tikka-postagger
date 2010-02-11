@@ -28,17 +28,17 @@ public class PerplexityEval extends SampleEval {
      * Calculates the perplexity. Given an array of log probabilities (over tokens),
      * returns the geometric mean.
      *
-     * @param probs Array of log probabilities
-     * @param tokens The number of tokens involved in creating the log probs
+     * @param logprobs Array of log probabilities
+     * @param tokens The number of tokens involved in creating the log logprobs
      * @return the harmonic mean
      */
     @Override
-    public double average(double[] probs, int tokens) {
+    public double average(double[] logprobs, int tokens) {
         double ave = 0;
-        for (int i = 0; i < probs.length; ++i) {
-            ave += Math.exp(probs[i] / tokens);
+        for (int i = 0; i < logprobs.length; ++i) {
+            ave += 1 / Math.exp(0 - logprobs[i] / tokens);
         }
-        ave = ave / probs.length;
+        ave = logprobs.length / ave;
         return ave;
     }
 }

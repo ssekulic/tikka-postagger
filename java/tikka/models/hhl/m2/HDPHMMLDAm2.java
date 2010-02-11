@@ -997,8 +997,13 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+//    @Override
+//    public void tagTestText() throws IOException {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
+
     @Override
-    public void tagTestText() throws IOException {
+    protected void setWordClassProbArrays() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 //    /**
@@ -1008,6 +1013,6 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
 //     * @throws IOException
 //     */
 //    @Override
-//    public void printAnnotatedText(String outDir) throws IOException {
+//    public void printAnnotatedTrainText(String outDir) throws IOException {
 //    }
 }

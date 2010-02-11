@@ -720,475 +720,368 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
         }
     }
 
-    /**
-     * Tag, annotate and split data in a test directory.
-     *
-     * @param testDataDir
-     * @throws IOException
-     */
-    @Override
-    public void tagTestText() throws IOException {
-//        testDirReader = new DirReader(testDataDir, dataFormat);
-//        testDocumentD = 0;
-//
-//        ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
-//              documentVectorT = new ArrayList<Integer>();
-//
-//        testWordIdx = new HashMap<String, Integer>();
-//        testWordIdx.put(EOSw, EOSi);
-//        testIdxToWord.put(EOSi, EOSw);
+//    /**
+//     * Tag, annotate and split data in a test directory.
+//     *
+//     * @throws IOException
+//     */
+//    @Override
+//    public void tagTestText() throws IOException {
 //        /**
-//         * This means that if the model has not been saved prior to this,
-//         * and if the model is saved afterwards, the words from the test data
-//         * will be saved as well
+//         * This is a workaround because wgamma and wbeta are overwritten in the
+//         * following method. Global variables documentD, wordW, wordN are
+//         * overwritten.
 //         */
-//        while ((dataReader = testDirReader.nextDocumentReader()) != null) {
-//            try {
-//                String[][] sentence;
-//                while ((sentence = dataReader.nextSequence()) != null) {
-//                    for (String[] line : sentence) {
-//                        String word = wordNormalizer.normalize(line)[0];
-//                        if (!word.isEmpty()) {
-//                            if (!testWordIdx.containsKey(word)) {
-//                                testWordIdx.put(word, testWordIdx.size());
-//                                testIdxToWord.put(testIdxToWord.size(), word);
-//                            }
-//                            wordVectorT.add(testWordIdx.get(word));
-//                            documentVectorT.add(testDocumentD);
-//                        }
-//                    }
-//                    wordVectorT.add(EOSi);
-//                    documentVectorT.add(testDocumentD);
-//                }
-//            } catch (IOException e) {
-//            }
-//            testDocumentD++;
-//        }
-//
-//        /**
-//         * Essentially rewriting all the global tracking variables
-//         */
-//        int testWordN = wordVectorT.size();
-//        /**
-//         * Need to provide global access to wordN in later pretty printing stage
-//         */
-//        wordN = testWordN;
-//
-//        wordVector = new int[testWordN];
-//        documentVector = new int[testWordN];
-//        splitVector = new int[testWordN];
-//
-//        first = new int[testWordN];
-//        second = new int[testWordN];
-//        third = new int[testWordN];
-//
-//        stateVector = new int[testWordN];
-//        topicVector = new int[testWordN];
-//
-////        HashMap<Integer, Integer> testIdxToIdx = new HashMap<Integer, Integer>();
-////        HashMap<Integer, Integer> idxToTestIdx = new HashMap<Integer, Integer>();
-////        int testWordW = 0;
-////        for (Integer idx : testWordIdx.values()) {
-////            testIdxToIdx.put(testWordW, idx);
-////            idxToTestIdx.put(idx, testWordW);
-////            testWordW++;
-////        }
-////        assert testWordW == testWordIdx.size() : new AssertionError("the sizes of the "
-////              + "test vocabularies and the counts are supposed to be the same");
-////
-////        for (int i = 0; i < testWordN; ++i) {
-////            wordVector[i] = wordVectorT.get(i);
-////        }
-//
-//        copyToArray(wordVector, wordVectorT);
-//        copyToArray(documentVector, documentVectorT);
-//
-//        topicCounts = new int[topicK];
-//        topicProbs = new double[topicK];
-//        for (int i = 0; i < topicK; ++i) {
-//            topicCounts[i] = 0;
-//            topicProbs[i] = 0.;
-//        }
-//
+//        double twbeta = wbeta, twgamma = wgamma;
+//        initializeTokenArrays(testDirReader, testWordIdx, testIdxToWord);
+//        wbeta = twbeta;
+//        wgamma = twgamma;
 //        double talpha = alpha * topicK;
 //
-//        DocumentByTopic = new int[testDocumentD * topicK];
+//        DocumentCounts = new double[documentD];
 //        try {
 //            for (int i = 0;; ++i) {
-//                DocumentByTopic[i] = 0;
-//            }
-//        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-//        }
-//        int[] DocumentCounts = new int[testDocumentD];
-//        try {
-//            for (int i = 0;; ++i) {
-//                DocumentCounts[i] = 0;
+//                DocumentCounts[i] = talpha;
 //            }
 //        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
 //        }
 //
-//        stateCounts = new int[stateS];
-//        stateProbs = new double[stateS];
-//        for (int i = 0; i < stateS; ++i) {
-//            stateCounts[i] = 0;
-//            stateProbs[i] = 0;
+//        int wordid = 0, docid = 0, topicid = 0, stateid = 0, splitid = 0;
+//        int current = 0, prev = 0, pprev = 0, next = 0,
+//              nnext = 0, nnnext = 0;
+//        double max = 0, totalprob = 0;
+//        double r = 0;
+//        int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
+//        String word = "";
+//        int wlength = 0, splitmax = 0;
+//        String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
+//        int[] stemidxes = new int[MAXLEN], affixidxes = new int[MAXLEN];
+//
+//        double[] splitProbs = new double[MAXLEN];
+//
+//        /**
+//         * Assign probabilities to each word given either topic or state.
+//         * This will not change in the test run so we store this in table
+//         * at the beginning.
+//         */
+//        double[] testWordTopicProbs = new double[wordW * topicK];
+//        double[] testWordStateProbs = new double[wordW * stateS];
+//
+//        for (int i = 0; i < wordW; ++i) {
+//            word = testIdxToWord.get(i);
+//            wlength = word.length();
+//            splitmax = wlength + 1;
+//            for (int k = 0; k < splitmax; ++k) {
+//                stems[k] = word.substring(0, k);
+//                affixes[k] = word.substring(k, wlength);
+//                stemidxes[k] = stemLexicon.getIdx(stems[k]);
+//                affixidxes[k] = affixLexicon.getIdx(affixes[k]);
+//            }
+//            wordtopicoff = i * topicK;
+//            wordstateoff = i * stateS;
+//            for (int j = 0; j < topicK; ++j) {
+//                totalprob = 0;
+//                for (int l = 1; l < topicSubStates; ++l) {
+//                    for (int k = 0; k < splitmax; ++k) {
+//                        totalprob += stemAffixTopicHDP.prob(j, affixidxes[k], stems[k])
+//                              * affixStateDP.prob(l, affixes[k]);
+//                    }
+//                }
+//                testWordTopicProbs[wordtopicoff + j] = totalprob;
+//            }
+//            for (int j = 1; j < stateS; ++j) {
+//                totalprob = 0;
+//                for (int k = 0; k < splitmax; ++k) {
+//                    totalprob += stemAffixStateDP.prob(j, affixidxes[k], stems[k])
+//                          * affixStateDP.prob(j, affixes[k]);
+//                }
+//                testWordStateProbs[wordstateoff + j] = totalprob;
+//            }
 //        }
-
-        /**
-         * This is a workaround because wgamma and wbeta are overwritten in the
-         * following method. Global variables documentD, wordW, wordN are
-         * overwritten.
-         */
-        double twbeta = wbeta, twgamma = wgamma;
-        initializeTokenArrays(testDirReader, testWordIdx, testIdxToWord);
-        wbeta = twbeta;
-        wgamma = twgamma;
-        double talpha = alpha * topicK;
-
-        DocumentCounts = new double[documentD];
-        try {
-            for (int i = 0;; ++i) {
-                DocumentCounts[i] = talpha;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-
-        int wordid = 0, docid = 0, topicid = 0, stateid = 0, splitid = 0;
-        int current = 0, prev = 0, pprev = 0, next = 0,
-              nnext = 0, nnnext = 0;
-        double max = 0, totalprob = 0;
-        double r = 0;
-        int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
-        String word = "";
-        int wlength = 0, splitmax = 0;
-        String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
-        int[] stemidxes = new int[MAXLEN], affixidxes = new int[MAXLEN];
-
-        double[] splitProbs = new double[MAXLEN];
-
-        /**
-         * Assign probabilities to each word given either topic or state.
-         * This will not change in the test run so we store this in table
-         * at the beginning.
-         */
-        double[] testWordTopicProbs = new double[wordW * topicK];
-        double[] testWordStateProbs = new double[wordW * stateS];
-
-        for (int i = 0; i < wordW; ++i) {
-            word = testIdxToWord.get(i);
-            wlength = word.length();
-            splitmax = wlength + 1;
-            for (int k = 0; k < splitmax; ++k) {
-                stems[k] = word.substring(0, k);
-                affixes[k] = word.substring(k, wlength);
-                stemidxes[k] = stemLexicon.getIdx(stems[k]);
-                affixidxes[k] = affixLexicon.getIdx(affixes[k]);
-            }
-            wordtopicoff = i * topicK;
-            wordstateoff = i * stateS;
-            for (int j = 0; j < topicK; ++j) {
-                totalprob = 0;
-                for (int l = 1; l < topicSubStates; ++l) {
-                    for (int k = 0; k < splitmax; ++k) {
-                        totalprob += stemAffixTopicHDP.prob(j, affixidxes[k], stems[k])
-                              * affixStateDP.prob(l, affixes[k]);
-                    }
-                }
-                testWordTopicProbs[wordtopicoff + j] = totalprob;
-            }
-            for (int j = 1; j < stateS; ++j) {
-                totalprob = 0;
-                for (int k = 0; k < splitmax; ++k) {
-                    totalprob += stemAffixStateDP.prob(j, affixidxes[k], stems[k])
-                          * affixStateDP.prob(j, affixes[k]);
-                }
-                testWordStateProbs[wordstateoff + j] = totalprob;
-            }
-        }
-
-        /**
-         * Gibbs sample initial parameters for test set
-         */
-        System.err.print("\nSample initial document parameters for test set");
-        temperature = 1;
-        temperatureReciprocal = 1;
-        for (int i = 0; i < wordN; ++i) {
-            wordid = wordVector[i];
-
-            if (wordid == EOSi) {
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev = current = 0;
-            } else {
-                docid = documentVector[i];
-                docoff = topicK * docid;
-                wordstateoff = wordid * stateS;
-                wordtopicoff = wordid * topicK;
-
-                if (mtfRand.nextDouble() > 0.5) {
-                    stateid = stateVector[i] = mtfRand.nextInt(
-                          topicSubStates - 1) + 1;
-                } else {
-                    stateid = stateVector[i] = topicSubStates;
-                }
-
-                try {
-                    for (int j = 0;; ++j) {
-                        topicProbs[j] = DocumentByTopic[docoff + j]
-                              + alpha;
-                        if (stateid < topicSubStates) {
-                            topicProbs[j] *= testWordTopicProbs[wordtopicoff + j];
-                        }
-                    }
-                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                }
-
-                totalprob = annealProbs(topicProbs);
-                r = mtfRand.nextDouble() * totalprob;
-                max = topicProbs[0];
-                topicid = 0;
-                while (r > max) {
-                    topicid++;
-                    max += topicProbs[topicid];
-                }
-                topicVector[i] = topicid;
-                max = 0;
-
-                thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
-                if (stateVector[i] == topicSubStates) {
-                    for (int j = 1; j < topicSubStates; ++j) {
-                        stateProbs[j] = testWordTopicProbs[wordtopicoff + topicid]
-                              * (thirdOrderTransitions[thirdstateoff + j] + psi);
-                    }
-                    try {
-                        for (int j = topicSubStates;; j++) {
-                            stateProbs[j] = testWordStateProbs[wordstateoff + j]
-                                  * (thirdOrderTransitions[thirdstateoff + j] + psi);
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    }
-                    totalprob = annealProbs(1, stateProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = stateProbs[1];
-                    stateid = 1;
-                    while (r > max) {
-                        stateid++;
-                        max += stateProbs[stateid];
-                    }
-                    stateVector[i] = stateid;
-                }
-
-                if (stateid < topicSubStates) {
-                    DocumentByTopic[docoff + topicid]++;
-                    DocumentCounts[docid]++;
-                }
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev;
-                prev = current;
-                current = stateid;
-            }
-        }
-
-        /**
-         * Burn in for test set regarding document vectors.
-         */
-        System.err.print("\nBurn in sample of initial document parameters "
-              + "for test set");
-        temperature = MAPTEMP;
-        temperatureReciprocal = 1 / temperature;
-        for (int iter = 0; iter < testSetBurninIterations; ++iter) {
-            System.err.print("\niteration " + iter);
-            System.err.print("\tprocessing word ");
-            for (int i = 0; i < wordN; ++i) {
-                if (i % 100000 == 0) {
-                    System.err.print(i + ",");
-                }
-
-                wordid = wordVector[i];
-
-                if (wordid == EOSi) {
-                    first[i] = current;
-                    second[i] = prev;
-                    third[i] = pprev;
-                    pprev = prev = current = 0;
-                } else {
-                    docid = documentVector[i];
-                    docoff = topicK * docid;
-                    stateid = stateVector[i];
-                    topicid = topicVector[i];
-                    wordstateoff = wordid * stateS;
-                    wordtopicoff = wordid * topicK;
-
-                    if (stateid < topicSubStates) {
-                        DocumentByTopic[docoff + topicid]--;
-                    }
-
-                    try {
-                        for (int j = 0;; ++j) {
-                            topicProbs[j] = DocumentByTopic[docoff + j]
-                                  + alpha;
-                            if (stateid < topicSubStates) {
-                                topicProbs[j] *= testWordTopicProbs[wordtopicoff + j];
-                            }
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    }
-
-                    totalprob = annealProbs(topicProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = topicProbs[0];
-                    topicid = 0;
-                    while (r > max) {
-                        topicid++;
-                        max += topicProbs[topicid];
-                    }
-                    topicVector[i] = topicid;
-                    max = 0;
-
-                    thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
-                    secondstateoff = prev * S2 + current * stateS;
-                    if (stateVector[i] == topicSubStates) {
-                        for (int j = 1; j < topicSubStates; ++j) {
-                            stateProbs[j] = testWordTopicProbs[wordtopicoff + topicid]
-                                  * (thirdOrderTransitions[thirdstateoff + j] + psi)
-                                  * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
-                                  / (secondOrderTransitions[secondstateoff + j] + spsi))
-                                  * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
-                                  / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
-                                  * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
-                                  / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
-                        }
-                        try {
-                            for (int j = topicSubStates;; j++) {
-                                stateProbs[j] = testWordStateProbs[wordstateoff + j]
-                                      * (thirdOrderTransitions[thirdstateoff + j] + psi)
-                                      * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
-                                      / (secondOrderTransitions[secondstateoff + j] + spsi))
-                                      * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
-                                      / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
-                                      * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
-                                      / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
-                            }
-                        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                        }
-                        totalprob = annealProbs(1, stateProbs);
-                        r = mtfRand.nextDouble() * totalprob;
-                        max = stateProbs[1];
-                        stateid = 1;
-                        while (r > max) {
-                            stateid++;
-                            max += stateProbs[stateid];
-                        }
-                        stateVector[i] = stateid;
-                    }
-
-                    if (stateVector[i] < topicSubStates) {
-                        DocumentByTopic[docoff + topicid]++;
-                    }
-                    first[i] = current;
-                    second[i] = prev;
-                    third[i] = pprev;
-                    pprev = prev;
-                    prev = current;
-                    current = stateid;
-                }
-            }
-        }
-
-        /**
-         * Sample words and probabilities. We are going for perplexity in this
-         * situation, not the bayes factor
-         */
-        SampleProbs = new double[samples * wordN];
-        for (int outiter = 0; outiter < samples; ++outiter) {
-            System.err.print("\nSample " + outiter + ":");
-            stabilizeTemperature();
-            int sampleoff = outiter * wordN;
-            for (int initer = 0; initer < lag; ++initer) {
-                System.err.print("\niteration " + initer);
-                System.err.print("\tprocessing word ");
-                current = 0;
-                prev = 0;
-                pprev = 0;
-                for (int i = 0; i < wordN; i++) {
-
-                    if (i % 100000 == 0) {
-                        System.err.print(i + ",");
-                    }
-                    wordid = wordVector[i];
-
-                    if (wordid != EOSi) // sentence marker
-                    {
-                        docid = documentVector[i];
-                        stateid = stateVector[i];
-                        topicid = topicVector[i];
-                        wordstateoff = wordid * stateS;
-                        wordtopicoff = wordid * topicK;
-
-                        totalprob = 0;
-                        if (stateid < topicSubStates) {
-                            totalprob = testWordTopicProbs[wordtopicoff + topicid]
-                                  * (DocumentByTopic[docid * topicK + topicid] + alpha)
-                                  / (DocumentCounts[docid]);
-                        } else {
-                            totalprob = testWordStateProbs[wordstateoff + stateid];
-                        }
-                    }
-                    SampleProbs[sampleoff + i] = totalprob;
-                }
-            }
-        }
-
-        System.err.print("\nSampling split locations");
-        current = 0;
-        prev = 0;
-        pprev = 0;
-        for (int i = 0; i < wordN; i++) {
-            wordid = wordVector[i];
-            if (wordid != EOSi) // sentence marker
-            {
-                docid = documentVector[i];
-                stateid = stateVector[i];
-                topicid = topicVector[i];
-
-                word = testIdxToWord.get(wordid);
-                wlength = word.length();
-                splitmax = wlength + 1;
-                for (int k = 0; k < splitmax; ++k) {
-                    stems[k] = word.substring(0, k);
-                    affixes[k] = word.substring(k, wlength);
-                    stemidxes[k] = stemLexicon.getIdx(stems[k]);
-                    affixidxes[k] = affixLexicon.getIdx(affixes[k]);
-                }
-
-                for (int j = 0; j < splitmax; ++j) {
-                    if (stateid < topicSubStates) {
-                        splitProbs[j] = stemAffixTopicHDP.prob(topicid,
-                              affixidxes[j], stems[j])
-                              * affixStateDP.probNumerator(stateid,
-                              affixes[j]);
-                    } else {
-                        splitProbs[j] = stemAffixStateDP.prob(stateid,
-                              affixidxes[j], stems[j])
-                              * affixStateDP.probNumerator(stateid,
-                              affixes[j]);
-                    }
-                }
-                totalprob = annealProbs(splitProbs, splitmax);
-                r = mtfRand.nextDouble() * totalprob;
-                max = splitProbs[0];
-                splitid = 0;
-                while (r > max) {
-                    splitid++;
-                    max += splitProbs[splitid];
-                }
-                splitVector[i] = splitid;
-            }
-        }
-    }
+//
+//        /**
+//         * Gibbs sample initial parameters for test set
+//         */
+//        System.err.print("\nSample initial document parameters for test set");
+//        temperature = 1;
+//        temperatureReciprocal = 1;
+//        for (int i = 0; i < wordN; ++i) {
+//            wordid = wordVector[i];
+//
+//            if (wordid == EOSi) {
+//                first[i] = current;
+//                second[i] = prev;
+//                third[i] = pprev;
+//                pprev = prev = current = 0;
+//            } else {
+//                docid = documentVector[i];
+//                docoff = topicK * docid;
+//                wordstateoff = wordid * stateS;
+//                wordtopicoff = wordid * topicK;
+//
+//                if (mtfRand.nextDouble() > 0.5) {
+//                    stateid = stateVector[i] = mtfRand.nextInt(
+//                          topicSubStates - 1) + 1;
+//                } else {
+//                    stateid = stateVector[i] = topicSubStates;
+//                }
+//
+//                try {
+//                    for (int j = 0;; ++j) {
+//                        topicProbs[j] = DocumentByTopic[docoff + j]
+//                              + alpha;
+//                        if (stateid < topicSubStates) {
+//                            topicProbs[j] *= testWordTopicProbs[wordtopicoff + j];
+//                        }
+//                    }
+//                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+//                }
+//
+//                totalprob = annealProbs(topicProbs);
+//                r = mtfRand.nextDouble() * totalprob;
+//                max = topicProbs[0];
+//                topicid = 0;
+//                while (r > max) {
+//                    topicid++;
+//                    max += topicProbs[topicid];
+//                }
+//                topicVector[i] = topicid;
+//                max = 0;
+//
+//                thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
+//                if (stateVector[i] == topicSubStates) {
+//                    for (int j = 1; j < topicSubStates; ++j) {
+//                        stateProbs[j] = testWordTopicProbs[wordtopicoff + topicid]
+//                              * (thirdOrderTransitions[thirdstateoff + j] + psi);
+//                    }
+//                    try {
+//                        for (int j = topicSubStates;; j++) {
+//                            stateProbs[j] = testWordStateProbs[wordstateoff + j]
+//                                  * (thirdOrderTransitions[thirdstateoff + j] + psi);
+//                        }
+//                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+//                    }
+//                    totalprob = annealProbs(1, stateProbs);
+//                    r = mtfRand.nextDouble() * totalprob;
+//                    max = stateProbs[1];
+//                    stateid = 1;
+//                    while (r > max) {
+//                        stateid++;
+//                        max += stateProbs[stateid];
+//                    }
+//                    stateVector[i] = stateid;
+//                }
+//
+//                if (stateid < topicSubStates) {
+//                    DocumentByTopic[docoff + topicid]++;
+//                    DocumentCounts[docid]++;
+//                }
+//                first[i] = current;
+//                second[i] = prev;
+//                third[i] = pprev;
+//                pprev = prev;
+//                prev = current;
+//                current = stateid;
+//            }
+//        }
+//
+//        /**
+//         * Burn in for test set regarding document vectors.
+//         */
+//        System.err.print("\nBurn in sample of initial document parameters "
+//              + "for test set");
+//        temperature = MAPTEMP;
+//        temperatureReciprocal = 1 / temperature;
+//        for (int iter = 0; iter < testSetBurninIterations; ++iter) {
+//            System.err.print("\niteration " + iter);
+//            System.err.print("\tprocessing word ");
+//            for (int i = 0; i < wordN; ++i) {
+//                if (i % 100000 == 0) {
+//                    System.err.print(i + ",");
+//                }
+//
+//                wordid = wordVector[i];
+//
+//                if (wordid == EOSi) {
+//                    first[i] = current;
+//                    second[i] = prev;
+//                    third[i] = pprev;
+//                    pprev = prev = current = 0;
+//                } else {
+//                    docid = documentVector[i];
+//                    docoff = topicK * docid;
+//                    stateid = stateVector[i];
+//                    topicid = topicVector[i];
+//                    wordstateoff = wordid * stateS;
+//                    wordtopicoff = wordid * topicK;
+//
+//                    if (stateid < topicSubStates) {
+//                        DocumentByTopic[docoff + topicid]--;
+//                    }
+//
+//                    try {
+//                        for (int j = 0;; ++j) {
+//                            topicProbs[j] = DocumentByTopic[docoff + j]
+//                                  + alpha;
+//                            if (stateid < topicSubStates) {
+//                                topicProbs[j] *= testWordTopicProbs[wordtopicoff + j];
+//                            }
+//                        }
+//                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+//                    }
+//
+//                    totalprob = annealProbs(topicProbs);
+//                    r = mtfRand.nextDouble() * totalprob;
+//                    max = topicProbs[0];
+//                    topicid = 0;
+//                    while (r > max) {
+//                        topicid++;
+//                        max += topicProbs[topicid];
+//                    }
+//                    topicVector[i] = topicid;
+//                    max = 0;
+//
+//                    thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
+//                    secondstateoff = prev * S2 + current * stateS;
+//                    if (stateVector[i] == topicSubStates) {
+//                        for (int j = 1; j < topicSubStates; ++j) {
+//                            stateProbs[j] = testWordTopicProbs[wordtopicoff + topicid]
+//                                  * (thirdOrderTransitions[thirdstateoff + j] + psi)
+//                                  * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
+//                                  / (secondOrderTransitions[secondstateoff + j] + spsi))
+//                                  * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
+//                                  / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
+//                                  * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
+//                                  / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
+//                        }
+//                        try {
+//                            for (int j = topicSubStates;; j++) {
+//                                stateProbs[j] = testWordStateProbs[wordstateoff + j]
+//                                      * (thirdOrderTransitions[thirdstateoff + j] + psi)
+//                                      * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
+//                                      / (secondOrderTransitions[secondstateoff + j] + spsi))
+//                                      * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
+//                                      / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
+//                                      * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
+//                                      / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
+//                            }
+//                        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+//                        }
+//                        totalprob = annealProbs(1, stateProbs);
+//                        r = mtfRand.nextDouble() * totalprob;
+//                        max = stateProbs[1];
+//                        stateid = 1;
+//                        while (r > max) {
+//                            stateid++;
+//                            max += stateProbs[stateid];
+//                        }
+//                        stateVector[i] = stateid;
+//                    }
+//
+//                    if (stateVector[i] < topicSubStates) {
+//                        DocumentByTopic[docoff + topicid]++;
+//                    }
+//                    first[i] = current;
+//                    second[i] = prev;
+//                    third[i] = pprev;
+//                    pprev = prev;
+//                    prev = current;
+//                    current = stateid;
+//                }
+//            }
+//        }
+//
+//        /**
+//         * Sample words and probabilities. We are going for perplexity in this
+//         * situation, not the bayes factor
+//         */
+//        SampleProbs = new double[samples * wordN];
+//        for (int outiter = 0; outiter < samples; ++outiter) {
+//            System.err.print("\nSample " + outiter + ":");
+//            stabilizeTemperature();
+//            int sampleoff = outiter * wordN;
+//            for (int initer = 0; initer < lag; ++initer) {
+//                System.err.print("\niteration " + initer);
+//                System.err.print("\tprocessing word ");
+//                current = 0;
+//                prev = 0;
+//                pprev = 0;
+//                for (int i = 0; i < wordN; i++) {
+//
+//                    if (i % 100000 == 0) {
+//                        System.err.print(i + ",");
+//                    }
+//                    wordid = wordVector[i];
+//
+//                    if (wordid != EOSi) // sentence marker
+//                    {
+//                        docid = documentVector[i];
+//                        stateid = stateVector[i];
+//                        topicid = topicVector[i];
+//                        wordstateoff = wordid * stateS;
+//                        wordtopicoff = wordid * topicK;
+//
+//                        totalprob = 0;
+//                        if (stateid < topicSubStates) {
+//                            totalprob = testWordTopicProbs[wordtopicoff + topicid]
+//                                  * (DocumentByTopic[docid * topicK + topicid] + alpha)
+//                                  / (DocumentCounts[docid]);
+//                        } else {
+//                            totalprob = testWordStateProbs[wordstateoff + stateid];
+//                        }
+//                    }
+//                    SampleProbs[sampleoff + i] = totalprob;
+//                }
+//            }
+//        }
+//
+//        System.err.print("\nSampling split locations");
+//        current = 0;
+//        prev = 0;
+//        pprev = 0;
+//        for (int i = 0; i < wordN; i++) {
+//            wordid = wordVector[i];
+//            if (wordid != EOSi) // sentence marker
+//            {
+//                docid = documentVector[i];
+//                stateid = stateVector[i];
+//                topicid = topicVector[i];
+//
+//                word = testIdxToWord.get(wordid);
+//                wlength = word.length();
+//                splitmax = wlength + 1;
+//                for (int k = 0; k < splitmax; ++k) {
+//                    stems[k] = word.substring(0, k);
+//                    affixes[k] = word.substring(k, wlength);
+//                    stemidxes[k] = stemLexicon.getIdx(stems[k]);
+//                    affixidxes[k] = affixLexicon.getIdx(affixes[k]);
+//                }
+//
+//                for (int j = 0; j < splitmax; ++j) {
+//                    if (stateid < topicSubStates) {
+//                        splitProbs[j] = stemAffixTopicHDP.prob(topicid,
+//                              affixidxes[j], stems[j])
+//                              * affixStateDP.probNumerator(stateid,
+//                              affixes[j]);
+//                    } else {
+//                        splitProbs[j] = stemAffixStateDP.prob(stateid,
+//                              affixidxes[j], stems[j])
+//                              * affixStateDP.probNumerator(stateid,
+//                              affixes[j]);
+//                    }
+//                }
+//                totalprob = annealProbs(splitProbs, splitmax);
+//                r = mtfRand.nextDouble() * totalprob;
+//                max = splitProbs[0];
+//                splitid = 0;
+//                while (r > max) {
+//                    splitid++;
+//                    max += splitProbs[splitid];
+//                }
+//                splitVector[i] = splitid;
+//            }
+//        }
+//    }
 
     /**
      * Method for setting probability of tokens per sample.
@@ -1244,6 +1137,60 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
                     }
                 }
                 SampleProbs[sampleoff + i] = totalprob;
+            }
+        }
+    }
+
+
+    /**
+     * Set the arrays testWordTopicProbs and testWordStateProbs
+     */
+    @Override
+    protected void setWordClassProbArrays() {
+        double totalprob = 0;
+        int wordstateoff, wordtopicoff;
+        String word = "";
+        int wlength = 0, splitmax = 0;
+        String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
+        int[] stemidxes = new int[MAXLEN], affixidxes = new int[MAXLEN];
+
+        /**
+         * Assign probabilities to each word given either topic or state.
+         * This will not change in the test run so we store this in table
+         * at the beginning.
+         */
+        testWordTopicProbs = new double[wordW * topicK];
+        testWordStateProbs = new double[wordW * stateS];
+
+        for (int i = 0; i < wordW; ++i) {
+            word = testIdxToWord.get(i);
+            wlength = word.length();
+            splitmax = wlength + 1;
+            for (int k = 0; k < splitmax; ++k) {
+                stems[k] = word.substring(0, k);
+                affixes[k] = word.substring(k, wlength);
+                stemidxes[k] = stemLexicon.getIdx(stems[k]);
+                affixidxes[k] = affixLexicon.getIdx(affixes[k]);
+            }
+            wordtopicoff = i * topicK;
+            wordstateoff = i * stateS;
+            for (int j = 0; j < topicK; ++j) {
+                totalprob = 0;
+                for (int l = 1; l < topicSubStates; ++l) {
+                    for (int k = 0; k < splitmax; ++k) {
+                        totalprob += stemAffixTopicHDP.prob(j, affixidxes[k], stems[k])
+                              * affixStateDP.prob(l, affixes[k]);
+                    }
+                }
+                testWordTopicProbs[wordtopicoff + j] = totalprob;
+            }
+            for (int j = 1; j < stateS; ++j) {
+                totalprob = 0;
+                for (int k = 0; k < splitmax; ++k) {
+                    totalprob += stemAffixStateDP.prob(j, affixidxes[k], stems[k])
+                          * affixStateDP.prob(j, affixes[k]);
+                }
+                testWordStateProbs[wordstateoff + j] = totalprob;
             }
         }
     }
