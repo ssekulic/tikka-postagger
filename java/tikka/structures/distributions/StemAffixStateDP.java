@@ -62,8 +62,8 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
      */
     public StemAffixStateDP(
             DirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper) {
-        super(baseDistribution, lexicon, hyper);
+            Lexicon lexicon, double hyper, int states) {
+        super(baseDistribution, lexicon, hyper, states);
     }
 
     /**

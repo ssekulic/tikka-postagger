@@ -37,8 +37,8 @@ public class FourDimHierarchicalDirichletProcess extends FourDimDirichletProcess
      * @param hyper
      */
     public FourDimHierarchicalDirichletProcess(HierarchicalDirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper) {
-        super(baseDistribution, lexicon, hyper);
+            Lexicon lexicon, double hyper, int classes) {
+        super(baseDistribution, lexicon, hyper, classes);
     }
 
     /**
