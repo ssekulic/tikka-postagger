@@ -73,18 +73,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
               stemBoundaryProb, wbeta * 10);
 
         affixBaseDistribution = new DirichletBaseDistribution(
-              affixLexicon, affixBoundaryProb, muAffix) {
-
-            @Override
-            public int dec(String s) throws EmptyCountException {
-                throw new UnsupportedOperationException("Don't use this!");
-            }
-
-            @Override
-            public int inc(String s) {
-                throw new UnsupportedOperationException("Don't use this!");
-            }
-        };
+              affixLexicon, affixBoundaryProb, muAffix) ;
 
         /**
          * Note the hyperparameter being passed to the DP base. it is not
@@ -93,18 +82,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
          * consistent with models that do not account for morphology
          */
         stemBaseDistribution = new DirichletBaseDistribution(
-              stemLexicon, stemBoundaryProb, wgamma) {
-
-            @Override
-            public int dec(String s) throws EmptyCountException {
-                throw new UnsupportedOperationException("Don't use this!");
-            }
-
-            @Override
-            public int inc(String s) {
-                throw new UnsupportedOperationException("Don't use this!");
-            }
-        };
+              stemLexicon, stemBoundaryProb, wgamma);
 
         stemAffixTopicHDP = new StemAffixTopicHDP(
               stemTopicHierarchicalBaseDistribution, stemLexicon, wbeta);
