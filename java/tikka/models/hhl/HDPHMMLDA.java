@@ -873,7 +873,7 @@ public abstract class HDPHMMLDA {
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
         }
 
-        SampleProbs = new double[samples * wordN];
+        SampleProbs = new double[samples];
         try {
             for (int i = 0;; ++i) {
                 SampleProbs[i] = 0;
@@ -1392,16 +1392,6 @@ public abstract class HDPHMMLDA {
     public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval,
           String header) throws
           IOException {
-        double[] logsum = new double[samples];
-        for (int i = 0; i < samples; ++i) {
-            logsum[i] = 0;
-        }
-        for (int i = 0; i < samples; ++i) {
-            int sampleoff = i * wordN;
-            for (int j = 0; j < wordN; ++j) {
-                logsum[i] += Math.log(SampleProbs[sampleoff + j]);
-            }
-        }
 
         out.write(String.format("%% ***** %s *****", header) + newline);
         out.write("%% " + modelParameterStringBuilder.toString().replaceAll(newline, newline + "%% "));
@@ -1410,7 +1400,7 @@ public abstract class HDPHMMLDA {
         out.write("%% log probabilities of each sample in row vector format" + newline);
         String nums = "[";
         for (int i = 0; i < samples; ++i) {
-            nums += String.format("%.8f ", logsum[i]);
+            nums += String.format("%.8f ", SampleProbs[i]);
         }
         nums += "]" + newline + newline;
         out.write(nums);
@@ -1418,10 +1408,10 @@ public abstract class HDPHMMLDA {
         out.write("%% For use in latex" + newline);
         out.write("%% probabilities of each sample in row vector format" + newline);
         nums = "";
-        double average = sampleEval.average(logsum, wordN);
+        double average = sampleEval.average(SampleProbs, wordN);
         nums = String.format("%.2f ", average);
         for (int i = 0; i < samples; ++i) {
-            nums += String.format("& %.2f ", logsum[i]);
+            nums += String.format("& %.2f ", SampleProbs[i]);
         }
         out.write(nums + newline);
     }
@@ -1727,7 +1717,7 @@ public abstract class HDPHMMLDA {
          * Burn in then sample for test set regarding document vectors.
          */
         samples = 1; // set to one since perplexity is only sampled once
-        SampleProbs = new double[samples * wordN];
+        SampleProbs = new double[samples];
         System.err.print("\nBurn in sample of initial document parameters "
               + "for test set");
         temperature = MAPTEMP;
@@ -1868,7 +1858,7 @@ public abstract class HDPHMMLDA {
                             totalprob = testWordStateProbs[wordstateoff + stateid];
                         }
                     }
-                    SampleProbs[sampleoff + i] = totalprob;
+                    SampleProbs[samplenum] += Math.log(totalprob);
                 }
             }
         }
