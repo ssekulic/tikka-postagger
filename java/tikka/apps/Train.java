@@ -112,7 +112,7 @@ public class Train extends MainBase {
             if (annotatedTextDir != null) {
                 System.err.println("Printing annotated text to :"
                       + annotatedTextDir);
-                hhl.printAnnotatedText(annotatedTextDir);
+                hhl.printAnnotatedTrainText(annotatedTextDir);
             }
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:"

@@ -139,7 +139,7 @@ public class Tagger extends MainBase {
             if (annotatedTextDir != null) {
                 System.err.println("Printing annotated training text to :"
                       + annotatedTextDir);
-                hhl.printAnnotatedText(annotatedTextDir);
+                hhl.printAnnotatedTrainText(annotatedTextDir);
             }
 
             /**
@@ -151,19 +151,8 @@ public class Tagger extends MainBase {
 //                    System.err.println("Normalizing parameters!");
 //                    hhl.normalize();
 //                }
-                System.err.println("Tagging test text");
-                hhl.tagTestText();
-
-                /**
-                 * Save test text which has been tagged and segmented to output
-                 * if specified
-                 */
-                String annotatedTestTextDir = modelOptions.getAnnotatedTestTextOutDir();
-                if (annotatedTestTextDir != null) {
-                    System.err.println("Printing annotated test text to :"
-                          + annotatedTestTextDir);
-                    hhl.printAnnotatedTestText(annotatedTestTextDir);
-                }
+//                System.err.println("Tagging test text");
+//                hhl.tagTestText();
 
                 /**
                  * Output scores for the test samples
@@ -176,6 +165,17 @@ public class Tagger extends MainBase {
                     sampleEval = new PerplexityEval();
                     hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
                           sampleEval, "Scores from TEST data");
+                }
+
+                /**
+                 * Save test text which has been tagged and segmented to output
+                 * if specified
+                 */
+                String annotatedTestTextDir = modelOptions.getAnnotatedTestTextOutDir();
+                if (annotatedTestTextDir != null) {
+                    System.err.println("Printing annotated test text to :"
+                          + annotatedTestTextDir);
+                    hhl.printAnnotatedTestText(annotatedTestTextDir);
                 }
             }
 
