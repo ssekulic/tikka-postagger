@@ -7,7 +7,7 @@ JAVA=$JAVA_HOME/bin/java
 
 if [ -z $JAVA_MEM_FLAG ]
 then
-    JAVA_MEM_FLAG=-Xmx2g
+    JAVA_MEM_FLAG=-Xmx1g
 fi
 
 # Now prepares the Java command with the right settings                                                                                                                                                   
