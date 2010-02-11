@@ -38,6 +38,7 @@ public class MainBase {
      */
     public static void setOptions(Options options) {
         options.addOption("a", "alpha", true, "alpha value (default=50/topics)");
+        options.addOption("b", "beta", true, "beta value (default=0.01)");
         options.addOption("c", "data-format", true,
               "format of input data [conll2k, hashslash, pipesep, raw; default=conll2k]");
         options.addOption("d", "train-data-dir", true,

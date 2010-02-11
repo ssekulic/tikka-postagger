@@ -214,6 +214,9 @@ public class CommandLineOptions {
                 case 'a':
                     alpha = Double.parseDouble(value);
                     break;
+                case 'b':
+                    beta = Double.parseDouble(value);
+                    break;
                 case 'c':
                     if (value.equals("conll2k")) {
                         dataFormat = DataFormatEnum.DataFormat.CONLL2K;
