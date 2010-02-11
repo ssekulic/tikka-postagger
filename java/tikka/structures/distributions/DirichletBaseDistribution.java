@@ -26,7 +26,7 @@ import java.util.HashMap;
  * 
  * @author tsmoon
  */
-public abstract class DirichletBaseDistribution extends HashMap<String, Integer> {
+public class DirichletBaseDistribution extends HashMap<String, Integer> {
 
     /**
      * Cumulative count of all items in dictionary/distribution. Used in
@@ -77,22 +77,26 @@ public abstract class DirichletBaseDistribution extends HashMap<String, Integer>
      * @param hyper Hyperparameter for base distribution
      */
     public DirichletBaseDistribution(Lexicon lexicon, double morphBoundaryProb,
-            double hyper) {
+          double hyper) {
         this.morphBoundaryProb = morphBoundaryProb;
         notMorphBoundaryProb = 1 - morphBoundaryProb;
         this.hyper = hyper;
         this.lexicon = lexicon;
         stringProbs = new double[maxlen];
         for (int i = 0; i < maxlen; ++i) {
-            double stringProb = Math.log(morphBoundaryProb) + i *
-                    (Math.log(notMorphBoundaryProb) + Math.log(ALPHAPROB));
+            double stringProb = Math.log(morphBoundaryProb) + i
+                  * (Math.log(notMorphBoundaryProb) + Math.log(ALPHAPROB));
             stringProbs[i] = this.hyper * Math.exp(stringProb);
         }
     }
 
-    public abstract int dec(String s) throws EmptyCountException;
+    public int dec(String s) throws EmptyCountException {
+        throw new UnsupportedOperationException("Don't use this!");
+    }
 
-    public abstract int inc(String s);
+    public int inc(String s) {
+        throw new UnsupportedOperationException("Don't use this!");
+    }
 
 //    /**
 //     * Do not call this.
@@ -104,7 +108,6 @@ public abstract class DirichletBaseDistribution extends HashMap<String, Integer>
 //    public double setDenominator(int count) {
 //        return denominator = count - 1 + hyper;
 //    }
-
     /**
      * The probability of a string as indentified by its index. This assumes
      * that the string is already in the lexicon
@@ -113,7 +116,7 @@ public abstract class DirichletBaseDistribution extends HashMap<String, Integer>
      * @return  The probability of the string
      */
     public double prob(int idx) {
-         return prob(lexicon.getString(idx));
+        return prob(lexicon.getString(idx));
     }
 
     /**
@@ -129,8 +132,8 @@ public abstract class DirichletBaseDistribution extends HashMap<String, Integer>
             stringProb = stringProbs[s.length()];
         } catch (ArrayIndexOutOfBoundsException e) {
             System.err.println("\"" + s + "\" is longer than " + maxlen);
-            stringProb = hyper * Math.exp(Math.log(morphBoundaryProb) + s.length() *
-                    (Math.log(notMorphBoundaryProb) + Math.log(ALPHAPROB)));
+            stringProb = hyper * Math.exp(Math.log(morphBoundaryProb) + s.length()
+                  * (Math.log(notMorphBoundaryProb) + Math.log(ALPHAPROB)));
         }
         return stringProb;
     }
