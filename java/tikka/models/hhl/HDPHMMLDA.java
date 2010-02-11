@@ -1722,6 +1722,7 @@ public abstract class HDPHMMLDA {
         /**
          * Burn in then sample for test set regarding document vectors.
          */
+        samples = 1; // set to one since perplexity is only sampled once
         SampleProbs = new double[samples * wordN];
         System.err.print("\nBurn in sample of initial document parameters "
               + "for test set");
