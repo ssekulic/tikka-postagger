@@ -89,18 +89,24 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
         for (int i = 0; i < topicK; ++i) {
             ArrayList<DoubleStringPair> topStems =
                   new ArrayList<DoubleStringPair>();
-            for (int stemid : stemClsCounts.get(i).keySet()) {
-                double p = prob(i, stemid);
-                topStems.add(new DoubleStringPair(p, lexicon.getString(
-                      stemid)));
-            }
-            Collections.sort(topStems);
-            for (int j = 0; j < outputPerState; ++j) {
-                try {
-                    TopStemsPerTopic[i][j] = new StringDoublePair(
-                          topStems.get(j).stringValue,
-                          topStems.get(j).doubleValue);
-                } catch (IndexOutOfBoundsException e) {
+            if (stemClsCounts.containsKey(i)) {
+                for (int stemid : stemClsCounts.get(i).keySet()) {
+                    double p = prob(i, stemid);
+                    topStems.add(new DoubleStringPair(p, lexicon.getString(
+                          stemid)));
+                }
+                Collections.sort(topStems);
+                for (int j = 0; j < outputPerState; ++j) {
+                    try {
+                        TopStemsPerTopic[i][j] = new StringDoublePair(
+                              topStems.get(j).stringValue,
+                              topStems.get(j).doubleValue);
+                    } catch (IndexOutOfBoundsException e) {
+                    }
+                }
+            } else {
+                for (int j = 0; j < outputPerState; ++j) {
+                    TopStemsPerTopic[i][j] = new StringDoublePair("", 0);
                 }
             }
         }
@@ -108,7 +114,7 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
 
     /**
      * Print normalized probability tables for affixes by topic.
-     * 
+     *
      * @param topicS    Dummy variable. Not used at all.
      * @param topicK    Number of topics
      * @param outputPerTopic    How many affixes to print per state in
@@ -119,7 +125,8 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
      */
     @Override
     public void print(int topicS, int topicK, int outputPerTopic,
-          double[] topicProbs, BufferedWriter out) throws IOException {
+          double[] topicProbs, BufferedWriter out)
+          throws IOException {
         int startt = 0, M = 4, endt = Math.min(M, topicProbs.length);
 
         out.write("***** Stem Probabilities by Topic *****\n\n");

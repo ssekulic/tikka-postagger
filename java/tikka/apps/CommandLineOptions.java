@@ -50,7 +50,7 @@ public class CommandLineOptions {
     /**
      * Hyperparameter for word/topic prior
      */
-    protected double beta = 0.01;
+    protected double beta = 0.1;
     /**
      * Path for training data. Should be a full directory
      */
