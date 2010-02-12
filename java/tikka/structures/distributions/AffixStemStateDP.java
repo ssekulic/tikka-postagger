@@ -58,6 +58,5 @@ public class AffixStemStateDP extends FourDimDirichletProcess {
             DirichletBaseDistribution baseDistribution,
             Lexicon lexicon, double hyper, int states) {
         super(baseDistribution, lexicon, hyper, states);
-        throw new UnsupportedOperationException("Don't use this!");
     }
 }

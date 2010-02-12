@@ -48,7 +48,7 @@ public class Lexicon extends HashMap<Integer, StringCountPair> {
      * 
      * @param reverseMap    A map from strings to indexes
      */
-    public Lexicon(HashMap<String,Integer> reverseMap) {
+    public Lexicon(HashMap<String, Integer> reverseMap) {
         this.reverseMap = reverseMap;
         availableIdx = new Stack<Integer>();
         availableIdx.push(0);
@@ -148,7 +148,12 @@ public class Lexicon extends HashMap<Integer, StringCountPair> {
      * @return  Corresponding string
      */
     public String getString(int idx) {
-        return get(idx).string;
+        try {
+            return get(idx).string;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**

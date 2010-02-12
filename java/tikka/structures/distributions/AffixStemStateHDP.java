@@ -65,7 +65,7 @@ public class AffixStemStateHDP extends AffixStemStateDP {
      */
     public AffixStemStateHDP(DirichletBaseDistribution baseDistribution,
           Lexicon lexicon, double hyper, int states) {
-        super(null, null, hyper, states);
+        super(baseDistribution, lexicon, hyper, states);
         /**
          * Making the hyperparameter 5 times bigger here. Good? Bad?
          */
@@ -125,7 +125,7 @@ public class AffixStemStateHDP extends AffixStemStateDP {
      */
     @Override
     public double prob(int cls, int stem, int affix) {
-        return (getCount(cls, stem, affix) + hyper * affixStateDP.prob(affix, stem))
+        return (getCount(cls, stem, affix) + hyper * affixStateDP.prob(cls, affix))
               / (getCumCount(cls, stem) + hyper);
     }
 
