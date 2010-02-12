@@ -257,6 +257,9 @@ public class CommandLineOptions {
                         testDataDir = value;
                     }
                     break;
+                case 'g':
+                    gamma = Double.parseDouble(value);
+                    break;
                 case 'i':
                     opt = option.getOpt();
                     if (opt.equals("itr")) {

@@ -60,6 +60,10 @@ public class Train extends MainBase {
             } else if (experimentModel.equals("m2")) {
                 System.err.println("Using model 2!");
                 hhl = new HDPHMMLDAm2(modelOptions);
+            } else if (experimentModel.equals("m3")) {
+                System.err.println("Using model 3!");
+                modelOptions.topicSubStates = 0;
+                hhl = new HDPHMMLDAm2(modelOptions);
             } else {
                 hhl = new HDPHMMLDAm1(modelOptions);
             }
