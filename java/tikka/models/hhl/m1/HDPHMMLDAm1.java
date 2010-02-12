@@ -95,7 +95,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      * been loaded from a pretrained model.
      */
     @Override
-    public void initializeFromLoadedModel(CommandLineOptions options) {
+    public void initializeFromLoadedModel(CommandLineOptions options) throws IOException {
         super.initializeFromLoadedModel(options);
 
         initalizeDistributions();

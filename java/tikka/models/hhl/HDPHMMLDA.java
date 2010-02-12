@@ -894,7 +894,8 @@ public abstract class HDPHMMLDA {
      * Initializes from a pretrained, loaded model. Use this if the model has
      * been loaded from a pretrained model.
      */
-    public void initializeFromLoadedModel(CommandLineOptions options) {
+    public void initializeFromLoadedModel(CommandLineOptions options) throws
+          IOException {
         /**
          * Initialize random number generator
          */
@@ -902,6 +903,12 @@ public abstract class HDPHMMLDA {
             randomSeed = options.getRandomSeed();
         }
         mtfRand = new MersenneTwisterFast(randomSeed);
+
+        if (trainDataDir != null) {
+            trainDirReader = new DirReader(trainDataDir, dataFormat);
+        } else {
+            trainDataDir = "";
+        }
 
         /**
          * Revive some constants that will be used often
