@@ -320,6 +320,9 @@ public class CommandLineOptions {
                         temperatureDecrement = Double.parseDouble(value);
                     }
                     break;
+                case 'q':
+                    topicSubStates = Integer.valueOf(value);
+                    break;
                 case 'r':
                     randomSeed = Integer.valueOf(value);
                     break;
