@@ -1686,7 +1686,8 @@ public abstract class HDPHMMLDA {
                 wordstateoff = wordid * stateS;
                 wordtopicoff = wordid * topicK;
 
-                if (mtfRand.nextDouble() > 0.5) {
+                int mult = topicSubStates - 1 > 0 ? 1 : 0;
+                if (mtfRand.nextDouble() * mult > 0.5) {
                     stateid = stateVector[i] = mtfRand.nextInt(
                           topicSubStates - 1) + 1;
                 } else {
