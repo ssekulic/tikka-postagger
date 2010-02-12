@@ -917,12 +917,13 @@ public abstract class HDPHMMLDA {
         /**
          * Revive the annealing regime
          */
-        temperature = initialTemperature;
-        temperatureReciprocal = 1 / temperature;
-        innerIterations = iterations;
-        outerIterations =
-              (int) Math.round(
-              (initialTemperature - targetTemperature) / temperatureDecrement) + 1;
+        temperature = targetTemperature;
+//        temperature = initialTemperature;
+//        temperatureReciprocal = 1 / temperature;
+//        innerIterations = iterations;
+//        outerIterations =
+//              (int) Math.round(
+//              (initialTemperature - targetTemperature) / temperatureDecrement) + 1;
 
         /**
          * These are not saved in the model so must be revived
