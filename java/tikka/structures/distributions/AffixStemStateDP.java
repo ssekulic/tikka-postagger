@@ -17,16 +17,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.structures.distributions;
 
-import tikka.structures.DoubleStringPair;
 import tikka.structures.StringDoublePair;
 import tikka.structures.lexicons.Lexicon;
-import tikka.structures.lexicons.ThreeDimProbLexicon;
-import tikka.structures.lexicons.TwoDimLexicon;
-import tikka.structures.lexicons.TwoDimProbLexicon;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * Dirichlet process that models dependency from affix to stem. Affixes are
@@ -66,129 +58,6 @@ public class AffixStemStateDP extends FourDimDirichletProcess {
             DirichletBaseDistribution baseDistribution,
             Lexicon lexicon, double hyper, int states) {
         super(baseDistribution, lexicon, hyper, states);
-    }
-
-    /**
-     * Normalize sample counts for future printing.
-     *
-     * @param stateS    Total number of topics.
-     * @param outputPerTopic    How many affixes to print per state in
-     *                  the output.
-     * @param affixStateDP  State by affix DP
-     * @param affixLexicon  Affix-to-idx and idx-to-affix lexicon
-     */
-    public void normalize(int topicS, int stateS, int outputPerTopic,
-            ThreeDimDirichletProcess affixStateDP, Lexicon affixLexicon) {
-        throw new UnsupportedOperationException("Don't forget to implement this!");
-//        int maxid = 0;
-//        for (int stemid : lexicon.keySet()) {
-//            if (stemid > maxid) {
-//                maxid = stemid;
-//            }
-//        }
-//        maxid++;
-//        double[] stemProbs = new double[maxid];
-//
-//        TopAffixesPerState = new StringDoublePair[stateS][];
-//        for (int i = topicS; i < stateS; ++i) {
-//            TopAffixesPerState[i] = new StringDoublePair[outputPerTopic];
-//        }
-//
-//        for (int i = topicS; i < stateS; ++i) {
-//            try {
-//                for (int j = 0;; ++j) {
-//                    stemProbs[j] = 0;
-//                }
-//            } catch (ArrayIndexOutOfBoundsException e) {
-//            }
-//            ArrayList<DoubleStringPair> topStems =
-//                    new ArrayList<DoubleStringPair>();
-//            ThreeDimProbLexicon stemAffixProbLexicon = new ThreeDimProbLexicon();
-//            clsAffixStemProbs.put(i, stemAffixProbLexicon);
-//
-//            for (int affixid : clsAffixStemCounts.get(i).keySet()) {
-//                double affixStateProb = affixStateDP.getConstProb(i, affixid);
-//                TwoDimLexicon stemCounts =
-//                        clsAffixStemCounts.get(i).get(affixid);
-//                TwoDimProbLexicon stemProbLexicon = new TwoDimProbLexicon();
-//                stemAffixProbLexicon.put(affixid, stemProbLexicon);
-//
-//                for (int stemid : stemCounts.keySet()) {
-//                    double p = affixStateProb *
-//                            prob(i, affixid, stemid);
-//                    stemProbs[stemid] += p;
-//                    stemProbLexicon.put(stemid, p);
-//                }
-//            }
-//            try {
-//                for (int j = 0;; ++j) {
-//                    double d = stemProbs[j];
-//                    if (d > 0) {
-//                        topStems.add(new DoubleStringPair(d,
-//                                lexicon.getString(j)));
-//                    }
-//                }
-//            } catch (ArrayIndexOutOfBoundsException e) {
-//            }
-//            Collections.sort(topStems);
-//            for (int j = 0; j < outputPerTopic; ++j) {
-//                try {
-//                    TopAffixesPerState[i][j] =
-//                            new StringDoublePair(topStems.get(j).stringValue,
-//                            topStems.get(j).doubleValue);
-//                } catch (IndexOutOfBoundsException e) {
-////                    e.printStackTrace();
-//                }
-//            }
-//        }
-    }
-
-    /**
-     * Print top {@code N} stems by {@code Z} topics to output buffer.
-     *
-     * @param stateS    Total number of topics.
-     * @param outputPerTopic    How many stems to print per topic in
-     *                  the output.
-     * @param topicProbs    Array of probabilities for each topic.
-     * @param out   Output buffer
-     * @throws IOException
-     */
-    public void print(int topicK, int outputPerTopic, double[] topicProbs,
-            BufferedWriter out) throws IOException {
-        int startt = 0, M = 4, endt = M;
-
-        out.write("***** Stem Probabilities by Topic *****\n\n");
-        while (startt < topicK) {
-            for (int i = startt; i < endt; ++i) {
-                String header = "Topic_" + i;
-                header = String.format("%25s\t%6.5f\t", header,
-                        topicProbs[i]);
-                out.write(header);
-            }
-
-            out.newLine();
-            out.newLine();
-
-            for (int i = 0; i < outputPerTopic; ++i) {
-                for (int c = startt; c < endt; ++c) {
-                    String line = String.format("%25s\t%7s\t", "", "");
-                    try {
-                        line = String.format("%25s\t%6.5f\t",
-                                TopAffixesPerState[c][i].stringValue,
-                                TopAffixesPerState[c][i].doubleValue);
-                    } catch (NullPointerException e) {
-//                        e.printStackTrace();
-                    }
-                    out.write(line);
-                }
-                out.newLine();
-            }
-
-            out.newLine();
-            out.newLine();
-
-            startt = endt;
-            endt = java.lang.Math.min(topicK, startt + M);
-        }
+        throw new UnsupportedOperationException("Don't use this!");
     }
 }

@@ -33,11 +33,11 @@ public class FourDimDirichletProcess extends DirichletProcess {
     /**
      * 
      */
-    protected FourDimLexicon clsAffixStemCounts;
+    protected FourDimLexicon stemAffixClsCounts;
     /**
      * 
      */
-    protected FourDimProbLexicon clsAffixStemProbs;
+    protected FourDimProbLexicon stemAffixClsProbs;
 
     /**
      * Default constructor.
@@ -51,8 +51,8 @@ public class FourDimDirichletProcess extends DirichletProcess {
         this.lexicon = lexicon;
         this.hyper = hyper;
         this.baseDistribution = baseDistribution;
-        clsAffixStemCounts = new FourDimLexicon(classes);
-        clsAffixStemProbs = new FourDimProbLexicon();
+        stemAffixClsCounts = new FourDimLexicon(classes);
+        stemAffixClsProbs = new FourDimProbLexicon();
         stringProbs = baseDistribution.getStringProbs();
     }
 
@@ -68,12 +68,12 @@ public class FourDimDirichletProcess extends DirichletProcess {
         int val = 0;
 
         try {
-            val = clsAffixStemCounts.dec(cls, affix, stem);
+            val = stemAffixClsCounts.dec(cls, affix, stem);
         } catch (EmptyCountException e) {
             e.printMessage(lexicon.getString(stem), stem);
             System.exit(1);
         } catch (EmptyTwoDimLexiconException e) {
-            clsAffixStemCounts.get(cls).remove(affix);
+            stemAffixClsCounts.get(cls).remove(affix);
         }
 
         try {
@@ -94,7 +94,7 @@ public class FourDimDirichletProcess extends DirichletProcess {
      */
     public int inc(int cls, int affix, int stem) {
         lexicon.inc(stem);
-        return clsAffixStemCounts.inc(cls, affix, stem);
+        return stemAffixClsCounts.inc(cls, affix, stem);
     }
 
     /**
@@ -139,7 +139,7 @@ public class FourDimDirichletProcess extends DirichletProcess {
      */
     public double getConstProb(int cls, int affix,
             int stem) {
-        return clsAffixStemProbs.get(cls).get(affix).get(stem);
+        return stemAffixClsProbs.get(cls).get(affix).get(stem);
     }
 
     /**
@@ -172,7 +172,7 @@ public class FourDimDirichletProcess extends DirichletProcess {
      * @return Count of affix and class
      */
     public int getCumCount(int cls, int affix) {
-        return clsAffixStemCounts.getCumCount(cls, affix);
+        return stemAffixClsCounts.getCumCount(cls, affix);
     }
 
     /**
@@ -190,7 +190,7 @@ public class FourDimDirichletProcess extends DirichletProcess {
      * @return  Count of stem given affix and class
      */
     public int getCount(int cls, int affix, int stem) {
-        return clsAffixStemCounts.get(cls, affix, stem);
+        return stemAffixClsCounts.get(cls, affix, stem);
     }
 
     /**

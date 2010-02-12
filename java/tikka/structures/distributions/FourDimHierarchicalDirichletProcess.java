@@ -60,12 +60,12 @@ public class FourDimHierarchicalDirichletProcess extends FourDimDirichletProcess
         }
         
         try {
-            val = clsAffixStemCounts.dec(cls, affix, stem);
+            val = stemAffixClsCounts.dec(cls, affix, stem);
         } catch (EmptyCountException e) {
             e.printMessage(lexicon.getString(stem), stem);
             System.exit(1);
         } catch (EmptyTwoDimLexiconException e) {
-            clsAffixStemCounts.get(cls).remove(affix);
+            stemAffixClsCounts.get(cls).remove(affix);
         }
 
         try {
@@ -88,6 +88,6 @@ public class FourDimHierarchicalDirichletProcess extends FourDimDirichletProcess
     public int inc(int cls, int affix, int stem) {
         lexicon.inc(stem);
         baseDistribution.inc(lexicon.getString(stem));
-        return clsAffixStemCounts.inc(cls, affix, stem);
+        return stemAffixClsCounts.inc(cls, affix, stem);
     }
 }

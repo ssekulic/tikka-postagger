@@ -24,6 +24,7 @@ import java.io.IOException;
 
 import org.apache.commons.cli.*;
 import tikka.models.hhl.SerializableModel;
+import tikka.models.hhl.m2.HDPHMMLDAm2;
 import tikka.utils.math.BayesFactorEval;
 
 /**
@@ -56,8 +57,10 @@ public class Train extends MainBase {
             if (experimentModel.equals("m1")) {
                 System.err.println("Using model 1!");
                 hhl = new HDPHMMLDAm1(modelOptions);
+            } else if (experimentModel.equals("m2")) {
+                System.err.println("Using model 2!");
+                hhl = new HDPHMMLDAm2(modelOptions);
             } else {
-                System.err.println("Using model 1!");
                 hhl = new HDPHMMLDAm1(modelOptions);
             }
 
@@ -95,15 +98,14 @@ public class Train extends MainBase {
             /**
              * Calculate sample score, aka Bayes factor
              */
-            if (modelOptions.getSampleScoreOutputFilename() != null) {
+            if (modelOptions.getTestDataSampleScoreOutputFilename() != null) {
                 System.err.println("Beginning sampling");
                 hhl.sampleFromTrain();
                 System.err.println("Saving sample scores to :"
-                      + modelOptions.getSampleScoreOutputFilename());
+                      + modelOptions.getTestDataSampleScoreOutputFilename());
                 sampleEval = new BayesFactorEval();
-                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                hhl.printSampleScoreData(modelOptions.getTrainDataSampleScoreOutput(),
                       sampleEval, "Scores from TRAINING data");
-                modelOptions.getSampleScoreOutput().close();
             }
 
             /**

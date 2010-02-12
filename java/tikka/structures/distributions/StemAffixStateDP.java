@@ -69,6 +69,7 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
     /**
      * Normalize sample counts for future printing.
      *
+     * @param topicS    Number of topic states.
      * @param stateS    Total number of topics.
      * @param outputPerTopic    How many affixes to print per state in
      *                  the output.
@@ -101,12 +102,12 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
             ArrayList<DoubleStringPair> topStems =
                     new ArrayList<DoubleStringPair>();
             ThreeDimProbLexicon stemAffixProbLexicon = new ThreeDimProbLexicon();
-            clsAffixStemProbs.put(i, stemAffixProbLexicon);
+            stemAffixClsProbs.put(i, stemAffixProbLexicon);
 
-            for (int affixid : clsAffixStemCounts.get(i).keySet()) {
+            for (int affixid : stemAffixClsCounts.get(i).keySet()) {
                 double affixStateProb = affixStateDP.getConstProb(i, affixid);
                 TwoDimLexicon stemCounts =
-                        clsAffixStemCounts.get(i).get(affixid);
+                        stemAffixClsCounts.get(i).get(affixid);
                 TwoDimProbLexicon stemProbLexicon = new TwoDimProbLexicon();
                 stemAffixProbLexicon.put(affixid, stemProbLexicon);
 
@@ -141,25 +142,26 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
     }
 
     /**
-     * Print top {@code N} stems by {@code Z} topics to output buffer.
+     * Print top {@code N} stems by {@code C} states to output buffer.
      *
+     * @param topicS    Number of topic states.
      * @param stateS    Total number of topics.
      * @param outputPerTopic    How many stems to print per topic in
      *                  the output.
-     * @param topicProbs    Array of probabilities for each topic.
+     * @param stateProbs    Array of probabilities for each topic.
      * @param out   Output buffer
      * @throws IOException
      */
-    public void print(int topicK, int outputPerTopic, double[] topicProbs,
+    public void print(int topicS, int stateS, int outputPerTopic, double[] stateProbs,
             BufferedWriter out) throws IOException {
-        int startt = 0, M = 4, endt = M;
+        int startt = topicS, M = 4, endt = M;
 
         out.write("***** Stem Probabilities by Topic *****\n\n");
-        while (startt < topicK) {
+        while (startt < stateS) {
             for (int i = startt; i < endt; ++i) {
                 String header = "Topic_" + i;
                 header = String.format("%25s\t%6.5f\t", header,
-                        topicProbs[i]);
+                        stateProbs[i]);
                 out.write(header);
             }
 
@@ -185,7 +187,7 @@ public class StemAffixStateDP extends FourDimDirichletProcess {
             out.newLine();
 
             startt = endt;
-            endt = java.lang.Math.min(topicK, startt + M);
+            endt = java.lang.Math.min(stateS, startt + M);
         }
     }
 }

@@ -23,35 +23,36 @@ import tikka.structures.lexicons.Lexicon;
 
 import tikka.structures.lexicons.ThreeDimLexicon;
 import tikka.structures.lexicons.ThreeDimProbLexicon;
-import tikka.structures.lexicons.TwoDimProbLexicon;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
  * The class of the hierarchical Dirichlet process for stems over topics.
- * The counts are maintained in {@link #clsMorphCounts}.
+ * The counts are maintained in {@link #morphClsCounts}.
  *
  * @author tsmoon
  */
 public class StemTopicDP extends ThreeDimDirichletProcess {
 
     /**
-     * Alias for {@link #clsMorphCounts}.
+     * Alias for {@link #morphClsCounts}.
      */
-    protected ThreeDimLexicon clsStemCounts;
+    protected ThreeDimLexicon stemClsCounts;
     /**
-     * Alias for {@link #clsMorphProbs}.
+     * Alias for {@link #morphClsProbs}.
      */
-    protected ThreeDimProbLexicon clsStemProbs;
+    protected ThreeDimProbLexicon stemClsProbs;
     /**
      * 2D array of {@link Infltrait.structures.StringDoublePair}. Defined
      * for {@code C} states and {@code N} affixes which have {@code N} highest
      * likelihoods in the given state. Allocated and populated in
      * {@link #normalize(int)}.
      */
-    protected StringDoublePair[][] TopStemsPerState;
+    protected StringDoublePair[][] TopStemsPerTopic;
 
     /**
      * 
@@ -60,118 +61,46 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
      * @param hyper
      */
     public StemTopicDP(DirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper) {
+          Lexicon lexicon, double hyper) {
         super(baseDistribution, lexicon, hyper);
-        clsStemCounts = clsMorphCounts;
-        clsStemProbs = clsMorphProbs;
+        stemClsCounts = morphClsCounts;
+        stemClsProbs = morphClsProbs;
     }
 
     /**
      * Normalize sample counts.
      *
-     * @param stateS    Total number of states. This excludes the first
+     * @param topicS    Dummy variable. Not used at all.
+     * @param topicK    Total number of states. This excludes the first
      *                  state 0, which is the sentence boundary.
-     * @param outputPerState    How many affixes to print per state in
+     * @param outputPerTopic    How many affixes to print per state in
      *                  the output.
-     * @param topicProbs    Array of probabilties for each state. The first
-     *                  cell should be ignored.
+     * @param topicProbs    Dummy variable. Not used at all.
      */
     @Override
-    public void normalize(int topicS, int stateS, int outputPerState,
-            double[] topicProbs) {
+    public void normalize(int topicS, int topicK, int outputPerState,
+          double[] topicProbs) {
 
-        double sum = 0;
+        TopStemsPerTopic = new StringDoublePair[topicK][];
+        for (int i = 0; i < topicK; ++i) {
+            TopStemsPerTopic[i] = new StringDoublePair[outputPerState];
+        }
+
         for (int i = 0; i < topicS; ++i) {
-            sum += topicProbs[i] = getCumCount(i) + hyper;
-        }
-        for (int i = 0; i < topicS; ++i) {
-            topicProbs[i] /= sum;
-        }
-
-        setNonexistentStateAffixProbs(topicProbs, 1, topicS);
-
-        sum = 0;
-        for (int i = topicS; i < stateS; ++i) {
-            sum += topicProbs[i] = getCumCount(i) + hyper;
-        }
-        for (int i = topicS; i < stateS; ++i) {
-            topicProbs[i] /= sum;
-        }
-
-        setNonexistentTopicStateAffixProbs(topicProbs, topicS, stateS);
-
-        int maxid = 0;
-        for (int affixid : lexicon.keySet()) {
-            if (affixid > maxid) {
-                maxid = affixid;
+            ArrayList<DoubleStringPair> topStems =
+                  new ArrayList<DoubleStringPair>();
+            for (int stemid : stemClsCounts.get(i).keySet()) {
+                double p = prob(i, stemid);
+                topStems.add(new DoubleStringPair(p, lexicon.getString(
+                      stemid)));
             }
-        }
-        maxid++;
-
-        affixTopicStateProbs = new double[maxid];
-        for (int i = 0; i < maxid; ++i) {
-            affixTopicStateProbs[i] = 0;
-        }
-
-        TopStemsPerState = new StringDoublePair[stateS][];
-        for (int i = 1; i < stateS; ++i) {
-            TopStemsPerState[i] = new StringDoublePair[outputPerState];
-        }
-
-        for (int i = 1; i < topicS; ++i) {
-//            TwoDimProbLexicon affixProbLexicon = new TwoDimProbLexicon();
-//            clsStemProbs.put(i, affixProbLexicon);
-
-            ArrayList<DoubleStringPair> topAffixes =
-                    new ArrayList<DoubleStringPair>();
-            for (int affixid : clsStemCounts.get(i).keySet()) {
-//                try {
-                double p = prob(i, affixid);
-//                    affixProbLexicon.put(affixid, p);
-                topAffixes.add(new DoubleStringPair(p, lexicon.getString(
-                        affixid)));
-                double val = p * topicProbs[i];
-                affixTopicStateProbs[affixid] += val;
-//                } catch (ArrayIndexOutOfBoundsException e) {
-//                    e.printStackTrace();
-//                }
-            }
-            Collections.sort(topAffixes);
+            Collections.sort(topStems);
             for (int j = 0; j < outputPerState; ++j) {
                 try {
-                    TopStemsPerState[i][j] = new StringDoublePair(
-                            topAffixes.get(j).stringValue,
-                            topAffixes.get(j).doubleValue);
+                    TopStemsPerTopic[i][j] = new StringDoublePair(
+                          topStems.get(j).stringValue,
+                          topStems.get(j).doubleValue);
                 } catch (IndexOutOfBoundsException e) {
-//                    e.printStackTrace();
-                }
-            }
-        }
-
-        for (int i = topicS; i < stateS; ++i) {
-            TwoDimProbLexicon affixProbLexicon = new TwoDimProbLexicon();
-            clsStemProbs.put(i, affixProbLexicon);
-
-            ArrayList<DoubleStringPair> topAffixes =
-                    new ArrayList<DoubleStringPair>();
-            for (int affixid : clsStemCounts.get(i).keySet()) {
-//                try {
-                double p = prob(i, affixid);
-                affixProbLexicon.put(affixid, p);
-                topAffixes.add(new DoubleStringPair(p, lexicon.getString(
-                        affixid)));
-//                } catch (ArrayIndexOutOfBoundsException e) {
-//                    e.printStackTrace();
-//                }
-            }
-            Collections.sort(topAffixes);
-            for (int j = 0; j < outputPerState; ++j) {
-                try {
-                    TopStemsPerState[i][j] = new StringDoublePair(
-                            topAffixes.get(j).stringValue,
-                            topAffixes.get(j).doubleValue);
-                } catch (IndexOutOfBoundsException e) {
-//                    e.printStackTrace();
                 }
             }
         }
@@ -180,39 +109,38 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
     /**
      * Print normalized probability tables for affixes by topic.
      * 
-     * @param stateS    Total number of states. This excludes the first
-     *                  state 0, which is the sentence boundary.
-     * @param outputPerState    How many affixes to print per state in
+     * @param topicS    Dummy variable. Not used at all.
+     * @param topicK    Number of topics
+     * @param outputPerTopic    How many affixes to print per state in
      *                  the output.
      * @param topicProbs Array of probabilties for each state. The first
      *                  cell should be ignored.
      * @param out   Destination of output
      */
     @Override
-    public void print(int topicS, int stateS, int outputPerState,
-            double[] stateProbs,
-            BufferedWriter out) throws IOException {
-        int startt = topicS, M = 4, endt = M;
+    public void print(int topicS, int topicK, int outputPerTopic,
+          double[] topicProbs, BufferedWriter out) throws IOException {
+        int startt = 0, M = 4, endt = M;
 
-        out.write("***** Affix Probabilities by State *****\n\n");
-        while (startt < stateS) {
+        out.write("***** Stem Probabilities by Topic *****\n\n");
+        while (startt < topicK) {
             for (int i = startt; i < endt; ++i) {
-                String header = "State_" + i;
+                String header = "Topic_" + i;
                 header = String.format("%25s\t%6.5f\t", header,
-                        stateProbs[i]);
+                      topicProbs[i]);
                 out.write(header);
             }
 
             out.newLine();
             out.newLine();
 
-            for (int i = 0; i < outputPerState; ++i) {
+            for (int i = 0; i < outputPerTopic; ++i) {
                 for (int c = startt; c < endt; ++c) {
                     String line = String.format("%25s\t%7s\t", "", "");
                     try {
                         line = String.format("%25s\t%6.5f\t",
-                                TopStemsPerState[c][i].stringValue,
-                                TopStemsPerState[c][i].doubleValue);
+                              TopStemsPerTopic[c][i].stringValue,
+                              TopStemsPerTopic[c][i].doubleValue);
                     } catch (NullPointerException e) {
 //                        e.printStackTrace();
                     } catch (ArrayIndexOutOfBoundsException e) {
@@ -226,7 +154,7 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
             out.newLine();
 
             startt = endt;
-            endt = java.lang.Math.min(stateS, startt + M);
+            endt = java.lang.Math.min(topicK, startt + M);
         }
     }
 }

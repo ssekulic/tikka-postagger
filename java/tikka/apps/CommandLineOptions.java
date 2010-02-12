@@ -100,17 +100,25 @@ public class CommandLineOptions {
      */
     protected String tabularOutputFilename = null;
     /**
-     * Name of file to generate tabulated output to
+     * Name of file to dump test data sample scores (perplexity) to
      */
-    protected String sampleScoreOutputFilename = null;
+    protected String testDataSampleScoreOutputFilename = null;
+    /**
+     * Name of file to dump training data sample scores (bayes factor) to
+     */
+    protected String trainDataSampleScoreOutputFilename = null;
     /**
      * Output buffer to write normalized, tabulated data to.
      */
     protected BufferedWriter tabulatedOutput;
     /**
-     * Output buffer to write normalized, sample tagging data to.
+     * Output buffer to dump test data sample scores (perplexity) to
      */
-    protected BufferedWriter sampleScoreOutput;
+    protected BufferedWriter testDataSampleScoreOutput;
+    /**
+     * Output buffer to dump training data sample scores (perplexity) to
+     */
+    protected BufferedWriter trainDataSampleScoreOutput;
     /**
      * Temperature at which to start annealing process
      */
@@ -288,10 +296,14 @@ public class CommandLineOptions {
                         tabularOutputFilename = value;
                         tabulatedOutput = new BufferedWriter(new OutputStreamWriter(
                               new FileOutputStream(tabularOutputFilename)));
-                    } else if (opt.equals("os")) {
-                        sampleScoreOutputFilename = value;
-                        sampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
-                              new FileOutputStream(sampleScoreOutputFilename)));
+                    } else if (opt.equals("oste")) {
+                        testDataSampleScoreOutputFilename = value;
+                        testDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
+                              new FileOutputStream(testDataSampleScoreOutputFilename)));
+                    } else if (opt.equals("ostr")) {
+                        trainDataSampleScoreOutputFilename = value;
+                        trainDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
+                              new FileOutputStream(testDataSampleScoreOutputFilename)));
                     }
                     break;
                 case 'p':
@@ -486,18 +498,20 @@ public class CommandLineOptions {
         return lag;
     }
 
-    /**
-     * @return the sampleScoreOutput
-     */
-    public BufferedWriter getSampleScoreOutput() {
-        return sampleScoreOutput;
+    public BufferedWriter getTestDataSampleScoreOutput() {
+        return testDataSampleScoreOutput;
     }
 
-    /**
-     * @return the sampleScoreOutputFilename
-     */
-    public String getSampleScoreOutputFilename() {
-        return sampleScoreOutputFilename;
+    public String getTestDataSampleScoreOutputFilename() {
+        return testDataSampleScoreOutputFilename;
+    }
+
+    public BufferedWriter getTrainDataSampleScoreOutput() {
+        return trainDataSampleScoreOutput;
+    }
+
+    public String getTrainDataSampleScoreOutputFilename() {
+        return trainDataSampleScoreOutputFilename;
     }
 
     public int getTestSetBurninIterations() {

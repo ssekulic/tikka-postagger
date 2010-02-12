@@ -504,6 +504,14 @@ public abstract class HDPHMMLDA {
      */
     protected HierarchicalDirichletBaseDistribution stemTopicHierarchicalBaseDistribution;
     /**
+     * Base distribution for stems given topics
+     */
+    protected DirichletBaseDistribution stemTopicBaseDistribution;
+    /**
+     * Base distribution for stems given states
+     */
+    protected DirichletBaseDistribution stemStateBaseDistribution;
+    /**
      * Base distribution for the affixes given states. Equivalent to
      * <pre>G(affix)</pre> in the model.
      */
@@ -968,7 +976,39 @@ public abstract class HDPHMMLDA {
      * Normalize a sample.
      */
     public void normalize() {
-        normalizeWords();
+        Double sum = 0.;
+        for (int i = 1; i < stateS; ++i) {
+            sum += stateProbs[i] = stateCounts[i] + wgamma;
+        }
+        for (int i = 1; i < stateS; ++i) {
+            stateProbs[i] /= sum;
+        }
+
+        sum = 0.;
+        for (int i = 0; i < topicK; ++i) {
+            sum += topicProbs[i] = topicCounts[i] + wbeta;
+        }
+        for (int i = 0; i < topicK; ++i) {
+            topicProbs[i] /= sum;
+        }
+
+        double[] StateByWordProbs = new double[wordW * stateS];
+        try {
+            for (int i = 0;; ++i) {
+                StateByWordProbs[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
+        double[] TopicByWordProbs = new double[wordW * topicK];
+        try {
+            for (int i = 0;; ++i) {
+                TopicByWordProbs[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
+        normalizeWords(StateByWordProbs, TopicByWordProbs);
         normalizeRawTopics();
         normalizeRawStates();
     }
@@ -978,7 +1018,8 @@ public abstract class HDPHMMLDA {
      * segmentations. The parameters for the segmentation were learned during 
      * the training stage.
      */
-    protected abstract void normalizeWords();
+    protected abstract void normalizeWords(double[] StateByWordProbs,
+          double[] TopicByWordProbs);
 
     /**
      * Normalize the sample counts for words given topic.  This is NOT
@@ -991,9 +1032,7 @@ public abstract class HDPHMMLDA {
             TopWordsPerTopicFromRaw[i] = new StringDoublePair[outputPerClass];
         }
 
-        Double sum = 0.;
         for (int i = 0; i < topicK; ++i) {
-            sum += topicProbs[i] = topicCounts[i] + wbeta;
             ArrayList<DoubleStringPair> topWords =
                   new ArrayList<DoubleStringPair>();
             /**
@@ -1011,10 +1050,6 @@ public abstract class HDPHMMLDA {
                       / topicProbs[i]);
             }
         }
-
-        for (int i = 0; i < topicK; ++i) {
-            topicProbs[i] /= sum;
-        }
     }
 
     /**
@@ -1028,9 +1063,7 @@ public abstract class HDPHMMLDA {
             TopWordsPerStateFromRaw[i] = new StringDoublePair[outputPerClass];
         }
 
-        double sum = 0.;
         for (int i = topicSubStates; i < stateS; ++i) {
-            sum += stateProbs[i] = stateCounts[i] + wbeta;
             ArrayList<DoubleStringPair> topWords =
                   new ArrayList<DoubleStringPair>();
             /**
@@ -1048,10 +1081,6 @@ public abstract class HDPHMMLDA {
                       topWords.get(j).stringValue,
                       topWords.get(j).doubleValue / stateProbs[i]);
             }
-        }
-
-        for (int i = 1; i < stateS; ++i) {
-            stateProbs[i] /= sum;
         }
     }
 
@@ -1390,8 +1419,7 @@ public abstract class HDPHMMLDA {
      * @throws IOException
      */
     public void printSampleScoreData(BufferedWriter out, SampleEval sampleEval,
-          String header) throws
-          IOException {
+          String header) throws IOException {
 
         out.write(String.format("%% ***** %s *****", header) + newline);
         out.write("%% " + modelParameterStringBuilder.toString().replaceAll(newline, newline + "%% "));
@@ -1414,6 +1442,7 @@ public abstract class HDPHMMLDA {
             nums += String.format("& %.2f ", SampleProbs[i]);
         }
         out.write(nums + newline);
+        out.close();
     }
 
     /**
@@ -1872,4 +1901,60 @@ public abstract class HDPHMMLDA {
      * annotated text
      */
     protected abstract void sampleTestWordSplitLocations();
+
+    /**
+     * Set and order the top words per state
+     *
+     * @param StateByWordProbs Array of word by state probabilities
+     */
+    protected void setTopWordsPerState(double[] StateByWordProbs) {
+        TopWordsPerState = new StringDoublePair[stateS][];
+        for (int i = 1; i < stateS;
+              ++i) {
+            TopWordsPerState[i] = new StringDoublePair[outputPerClass];
+        }
+        for (int i = 1; i < stateS;
+              ++i) {
+            ArrayList<DoubleStringPair> topWords = new ArrayList<DoubleStringPair>();
+            for (int j = 1; j < wordW;
+                  ++j) {
+                topWords.add(new DoubleStringPair(StateByWordProbs[j * stateS + i], trainIdxToWord.get(j)));
+            }
+            Collections.sort(topWords);
+            for (int j = 0; j < outputPerClass;
+                  ++j) {
+                TopWordsPerState[i][j] = new StringDoublePair(topWords.get(j).stringValue, topWords.get(j).doubleValue);
+            }
+        }
+    }
+
+    /**
+     * Set and order the top words per topic
+     *
+     * @param TopicByWordProbs Array of word by topic probabilities
+     */
+    protected void setTopWordsPerTopic(double[] TopicByWordProbs) {
+        TopWordsPerTopic = new StringDoublePair[topicK][];
+        for (int i = 0; i < topicK;
+              ++i) {
+            TopWordsPerTopic[i] = new StringDoublePair[outputPerClass];
+        }
+        for (int i = 0; i < topicK;
+              ++i) {
+            ArrayList<DoubleStringPair> topWords = new ArrayList<DoubleStringPair>();
+            for (int j = 1; j < wordW;
+                  ++j) {
+                topWords.add(new DoubleStringPair(TopicByWordProbs[j * topicK + i], trainIdxToWord.get(j)));
+            }
+            Collections.sort(topWords);
+            for (int j = 0; j < outputPerClass;
+                  ++j) {
+                try {
+                    TopWordsPerTopic[i][j] = new StringDoublePair(topWords.get(j).stringValue, topWords.get(j).doubleValue);
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }

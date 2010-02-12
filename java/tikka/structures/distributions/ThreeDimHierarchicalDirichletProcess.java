@@ -29,7 +29,7 @@ import java.io.IOException;
 
 /**
  * The class of the hierarchical Dirichlet process for affixes over states.
- * The counts are maintained in {@link #clsMorphCounts}.
+ * The counts are maintained in {@link #morphClsCounts}.
  *
  * @author tsmoon
  */
@@ -37,7 +37,7 @@ public abstract class ThreeDimHierarchicalDirichletProcess extends ThreeDimDiric
 
     /**
      * Class constructor. Assigns {@link #baseDistribution}, {@link #lexicon},
-     * {@link #hyper}. Allocates {@link #clsMorphCounts}.
+     * {@link #hyper}. Allocates {@link #morphClsCounts}.
      *
      * @param baseDistribution  The pre-allocated base distribution
      * @param lexicon   The pre-allocated lexicon
@@ -52,7 +52,7 @@ public abstract class ThreeDimHierarchicalDirichletProcess extends ThreeDimDiric
      * Decrements the count of an morph in some class.
      * <p>
      * This decrements counts of the morph in {@link #baseDistribution},
-     * the counts of the morph in {@link #clsMorphCounts}, and the counts
+     * the counts of the morph in {@link #morphClsCounts}, and the counts
      * of the morph in {@link #lexicon}.
      * 
      * @param cls   Index of the class
@@ -70,7 +70,7 @@ public abstract class ThreeDimHierarchicalDirichletProcess extends ThreeDimDiric
         }
 
         try {
-            val = clsMorphCounts.dec(cls, morph);
+            val = morphClsCounts.dec(cls, morph);
         } catch (EmptyCountException e) {
             e.printMessage(lexicon.getString(morph), morph);
             System.exit(1);
@@ -89,7 +89,7 @@ public abstract class ThreeDimHierarchicalDirichletProcess extends ThreeDimDiric
      * Increment the count of an morph in some class.
      * <p>
      * This increments counts of the morph in {@link #baseDistribution},
-     * the counts of the morph in {@link #clsMorphCounts}, and the counts
+     * the counts of the morph in {@link #morphClsCounts}, and the counts
      * of the morph in {@link #lexicon}.
      * 
      * @param cls   Index of class
@@ -100,6 +100,6 @@ public abstract class ThreeDimHierarchicalDirichletProcess extends ThreeDimDiric
     public int inc(int cls, int morph) {
         lexicon.inc(morph);
         baseDistribution.inc(lexicon.getString(morph));
-        return clsMorphCounts.inc(cls, morph);
+        return morphClsCounts.inc(cls, morph);
     }
 }
