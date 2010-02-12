@@ -242,12 +242,13 @@ public class AffixStemStateHDP extends AffixStemStateDP {
     public void print(int topicS, int stateS, int outputPerTopic,
           double[] stateProbs,
           BufferedWriter out) throws IOException {
-        int startt = topicS, M = 4, endt = M;
+        int startt = 1, M = 4,
+              endt = Math.min(M + 1, stateProbs.length);
 
-        out.write("***** Stem Probabilities by Topic *****\n\n");
+        out.write("***** Affix Probabilities by State *****\n\n");
         while (startt < stateS) {
             for (int i = startt; i < endt; ++i) {
-                String header = "Topic_" + i;
+                String header = "State_" + i;
                 header = String.format("%25s\t%6.5f\t", header,
                       stateProbs[i]);
                 out.write(header);

@@ -70,7 +70,7 @@ public class CommandLineOptions {
     /**
      * Root of path to output annotated texts to
      */
-    protected String annotatedTextOutDir = null;
+    protected String annotatedTrainTextOutDir = null;
     /**
      * Root of path to output annotated test set texts to
      */
@@ -266,7 +266,11 @@ public class CommandLineOptions {
                     }
                     break;
                 case 'j':
-                    annotatedTestTextOutDir = value;
+                    if (value.endsWith("" + File.separator)) {
+                        annotatedTestTextOutDir = value.substring(0, value.length() - 1);
+                    } else {
+                        annotatedTestTextOutDir = value;
+                    }
                     break;
                 case 'k':
                     opt = option.getOpt();
@@ -284,10 +288,10 @@ public class CommandLineOptions {
                     break;
                 case 'n':
                     if (value.endsWith("" + File.separator)) {
-                        annotatedTextOutDir =
+                        annotatedTrainTextOutDir =
                               value.substring(0, value.length() - 1);
                     } else {
-                        annotatedTextOutDir = value;
+                        annotatedTrainTextOutDir = value;
                     }
                     break;
                 case 'o':
@@ -476,8 +480,8 @@ public class CommandLineOptions {
         return modelOutputPath;
     }
 
-    public String getAnnotatedTextOutDir() {
-        return annotatedTextOutDir;
+    public String getAnnotatedTrainTextOutDir() {
+        return annotatedTrainTextOutDir;
     }
 
     public String getAnnotatedTestTextOutDir() {

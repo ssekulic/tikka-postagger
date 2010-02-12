@@ -86,7 +86,7 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
             TopStemsPerTopic[i] = new StringDoublePair[outputPerState];
         }
 
-        for (int i = 0; i < topicS; ++i) {
+        for (int i = 0; i < topicK; ++i) {
             ArrayList<DoubleStringPair> topStems =
                   new ArrayList<DoubleStringPair>();
             for (int stemid : stemClsCounts.get(i).keySet()) {
@@ -120,7 +120,7 @@ public class StemTopicDP extends ThreeDimDirichletProcess {
     @Override
     public void print(int topicS, int topicK, int outputPerTopic,
           double[] topicProbs, BufferedWriter out) throws IOException {
-        int startt = 0, M = 4, endt = M;
+        int startt = 0, M = 4, endt = Math.min(M, topicProbs.length);
 
         out.write("***** Stem Probabilities by Topic *****\n\n");
         while (startt < topicK) {

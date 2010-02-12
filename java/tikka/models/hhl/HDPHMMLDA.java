@@ -1047,7 +1047,7 @@ public abstract class HDPHMMLDA {
             for (int j = 0; j < outputPerClass; ++j) {
                 TopWordsPerTopicFromRaw[i][j] = new StringDoublePair(
                       topWords.get(j).stringValue, topWords.get(j).doubleValue
-                      / topicProbs[i]);
+                      / (topicCounts[i] + wbeta));
             }
         }
     }
@@ -1059,19 +1059,19 @@ public abstract class HDPHMMLDA {
      */
     protected void normalizeRawStates() {
         TopWordsPerStateFromRaw = new StringDoublePair[stateS][];
-        for (int i = topicSubStates; i < stateS; ++i) {
+        for (int i = 1; i < stateS; ++i) {
             TopWordsPerStateFromRaw[i] = new StringDoublePair[outputPerClass];
         }
 
-        for (int i = topicSubStates; i < stateS; ++i) {
+        for (int i = 1; i < stateS; ++i) {
             ArrayList<DoubleStringPair> topWords =
                   new ArrayList<DoubleStringPair>();
             /**
              * Start at one to leave out EOSi
              */
-            for (int j = EOSi + 1; j < wordW; ++j) {
+            for (int j = 1; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                      StateByWord[j * stateS + i] + beta, trainIdxToWord.get(
+                      StateByWord[j * stateS + i] + gamma, trainIdxToWord.get(
                       j)));
             }
             Collections.sort(topWords);
@@ -1079,7 +1079,7 @@ public abstract class HDPHMMLDA {
                 TopWordsPerStateFromRaw[i][j] =
                       new StringDoublePair(
                       topWords.get(j).stringValue,
-                      topWords.get(j).doubleValue / stateProbs[i]);
+                      topWords.get(j).doubleValue / (stateCounts[i] + wgamma));
             }
         }
     }
@@ -1112,7 +1112,7 @@ public abstract class HDPHMMLDA {
      * @throws IOException
      */
     protected void printTopicsRaw(BufferedWriter out) throws IOException {
-        int startt = 0, M = 4, endt = M;
+        int startt = 0, M = 4, endt = Math.min(M, topicProbs.length);
         out.write("***** Unsegmented Word Probabilities by Topic *****\n\n");
         while (startt < topicK) {
             for (int i = startt; i < endt; ++i) {
@@ -1150,7 +1150,8 @@ public abstract class HDPHMMLDA {
      * @throws IOException
      */
     protected void printStatesRaw(BufferedWriter out) throws IOException {
-        int startt = topicSubStates, M = 4, endt = M + topicSubStates; // careful  here!!!!!!!!!!!!!!!!
+        int startt = 1, M = 4,
+              endt = Math.min(M + 1, stateProbs.length); // careful  here!!!!!!!!!!!!!!!!
         out.write("***** Unsegmented Word Probabilities by State *****\n\n");
         while (startt < stateS) {
             for (int i = startt; i < endt; ++i) {
@@ -1187,7 +1188,7 @@ public abstract class HDPHMMLDA {
      * @throws IOException
      */
     protected void printTopics(BufferedWriter out) throws IOException {
-        int startt = 0, M = 4, endt = M;
+        int startt = 0, M = 4, endt = Math.min(M, topicProbs.length);
         out.write("***** Word Probabilities by Topic *****\n\n");
         while (startt < topicK) {
             for (int i = startt; i < endt; ++i) {
@@ -1224,7 +1225,8 @@ public abstract class HDPHMMLDA {
      * @throws IOException
      */
     protected void printStates(BufferedWriter out) throws IOException {
-        int startt = topicSubStates, M = 4, endt = M + topicSubStates;
+        int startt = 1, M = 4,
+              endt = Math.min(M + 1, stateProbs.length);
         out.write("***** Word Probabilities by State *****\n\n");
         while (startt < stateS) {
             for (int i = startt; i < endt; ++i) {

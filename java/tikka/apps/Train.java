@@ -68,17 +68,6 @@ public class Train extends MainBase {
             hhl.initializeFromTrainingData();
             System.err.println("Beginning training!");
             hhl.train();
-            System.err.println("Normalizing parameters!");
-            hhl.normalize();
-
-            /**
-             * Save tabulated probabilities
-             */
-            if (modelOptions.getTabularOutputFilename() != null) {
-                System.err.println("Printing tabulated output to :"
-                      + modelOptions.getTabularOutputFilename());
-                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
-            }
 
             /**
              * Save model if specified
@@ -92,17 +81,28 @@ public class Train extends MainBase {
             }
 
             /**
+             * Save tabulated probabilities
+             */
+            if (modelOptions.getTabularOutputFilename() != null) {
+                System.err.println("Normalizing parameters!");
+                hhl.normalize();
+                System.err.println("Printing tabulated output to :"
+                      + modelOptions.getTabularOutputFilename());
+                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
+            }
+
+            /**
              * Set the string of parameters.
              */
             hhl.setModelParameterStringBuilder();
             /**
              * Calculate sample score, aka Bayes factor
              */
-            if (modelOptions.getTestDataSampleScoreOutputFilename() != null) {
+            if (modelOptions.getTrainDataSampleScoreOutputFilename() != null) {
                 System.err.println("Beginning sampling");
                 hhl.sampleFromTrain();
                 System.err.println("Saving sample scores to :"
-                      + modelOptions.getTestDataSampleScoreOutputFilename());
+                      + modelOptions.getTrainDataSampleScoreOutputFilename());
                 sampleEval = new BayesFactorEval();
                 hhl.printSampleScoreData(modelOptions.getTrainDataSampleScoreOutput(),
                       sampleEval, "Scores from TRAINING data");
@@ -111,7 +111,7 @@ public class Train extends MainBase {
             /**
              * Tag and segment training files from last iteration if specified
              */
-            String annotatedTextDir = modelOptions.getAnnotatedTextOutDir();
+            String annotatedTextDir = modelOptions.getAnnotatedTrainTextOutDir();
             if (annotatedTextDir != null) {
                 System.err.println("Printing annotated text to :"
                       + annotatedTextDir);

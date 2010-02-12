@@ -192,10 +192,10 @@ public class SerializableModel implements Serializable {
      * <pre>1-P(#)</pre> in the model.
      */
     protected double notStemBoundaryProb;
-    /**
-     * Number of types to print per class (topic and/or state)
-     */
-    protected int outputPerClass;
+//    /**
+//     * Number of types to print per class (topic and/or state)
+//     */
+//    protected int outputPerClass;
     /**
      * Array of where each token was segmented. For use in reconstruction
      * in the serializableModel.
@@ -238,7 +238,7 @@ public class SerializableModel implements Serializable {
         muStemBase = m.muStemBase;
         notAffixBoundaryProb = m.notAffixBoundaryProb;
         notStemBoundaryProb = m.notStemBoundaryProb;
-        outputPerClass = m.outputPerClass;
+//        outputPerClass = m.outputPerClass;
         psi = m.psi;
         randomSeed = m.randomSeed;
         trainDataDir = m.trainDataDir;
@@ -316,7 +316,7 @@ public class SerializableModel implements Serializable {
         hhl.muStemBase = muStemBase;
         hhl.notAffixBoundaryProb = notAffixBoundaryProb;
         hhl.notStemBoundaryProb = notStemBoundaryProb;
-        hhl.outputPerClass = outputPerClass;
+//        hhl.outputPerClass = outputPerClass;
         hhl.psi = psi;
         hhl.randomSeed = randomSeed;
         hhl.trainDataDir = trainDataDir;
@@ -373,7 +373,7 @@ public class SerializableModel implements Serializable {
         muStemBase = sm.muStemBase;
         notAffixBoundaryProb = sm.notAffixBoundaryProb;
         notStemBoundaryProb = sm.notStemBoundaryProb;
-        outputPerClass = sm.outputPerClass;
+//        outputPerClass = sm.outputPerClass;
         psi = sm.psi;
         randomSeed = sm.randomSeed;
         trainDataDir = sm.trainDataDir;

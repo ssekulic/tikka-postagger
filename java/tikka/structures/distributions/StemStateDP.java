@@ -76,27 +76,28 @@ public class StemStateDP extends ThreeDimDirichletProcess {
      * @param stateProbs    Dummy variable
      */
     @Override
-    public void normalize(int topicS, int stateS, int outputPerState, double[] stateProbs) {
+    public void normalize(int topicS, int stateS, int outputPerState,
+          double[] stateProbs) {
 
         TopStemsPerState = new StringDoublePair[stateS][];
         for (int i = topicS; i < stateS; ++i) {
             TopStemsPerState[i] = new StringDoublePair[outputPerState];
         }
 
-        for (int i = topicS; i < topicS; ++i) {
-            ArrayList<DoubleStringPair> topAffixes =
+        for (int i = topicS; i < stateS; ++i) {
+            ArrayList<DoubleStringPair> topStems =
                   new ArrayList<DoubleStringPair>();
             for (int stemid : stemClsCounts.get(i).keySet()) {
                 double p = prob(i, stemid);
-                topAffixes.add(new DoubleStringPair(p, lexicon.getString(
+                topStems.add(new DoubleStringPair(p, lexicon.getString(
                       stemid)));
             }
-            Collections.sort(topAffixes);
+            Collections.sort(topStems);
             for (int j = 0; j < outputPerState; ++j) {
                 try {
                     TopStemsPerState[i][j] = new StringDoublePair(
-                          topAffixes.get(j).stringValue,
-                          topAffixes.get(j).doubleValue);
+                          topStems.get(j).stringValue,
+                          topStems.get(j).doubleValue);
                 } catch (IndexOutOfBoundsException e) {
                 }
             }
@@ -116,9 +117,9 @@ public class StemStateDP extends ThreeDimDirichletProcess {
      */
     @Override
     public void print(int topicS, int stateS, int outputPerState,
-          double[] stateProbs,
-          BufferedWriter out) throws IOException {
-        int startt = topicS, M = 4, endt = M;
+          double[] stateProbs, BufferedWriter out) throws IOException {
+        int startt = topicS, M = 4,
+              endt = Math.min(M + topicS, stateProbs.length);
 
         out.write("***** Stem Probabilities by State *****\n\n");
         while (startt < stateS) {
