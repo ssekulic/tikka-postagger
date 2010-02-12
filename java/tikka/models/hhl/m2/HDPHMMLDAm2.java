@@ -82,7 +82,8 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
      * been loaded from a pretrained model.
      */
     @Override
-    public void initializeFromLoadedModel(CommandLineOptions options) throws IOException {
+    public void initializeFromLoadedModel(CommandLineOptions options) throws
+          IOException {
         super.initializeFromLoadedModel(options);
 
         initalizeDistributions();
@@ -783,14 +784,12 @@ public class HDPHMMLDAm2 extends HDPHMMLDA {
 
                 for (int j = 0; j < splitmax; ++j) {
                     if (stateid < topicSubStates) {
-                        splitProbs[j] = stemAffixTopicHDP.prob(topicid,
-                              affixidxes[j], stems[j])
-                              * affixStateDP.probNumerator(stateid,
+                        splitProbs[j] = stemTopicDP.prob(topicid, stems[j])
+                              * affixStemStateHDP.prob(stateid, stemidxes[j],
                               affixes[j]);
                     } else {
-                        splitProbs[j] = stemAffixStateDP.prob(stateid,
-                              affixidxes[j], stems[j])
-                              * affixStateDP.probNumerator(stateid,
+                        splitProbs[j] = stemStateDP.prob(stateid, stems[j])
+                              * affixStemStateHDP.prob(stateid, stemidxes[j],
                               affixes[j]);
                     }
                 }
