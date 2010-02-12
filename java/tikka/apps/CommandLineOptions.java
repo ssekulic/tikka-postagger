@@ -140,7 +140,7 @@ public class CommandLineOptions {
      * Probability of null morph or ,equivalently, the probability of a
      * morpheme boundary
      */
-    protected double stemBoundaryProb = 0.2, affixBoundaryProb = 0.4;
+    protected double stemBoundaryProb = 0.2, affixBoundaryProb = 0.25;
     /**
      * Hyperparameter for state transition priors
      */

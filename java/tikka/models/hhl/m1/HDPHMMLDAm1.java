@@ -95,7 +95,8 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      * been loaded from a pretrained model.
      */
     @Override
-    public void initializeFromLoadedModel(CommandLineOptions options) throws IOException {
+    public void initializeFromLoadedModel(CommandLineOptions options) throws
+          IOException {
         super.initializeFromLoadedModel(options);
 
         initalizeDistributions();
@@ -199,7 +200,8 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
                 wordstateoff = wordid * stateS;
                 wordtopicoff = wordid * topicK;
 
-                if (mtfRand.nextDouble() > 0.5) {
+                int mult = topicSubStates - 1 > 0 ? 1 : 0;
+                if (mtfRand.nextDouble() * mult > 0.5) {
                     stateid = stateVector[i] = mtfRand.nextInt(
                           topicSubStates - 1) + 1;
                 } else {
@@ -551,7 +553,8 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      * the training stage.
      */
     @Override
-    protected void normalizeWords(double[] StateByWordProbs, double[] TopicByWordProbs) {
+    protected void normalizeWords(double[] StateByWordProbs,
+          double[] TopicByWordProbs) {
         int wlength = 0, splitmax = 0;
         String word = "";
         String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
