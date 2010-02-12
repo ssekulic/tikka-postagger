@@ -134,13 +134,13 @@ public class CommandLineOptions {
     /**
      * Hyperparameters for (hierarchical) dirichlet processes
      */
-    protected double muStem = 30, muStemBase = 300, muAffixBase = 100,
-          muAffix = 10, betaStemBase = 300, betaStem = 30;
+    protected double muStem = 300, muStemBase = 3000, muAffixBase = 3000,
+          muAffix = 300, betaStemBase = 3000, betaStem = 300;
     /**
      * Probability of null morph or ,equivalently, the probability of a
      * morpheme boundary
      */
-    protected double stemBoundaryProb = 0.2, affixBoundaryProb = 0.2;
+    protected double stemBoundaryProb = 0.2, affixBoundaryProb = 0.4;
     /**
      * Hyperparameter for state transition priors
      */
