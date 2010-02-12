@@ -46,7 +46,7 @@ public class CommandLineOptions {
     /**
      * Hyperparameter of topic prior
      */
-    protected double alpha = 50 / topics;
+    protected double alpha = 1;
     /**
      * Hyperparameter for word/topic prior
      */
