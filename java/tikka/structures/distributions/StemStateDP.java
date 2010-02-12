@@ -87,19 +87,26 @@ public class StemStateDP extends ThreeDimDirichletProcess {
         for (int i = topicS; i < stateS; ++i) {
             ArrayList<DoubleStringPair> topStems =
                   new ArrayList<DoubleStringPair>();
-            for (int stemid : stemClsCounts.get(i).keySet()) {
-                double p = prob(i, stemid);
-                topStems.add(new DoubleStringPair(p, lexicon.getString(
-                      stemid)));
-            }
-            Collections.sort(topStems);
-            for (int j = 0; j < outputPerState; ++j) {
-                try {
-                    TopStemsPerState[i][j] = new StringDoublePair(
-                          topStems.get(j).stringValue,
-                          topStems.get(j).doubleValue);
-                } catch (IndexOutOfBoundsException e) {
+            if (stemClsCounts.containsKey(i)) {
+                for (int stemid : stemClsCounts.get(i).keySet()) {
+                    double p = prob(i, stemid);
+                    topStems.add(new DoubleStringPair(p, lexicon.getString(
+                          stemid)));
                 }
+                Collections.sort(topStems);
+                for (int j = 0; j < outputPerState; ++j) {
+                    try {
+                        TopStemsPerState[i][j] = new StringDoublePair(
+                              topStems.get(j).stringValue,
+                              topStems.get(j).doubleValue);
+                    } catch (IndexOutOfBoundsException e) {
+                    }
+                }
+            } else {
+                for (int j = 0; j < outputPerState; ++j) {
+                    TopStemsPerState[i][j] = new StringDoublePair("", 0);
+                }
+
             }
         }
     }
