@@ -303,7 +303,7 @@ public class CommandLineOptions {
                     } else if (opt.equals("ostr")) {
                         trainDataSampleScoreOutputFilename = value;
                         trainDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
-                              new FileOutputStream(testDataSampleScoreOutputFilename)));
+                              new FileOutputStream(trainDataSampleScoreOutputFilename)));
                     }
                     break;
                 case 'p':
