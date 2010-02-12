@@ -64,9 +64,10 @@ public class MainBase {
               "full path to save model to");
         options.addOption("n", "annotated-text", true,
               "full path to save annotated text to");
-        options.addOption("os", "output-sample-score", true,
-              "path of output for bayes factors and perplexity measures for "
-              + "samples taken for the training and/or training data");
+        options.addOption("oste", "output-test-sample-score", true,
+              "path of output for perplexity measures for samples taken for the test data");
+        options.addOption("ostr", "output-train-sample-score", true,
+              "path of output for bayes factors for samples taken for the training data");
         options.addOption("ot", "output-tabulated-probabilities", true,
               "path of tabulated probability output");
         options.addOption("pi", "initial-temperature", true,

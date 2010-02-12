@@ -20,8 +20,6 @@ package tikka.models.hhl.m1;
 import java.io.BufferedWriter;
 import tikka.apps.CommandLineOptions;
 
-import tikka.exceptions.EmptyCountException;
-
 import tikka.models.hhl.HDPHMMLDA;
 
 import tikka.structures.DoubleStringPair;
@@ -73,7 +71,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
               stemBoundaryProb, wbeta * 10);
 
         affixBaseDistribution = new DirichletBaseDistribution(
-              affixLexicon, affixBoundaryProb, muAffix) ;
+              affixLexicon, affixBoundaryProb, muAffix);
 
         /**
          * Note the hyperparameter being passed to the DP base. it is not
@@ -464,7 +462,7 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
                         for (int j = topicSubStates;; ++j) {
                             totalprob = 0;
                             for (int k = 0; k < splitmax; ++k) {
-                                totalprob += stemAffixStateDP.prob(stateid, affixidxes[k], stems[k])
+                                totalprob += stemAffixStateDP.prob(j, affixidxes[k], stems[k])
                                       * affixStateDP.prob(j, affixes[k]);
                             }
                             stateProbs[j] = totalprob
@@ -553,132 +551,76 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      * the training stage.
      */
     @Override
-    protected void normalizeWords() {
-        Double sum = 0.;
-        double[] StateByWordProbs = new double[wordW * stateS];
-        try {
-            for (int i = 0;; ++i) {
-                StateByWordProbs[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
-
-        double[] TopicByWordProbs = new double[wordW * topicK];
-        try {
-            for (int i = 0;; ++i) {
-                TopicByWordProbs[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-        }
+    protected void normalizeWords(double[] StateByWordProbs, double[] TopicByWordProbs) {
+        int wlength = 0, splitmax = 0;
+        String word = "";
+        String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
+        int[] stemidxes = new int[MAXLEN], affixidxes = new int[MAXLEN];
 
         double[] nonexistentStateAffixProbs = affixStateDP.getNonexistentStateAffixProbs();
-        for (int wordid = 0; wordid < wordW; ++wordid) {
-            String word = trainIdxToWord.get(wordid);
+        for (int wordid = 1; wordid < wordW; ++wordid) {
+            word = trainIdxToWord.get(wordid);
             int wordtopicoff = wordid * topicK;
-            int wlength = word.length();
-            String[] stems = new String[wlength + 1];
-            String[] affixes = new String[wlength + 1];
-            int[] affixids = new int[wlength + 1];
+            int wordstateoff = wordid * stateS;
+
+            wlength = word.length();
+            splitmax = wlength + 1;
+            for (int k = 0; k < splitmax; ++k) {
+                stems[k] = word.substring(0, k);
+                affixes[k] = word.substring(k, wlength);
+                stemidxes[k] = stemLexicon.getIdx(stems[k]);
+                affixidxes[k] = affixLexicon.getIdx(affixes[k]);
+            }
+
             for (int i = 1; i < topicSubStates; ++i) {
-                for (int j = 0; j < wlength + 1; ++j) {
-                    String stem = word.substring(0, j);
-                    String affix = word.substring(j, wlength);
-                    stems[j] = stem;
-                    affixes[j] = affix;
-                    affixids[j] = affixLexicon.getIdx(affix);
-                }
                 double ssum = 0;
                 for (int j = 0; j < topicK; ++j) {
                     double tsum = 0;
                     for (int k = 0; k < wlength + 1; ++k) {
                         double stemProb =
-                              stemAffixTopicHDP.prob(j, affixids[k], stems[k]);
+                              stemAffixTopicHDP.prob(j, affixidxes[k], stems[k]);
                         double affixProb = 0;
-                        if (affixids[k] == -1) {
+                        if (affixidxes[k] == -1) {
                             affixProb =
                                   nonexistentStateAffixProbs[affixes[k].length()];
                         } else {
-                            affixProb = affixStateDP.prob(j, affixes[k]);
+                            affixProb = affixStateDP.prob(i, affixes[k]);
                         }
                         tsum += stemProb * affixProb;
                     }
                     TopicByWordProbs[wordtopicoff + j] = tsum;
                     ssum += tsum * topicProbs[j];
                 }
-                StateByWordProbs[wordid * stateS + i] = ssum;
+                StateByWordProbs[wordstateoff + i] = ssum;
             }
         }
 
-        TopWordsPerState = new StringDoublePair[stateS][];
-        for (int i = 1; i < stateS; ++i) {
-            TopWordsPerState[i] = new StringDoublePair[outputPerClass];
-        }
+        for (int wordid = 1; wordid < wordW; ++wordid) {
+            word = trainIdxToWord.get(wordid);
+            int wordstateoff = wordid * stateS;
 
-        sum = 0.;
-        for (int i = 1; i < topicSubStates; ++i) {
-            sum += stateProbs[i] = stateCounts[i] + wbeta;
-            ArrayList<DoubleStringPair> topWords =
-                  new ArrayList<DoubleStringPair>();
-            for (int j = 0; j < wordW; ++j) {
-                topWords.add(new DoubleStringPair(
-                      StateByWordProbs[j * stateS + i], trainIdxToWord.get(
-                      j)));
+            wlength = word.length();
+            splitmax = wlength + 1;
+            for (int k = 0; k < splitmax; ++k) {
+                stems[k] = word.substring(0, k);
+                affixes[k] = word.substring(k, wlength);
+                stemidxes[k] = stemLexicon.getIdx(stems[k]);
+                affixidxes[k] = affixLexicon.getIdx(affixes[k]);
             }
-            Collections.sort(topWords);
-            for (int j = 0; j < outputPerClass; ++j) {
-                TopWordsPerState[i][j] =
-                      new StringDoublePair(
-                      topWords.get(j).stringValue,
-                      topWords.get(j).doubleValue / stateProbs[i]);
-            }
-        }
 
-        for (int i = topicSubStates; i < stateS; ++i) {
-            sum += stateProbs[i] = stateCounts[i] + wbeta;
-            ArrayList<DoubleStringPair> topWords =
-                  new ArrayList<DoubleStringPair>();
-            for (int j = 0; j < wordW; ++j) {
-                topWords.add(new DoubleStringPair(
-                      StateByWord[j * stateS + i] + beta, trainIdxToWord.get(
-                      j)));
-            }
-            Collections.sort(topWords);
-            for (int j = 0; j < outputPerClass; ++j) {
-                TopWordsPerState[i][j] =
-                      new StringDoublePair(
-                      topWords.get(j).stringValue,
-                      topWords.get(j).doubleValue / stateProbs[i]);
-            }
-        }
-
-        for (int i = 1; i < stateS; ++i) {
-            stateProbs[i] /= sum;
-        }
-
-        TopWordsPerTopic = new StringDoublePair[topicK][];
-        for (int i = 0; i < topicK; ++i) {
-            TopWordsPerTopic[i] = new StringDoublePair[outputPerClass];
-        }
-        for (int i = 0; i < topicK; ++i) {
-            ArrayList<DoubleStringPair> topWords =
-                  new ArrayList<DoubleStringPair>();
-            for (int j = 0; j < wordW; ++j) {
-                topWords.add(new DoubleStringPair(
-                      TopicByWordProbs[j * topicK + i],
-                      trainIdxToWord.get(j)));
-            }
-            Collections.sort(topWords);
-            for (int j = 0; j < outputPerClass; ++j) {
-                try {
-                    TopWordsPerTopic[i][j] =
-                          new StringDoublePair(
-                          topWords.get(j).stringValue,
-                          topWords.get(j).doubleValue);
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
+            for (int i = topicSubStates; i < stateS; ++i) {
+                double p = 0;
+                for (int k = 0; k < splitmax; ++k) {
+                    double stemProb = stemAffixStateDP.prob(i, affixidxes[k], stems[k]);
+                    double affixProb = affixStateDP.prob(i, affixes[k]);
+                    p += stemProb * affixProb;
                 }
+                StateByWordProbs[wordstateoff + i] = p;
             }
         }
+
+        setTopWordsPerState(StateByWordProbs);
+        setTopWordsPerTopic(TopicByWordProbs);
     }
 
     /**
@@ -797,10 +739,9 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
      */
     @Override
     public void normalize() {
-        affixStateDP.normalize(topicSubStates, stateS, outputPerClass,
-              stateProbs);
-        stemAffixTopicHDP.normalize(topicK, outputPerClass, affixStateDP,
-              affixLexicon);
+        affixStateDP.normalize(topicSubStates, stateS, outputPerClass, stateProbs);
+        stemAffixStateDP.normalize(topicSubStates, stateS, outputPerClass, affixStateDP, affixLexicon);
+        stemAffixTopicHDP.normalize(topicK, outputPerClass, affixStateDP, affixLexicon);
         super.normalize();
     }
 
@@ -814,7 +755,10 @@ public class HDPHMMLDAm1 extends HDPHMMLDA {
     @Override
     public void printTabulatedProbabilities(BufferedWriter out) throws
           IOException {
-        affixStateDP.print(topicSubStates, stateS, outputPerClass, stateProbs,
+        affixStateDP.print(1, stateS, outputPerClass, stateProbs,
+              out);
+        printNewlines(out, 4);
+        stemAffixStateDP.print(topicSubStates, stateS, outputPerClass, stateProbs,
               out);
         printNewlines(out, 4);
         stemAffixTopicHDP.print(topicK, outputPerClass, topicProbs, out);

@@ -19,14 +19,15 @@ package tikka.apps;
 
 import tikka.models.hhl.HDPHMMLDA;
 import tikka.models.hhl.m1.HDPHMMLDAm1;
+import tikka.models.hhl.SerializableModel;
+import tikka.models.hhl.m2.HDPHMMLDAm2;
+import tikka.utils.math.BayesFactorEval;
+import tikka.utils.math.PerplexityEval;
+import tikka.utils.math.SampleEval;
 
 import java.io.IOException;
 
 import org.apache.commons.cli.*;
-import tikka.models.hhl.SerializableModel;
-import tikka.utils.math.BayesFactorEval;
-import tikka.utils.math.PerplexityEval;
-import tikka.utils.math.SampleEval;
 
 /**
  * This is a module for tagging test data sets. Parameters may be trained from
@@ -76,6 +77,9 @@ public class Tagger extends MainBase {
                 if (experimentModel.equals("m1")) {
                     System.err.println("Using model 1!");
                     hhl = new HDPHMMLDAm1(modelOptions);
+                } else if (experimentModel.equals("m2")) {
+                    System.err.println("Using model 2!");
+                    hhl = new HDPHMMLDAm2(modelOptions);
                 } else {
                     hhl = new HDPHMMLDAm1(modelOptions);
                 }
@@ -121,13 +125,13 @@ public class Tagger extends MainBase {
             /**
              * Output scores for the training samples
              */
-            if (modelOptions.getSampleScoreOutputFilename() != null) {
+            if (modelOptions.getTrainDataSampleScoreOutputFilename() != null) {
                 System.err.println("Beginning sampling train data");
                 hhl.sampleFromTrain();
                 System.err.println("Saving sample training scores to :"
-                      + modelOptions.getSampleScoreOutputFilename());
+                      + modelOptions.getTrainDataSampleScoreOutputFilename());
                 sampleEval = new BayesFactorEval();
-                hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                hhl.printSampleScoreData(modelOptions.getTrainDataSampleScoreOutput(),
                       sampleEval, "Scores from TRAINING data");
             }
 
@@ -157,15 +161,14 @@ public class Tagger extends MainBase {
                 /**
                  * Output scores for the test samples
                  */
-                if (modelOptions.getSampleScoreOutputFilename() != null) {
+                if (modelOptions.getTestDataSampleScoreOutputFilename() != null) {
                     System.err.println("Beginning test sampling");
                     hhl.sampleFromTest();
                     System.err.println("Saving test sample scores to :"
-                          + modelOptions.getSampleScoreOutputFilename());
+                          + modelOptions.getTestDataSampleScoreOutputFilename());
                     sampleEval = new PerplexityEval();
-                    hhl.printSampleScoreData(modelOptions.getSampleScoreOutput(),
+                    hhl.printSampleScoreData(modelOptions.getTestDataSampleScoreOutput(),
                           sampleEval, "Scores from TEST data");
-                    modelOptions.getSampleScoreOutput().close();
                 }
 
                 /**

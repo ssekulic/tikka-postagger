@@ -17,7 +17,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.models.hhl;
 
+import tikka.apps.CommandLineOptions;
+
 import tikka.models.hhl.m1.HDPHMMLDAm1;
+import tikka.models.hhl.m2.HDPHMMLDAm2;
+
+import tikka.opennlp.io.DataFormatEnum;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,11 +31,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import tikka.apps.CommandLineOptions;
-import tikka.opennlp.io.DataFormatEnum;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters
@@ -290,6 +294,8 @@ public class SerializableModel implements Serializable {
         HDPHMMLDA hhl = null;
         if (modelName.equals("m1")) {
             hhl = new HDPHMMLDAm1(options);
+        } else if (modelName.equals("m2")) {
+            hhl = new HDPHMMLDAm2(options);
         }
 
         hhl.affixBoundaryProb = affixBoundaryProb;

@@ -95,15 +95,15 @@ public class StemAffixTopicDP extends FourDimDirichletProcess {
             ArrayList<DoubleStringPair> topStems =
                     new ArrayList<DoubleStringPair>();
             ThreeDimProbLexicon stemAffixProbLexicon = new ThreeDimProbLexicon();
-            clsAffixStemProbs.put(i, stemAffixProbLexicon);
+            stemAffixClsProbs.put(i, stemAffixProbLexicon);
 
-            for (int affixid : clsAffixStemCounts.get(i).keySet()) {
+            for (int affixid : stemAffixClsCounts.get(i).keySet()) {
                 double affixProb = affixTopicStateProbs[affixid];
                 assert affixProb > 0 : "Uh oh, affix " + affixid + " is " + affixProb;
                 double affixDenom = probDenominator(i, affixid);
                 double affixMult = affixProb / affixDenom;
                 TwoDimLexicon stemCounts =
-                        clsAffixStemCounts.get(i).get(affixid);
+                        stemAffixClsCounts.get(i).get(affixid);
                 TwoDimProbLexicon stemProbLexicon = new TwoDimProbLexicon();
                 stemAffixProbLexicon.put(affixid, stemProbLexicon);
 

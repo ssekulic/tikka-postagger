@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  * The class of the hierarchical Dirichlet process for affixes over states.
- * The counts are maintained in {@link #clsMorphCounts}.
+ * The counts are maintained in {@link #morphClsCounts}.
  *
  * @author tsmoon
  */
@@ -38,13 +38,13 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * {@link java.util.HashMap} which keeps counts of morphs per class. This
      * is used in the training as well as normalization stage.
      */
-    protected ThreeDimLexicon clsMorphCounts;
+    protected ThreeDimLexicon morphClsCounts;
     /**
      * {@link java.util.HashMap} which keeps probs of morphs per class. This
      * is used only in the normalization stage and is solely intended for fast
      * lookup.
      */
-    protected ThreeDimProbLexicon clsMorphProbs;
+    protected ThreeDimProbLexicon morphClsProbs;
     /**
      * Array of probabilities for the affixes to be used in computing probabilities for
      * stems and words conditioned only on the topics. Allocated and populated in
@@ -68,19 +68,19 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
 
     /**
      * Class constructor. Assigns {@link #baseDistribution}, {@link #lexicon},
-     * {@link #hyper}. Allocates {@link #clsMorphCounts}.
+     * {@link #hyper}. Allocates {@link #morphClsCounts}.
      *
      * @param baseDistribution  The pre-allocated base distribution
      * @param lexicon   The pre-allocated lexicon
      * @param hyper Hyperparamter for this distribution
      */
     public ThreeDimDirichletProcess(DirichletBaseDistribution baseDistribution,
-            Lexicon lexicon, double hyper) {
+          Lexicon lexicon, double hyper) {
         this.lexicon = lexicon;
         this.hyper = hyper;
         this.baseDistribution = baseDistribution;
-        clsMorphCounts = new ThreeDimLexicon();
-        clsMorphProbs = new ThreeDimProbLexicon();
+        morphClsCounts = new ThreeDimLexicon();
+        morphClsProbs = new ThreeDimProbLexicon();
         stringProbs = baseDistribution.getStringProbs();
     }
 
@@ -88,7 +88,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * Decrements the count of an morph in some class.
      * <p>
      * This decrements counts of the morph in {@link #baseDistribution},
-     * the counts of the morph in {@link #clsMorphCounts}, and the counts
+     * the counts of the morph in {@link #morphClsCounts}, and the counts
      * of the morph in {@link #lexicon}.
      * 
      * @param cls   Index of the class
@@ -99,7 +99,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
         int val = 0;
 
         try {
-            val = clsMorphCounts.dec(cls, morph);
+            val = morphClsCounts.dec(cls, morph);
         } catch (EmptyCountException e) {
             e.printMessage(lexicon.getString(morph), morph);
             System.exit(1);
@@ -118,7 +118,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * Increment the count of an morph in some class.
      * <p>
      * This increments counts of the morph in {@link #baseDistribution},
-     * the counts of the morph in {@link #clsMorphCounts}, and the counts
+     * the counts of the morph in {@link #morphClsCounts}, and the counts
      * of the morph in {@link #lexicon}.
      * 
      * @param cls   Index of class
@@ -127,7 +127,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      */
     public int inc(int cls, int morph) {
         lexicon.inc(morph);
-        return clsMorphCounts.inc(cls, morph);
+        return morphClsCounts.inc(cls, morph);
     }
 
     /**
@@ -147,8 +147,8 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @return      The probability of {@code P(a|c)}.
      */
     public double prob(int cls, int morph) {
-        return (getCount(cls, morph) + baseDistribution.prob(morph)) /
-                (getCumCount(cls) + hyper);
+        return (getCount(cls, morph) + baseDistribution.prob(morph))
+              / (getCumCount(cls) + hyper);
     }
 
     /**
@@ -166,9 +166,9 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @return      The probability of {@code P(a|c)}.
      */
     public double prob(int cls, String morph) {
-        return (getCount(cls, lexicon.getIdx(morph)) + baseDistribution.prob(
-                morph)) /
-                (getCumCount(cls) + hyper);
+        return (getCount(cls, lexicon.getIdx(morph))
+              + baseDistribution.prob(morph))
+              / (getCumCount(cls) + hyper);
     }
 
     /**
@@ -188,7 +188,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
     public double probNumerator(int cls, String morph) {
 
         return getCount(cls, lexicon.getIdx(morph)) + baseDistribution.prob(
-                morph);
+              morph);
     }
 
     /**
@@ -218,7 +218,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @return  The count of the state
      */
     public int getCumCount(int cls) {
-        return clsMorphCounts.getCumCount(cls);
+        return morphClsCounts.getCumCount(cls);
     }
 
     /**
@@ -229,7 +229,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @return  The count of the morph
      */
     public int getCount(int cls, int morph) {
-        return clsMorphCounts.get(cls, morph);
+        return morphClsCounts.get(cls, morph);
     }
 
     /**
@@ -259,7 +259,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      *                  cell should be ignored.
      */
     public abstract void normalize(int topicS, int stateS, int outputPerState,
-            double[] stateProbs);
+          double[] stateProbs);
 
     /**
      * Print normalized probability tables for affixes by topic.
@@ -275,8 +275,8 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @param out   Destination of output
      */
     public abstract void print(int topicS, int stateS, int outputPerState,
-            double[] stateProbs,
-            BufferedWriter out) throws IOException;
+          double[] stateProbs,
+          BufferedWriter out) throws IOException;
 
     /**
      * Returns the probability of a morph given a class. This is only to be
@@ -287,7 +287,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @return  Probability of morph given class
      */
     public double getConstProb(int cls, int morph) {
-        return clsMorphProbs.get(cls).get(morph);
+        return morphClsProbs.get(cls).get(morph);
     }
 
 //    /**
@@ -334,7 +334,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @param endi      End index of array
      */
     public void setNonexistentStateAffixProbs(double[] clsProbs, int starti,
-            int endi) {
+          int endi) {
         nonexistentStateAffixProbs = new double[maxlen];
         for (int i = 0; i < maxlen; ++i) {
             nonexistentStateAffixProbs[i] = 0;
@@ -374,7 +374,7 @@ public abstract class ThreeDimDirichletProcess extends DirichletProcess {
      * @param
      */
     public void setNonexistentTopicStateAffixProbs(double[] clsProbs, int starti,
-            int endi) {
+          int endi) {
         nonexistentTopicStateAffixProbs = new double[maxlen];
         for (int i = 0; i < maxlen; ++i) {
             nonexistentTopicStateAffixProbs[i] = 0;

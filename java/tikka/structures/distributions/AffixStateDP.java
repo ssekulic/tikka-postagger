@@ -31,20 +31,20 @@ import java.util.Collections;
 
 /**
  * The class of the hierarchical Dirichlet process for affixes over states.
- * The counts are maintained in {@link #clsMorphCounts}.
+ * The counts are maintained in {@link #morphClsCounts}.
  *
  * @author tsmoon
  */
 public class AffixStateDP extends ThreeDimDirichletProcess {
 
     /**
-     * Alias for {@link #clsMorphCounts}.
+     * Alias for {@link #morphClsCounts}.
      */
-    protected ThreeDimLexicon clsAffixCounts;
+    protected ThreeDimLexicon affixClsCounts;
     /**
-     * Alias for {@link #clsMorphProbs}.
+     * Alias for {@link #morphClsProbs}.
      */
-    protected ThreeDimProbLexicon clsAffixProbs;
+    protected ThreeDimProbLexicon affixClsProbs;
     /**
      * 2D array of {@link Infltrait.structures.StringDoublePair}. Defined
      * for {@code C} states and {@code N} affixes which have {@code N} highest
@@ -62,8 +62,8 @@ public class AffixStateDP extends ThreeDimDirichletProcess {
     public AffixStateDP(DirichletBaseDistribution baseDistribution,
             Lexicon lexicon, double hyper) {
         super(baseDistribution, lexicon, hyper);
-        clsAffixCounts = clsMorphCounts;
-        clsAffixProbs = clsMorphProbs;
+        affixClsCounts = morphClsCounts;
+        affixClsProbs = morphClsProbs;
     }
 
     /**
@@ -120,11 +120,11 @@ public class AffixStateDP extends ThreeDimDirichletProcess {
 
         for (int i = 1; i < topicS; ++i) {
 //            TwoDimProbLexicon affixProbLexicon = new TwoDimProbLexicon();
-//            clsAffixProbs.put(i, affixProbLexicon);
+//            affixClsProbs.put(i, affixProbLexicon);
 
             ArrayList<DoubleStringPair> topAffixes =
                     new ArrayList<DoubleStringPair>();
-            for (int affixid : clsAffixCounts.get(i).keySet()) {
+            for (int affixid : affixClsCounts.get(i).keySet()) {
 //                try {
                 double p = prob(i, affixid);
 //                    affixProbLexicon.put(affixid, p);
@@ -150,11 +150,11 @@ public class AffixStateDP extends ThreeDimDirichletProcess {
 
         for (int i = topicS; i < stateS; ++i) {
             TwoDimProbLexicon affixProbLexicon = new TwoDimProbLexicon();
-            clsAffixProbs.put(i, affixProbLexicon);
+            affixClsProbs.put(i, affixProbLexicon);
 
             ArrayList<DoubleStringPair> topAffixes =
                     new ArrayList<DoubleStringPair>();
-            for (int affixid : clsAffixCounts.get(i).keySet()) {
+            for (int affixid : affixClsCounts.get(i).keySet()) {
 //                try {
                 double p = prob(i, affixid);
                 affixProbLexicon.put(affixid, p);
@@ -179,7 +179,9 @@ public class AffixStateDP extends ThreeDimDirichletProcess {
 
     /**
      * Print normalized probability tables for affixes by topic.
-     * 
+     *
+     * @param topicS    Number of topic states. Since we're printing affixes,
+     *                  we can ignore this.
      * @param stateS    Total number of states. This excludes the first
      *                  state 0, which is the sentence boundary.
      * @param outputPerState    How many affixes to print per state in
