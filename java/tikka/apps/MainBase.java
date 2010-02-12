@@ -76,6 +76,8 @@ public class MainBase {
               "temperature at which to stop annealing (default=1)");
         options.addOption("pt", "temperature-increment", true,
               "temperature increment steps (default=0.1)");
+        options.addOption("q", "topic-substates", true,
+              "number of states in that are allocated to topics (default=1)");
         options.addOption("s", "states", true,
               "number of states in HMM (default=15)");
         options.addOption("r", "random-seed", true,
