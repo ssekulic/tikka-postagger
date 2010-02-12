@@ -52,6 +52,8 @@ public class MainBase {
               "number of test set burn in iterations (default=10)");
         options.addOption("f", "test-data-dir", true,
               "full path to directory containing test documents");
+        options.addOption("g", "gamma", true,
+              "set gamma value (default=0.01)");
         options.addOption("j", "annotated-test-text", true,
               "full path to save annotated test set text to");
         options.addOption("ks", "samples", true,

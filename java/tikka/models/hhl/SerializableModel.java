@@ -296,6 +296,8 @@ public class SerializableModel implements Serializable {
             hhl = new HDPHMMLDAm1(options);
         } else if (modelName.equals("m2")) {
             hhl = new HDPHMMLDAm2(options);
+        } else if (modelName.equals("m3")) {
+            hhl = new HDPHMMLDAm2(options);
         }
 
         hhl.affixBoundaryProb = affixBoundaryProb;
