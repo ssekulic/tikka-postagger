@@ -87,23 +87,6 @@ public class Tagger extends MainBase {
                 hhl.initializeFromTrainingData();
                 System.err.println("Beginning training!");
                 hhl.train();
-                System.err.println("Normalizing parameters!");
-                normalized = true;
-                hhl.normalize();
-            }
-
-            /**
-             * Output normalized parameters in tabular form to output if
-             * specified
-             */
-            if (modelOptions.getTabularOutputFilename() != null) {
-                if (!normalized) {
-                    System.err.println("Normalizing parameters!");
-                    hhl.normalize();
-                }
-                System.err.println("Printing tabulated output to :"
-                      + modelOptions.getTabularOutputFilename());
-                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
             }
 
             /**
@@ -115,6 +98,18 @@ public class Tagger extends MainBase {
                       + modelOutputPath);
                 SerializableModel serializableModel = new SerializableModel(hhl);
                 serializableModel.saveModel(modelOutputPath);
+            }
+
+            /**
+             * Output normalized parameters in tabular form to output if
+             * specified
+             */
+            if (modelOptions.getTabularOutputFilename() != null) {
+                System.err.println("Normalizing parameters!");
+                hhl.normalize();
+                System.err.println("Printing tabulated output to :"
+                      + modelOptions.getTabularOutputFilename());
+                hhl.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
             }
 
             /**
@@ -139,7 +134,7 @@ public class Tagger extends MainBase {
              * Save training text which has been tagged and segmented to output if
              * specified
              */
-            String annotatedTextDir = modelOptions.getAnnotatedTextOutDir();
+            String annotatedTextDir = modelOptions.getAnnotatedTrainTextOutDir();
             if (annotatedTextDir != null) {
                 System.err.println("Printing annotated training text to :"
                       + annotatedTextDir);
