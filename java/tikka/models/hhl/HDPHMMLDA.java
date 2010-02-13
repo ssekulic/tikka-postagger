@@ -1812,7 +1812,7 @@ public abstract class HDPHMMLDA {
 
                     thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
                     secondstateoff = prev * S2 + current * stateS;
-                    if (stateVector[i] == topicSubStates) {
+                    try {
                         for (int j = 1; j < topicSubStates; ++j) {
                             stateProbs[j] = testWordTopicProbs[wordtopicoff + topicid]
                                   * (thirdOrderTransitions[thirdstateoff + j] + psi)
@@ -1823,29 +1823,27 @@ public abstract class HDPHMMLDA {
                                   * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
                                   / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
                         }
-                        try {
-                            for (int j = topicSubStates;; j++) {
-                                stateProbs[j] = testWordStateProbs[wordstateoff + j]
-                                      * (thirdOrderTransitions[thirdstateoff + j] + psi)
-                                      * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
-                                      / (secondOrderTransitions[secondstateoff + j] + spsi))
-                                      * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
-                                      / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
-                                      * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
-                                      / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
-                            }
-                        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                        for (int j = topicSubStates;; j++) {
+                            stateProbs[j] = testWordStateProbs[wordstateoff + j]
+                                  * (thirdOrderTransitions[thirdstateoff + j] + psi)
+                                  * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
+                                  / (secondOrderTransitions[secondstateoff + j] + spsi))
+                                  * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
+                                  / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
+                                  * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
+                                  / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
                         }
-                        totalprob = annealProbs(1, stateProbs);
-                        r = mtfRand.nextDouble() * totalprob;
-                        max = stateProbs[1];
-                        stateid = 1;
-                        while (r > max) {
-                            stateid++;
-                            max += stateProbs[stateid];
-                        }
-                        stateVector[i] = stateid;
+                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                     }
+                    totalprob = annealProbs(1, stateProbs);
+                    r = mtfRand.nextDouble() * totalprob;
+                    max = stateProbs[1];
+                    stateid = 1;
+                    while (r > max) {
+                        stateid++;
+                        max += stateProbs[stateid];
+                    }
+                    stateVector[i] = stateid;
 
                     if (stateVector[i] < topicSubStates) {
                         DocumentByTopic[docoff + topicid]++;
@@ -1868,7 +1866,6 @@ public abstract class HDPHMMLDA {
                 System.err.print("\nObtain final test sample");
                 System.err.print("\nSample " + samplenum + ":");
                 stabilizeTemperature();
-                int sampleoff = samplenum * wordN;
                 System.err.print("\tprocessing word ");
                 current = 0;
                 prev = 0;
