@@ -25,6 +25,7 @@ import java.io.IOException;
 import org.apache.commons.cli.*;
 import tikka.models.hhl.SerializableModel;
 import tikka.models.hhl.m2.HDPHMMLDAm2;
+import tikka.models.hhl.m3.HDPHMM;
 import tikka.utils.math.BayesFactorEval;
 
 /**
@@ -62,8 +63,7 @@ public class Train extends MainBase {
                 hhl = new HDPHMMLDAm2(modelOptions);
             } else if (experimentModel.equals("m3")) {
                 System.err.println("Using model 3!");
-                modelOptions.topicSubStates = 0;
-                hhl = new HDPHMMLDAm2(modelOptions);
+                hhl = new HDPHMM(modelOptions);
             } else {
                 hhl = new HDPHMMLDAm1(modelOptions);
             }
