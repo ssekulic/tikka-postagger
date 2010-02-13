@@ -35,6 +35,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import tikka.models.hhl.m3.HDPHMM;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters
@@ -297,7 +298,7 @@ public class SerializableModel implements Serializable {
         } else if (modelName.equals("m2")) {
             hhl = new HDPHMMLDAm2(options);
         } else if (modelName.equals("m3")) {
-            hhl = new HDPHMMLDAm2(options);
+            hhl = new HDPHMM(options);
         }
 
         hhl.affixBoundaryProb = affixBoundaryProb;
