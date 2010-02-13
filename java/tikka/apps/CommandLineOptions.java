@@ -188,7 +188,7 @@ public class CommandLineOptions {
     /**
      * Hyperparameter for word emission priors
      */
-    protected double gamma = 0.01;
+    protected double gamma = 0.0001;
     /**
      * Number of states in HMM.
      */
