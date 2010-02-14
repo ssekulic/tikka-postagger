@@ -26,6 +26,7 @@ import org.apache.commons.cli.*;
 import tikka.models.hhl.SerializableModel;
 import tikka.models.hhl.m2.HDPHMMLDAm2;
 import tikka.models.hhl.m3.HDPHMM;
+import tikka.models.hhl.m4.HDPLDA;
 import tikka.utils.math.BayesFactorEval;
 
 /**
@@ -62,8 +63,11 @@ public class Train extends MainBase {
                 System.err.println("Using model 2!");
                 hhl = new HDPHMMLDAm2(modelOptions);
             } else if (experimentModel.equals("m3")) {
-                System.err.println("Using model 3!");
+                System.err.println("Using HDPHMM!");
                 hhl = new HDPHMM(modelOptions);
+            } else if (experimentModel.equals("m4")) {
+                System.err.println("Using HDPLDA!");
+                hhl = new HDPLDA(modelOptions);
             } else {
                 hhl = new HDPHMMLDAm1(modelOptions);
             }

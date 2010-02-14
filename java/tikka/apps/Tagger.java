@@ -29,6 +29,7 @@ import java.io.IOException;
 
 import org.apache.commons.cli.*;
 import tikka.models.hhl.m3.HDPHMM;
+import tikka.models.hhl.m4.HDPLDA;
 
 /**
  * This is a module for tagging test data sets. Parameters may be trained from
@@ -82,8 +83,11 @@ public class Tagger extends MainBase {
                     System.err.println("Using model 2!");
                     hhl = new HDPHMMLDAm2(modelOptions);
                 } else if (experimentModel.equals("m3")) {
-                    System.err.println("Using model 3!");
+                    System.err.println("Using HDPHMM!");
                     hhl = new HDPHMM(modelOptions);
+                } else if (experimentModel.equals("m4")) {
+                    System.err.println("Using HDPLDA!");
+                    hhl = new HDPLDA(modelOptions);
                 } else {
                     hhl = new HDPHMMLDAm1(modelOptions);
                 }

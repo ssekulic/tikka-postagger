@@ -35,16 +35,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * This is a pure HDPHMM model. This model assumes that only a few states
- * (designated by {@link #topicSubStates}) generate topic words and the remaining
- * states generate state words. Affixes are conditioned on stems. Stems are
- * based on a DP. Affixes come from an HDP.
- * the state.
+ * This is a pure HDPHMM model. There is no LDA associated with the model
  *
  * @author tsmoon
  */
 public class HDPHMM extends HDPHMMLDA {
 
+    /**
+     * Since there are no topicSubStates to model here, states begin with at one.
+     */
+    protected final int FIRSTSTATEID = 1;
     /**
      * Default constructor.
      *
@@ -327,7 +327,7 @@ public class HDPHMM extends HDPHMMLDA {
                         }
                     } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                     }
-                    totalprob = annealProbs(1, stateProbs);
+                    totalprob = annealProbs(FIRSTSTATEID, stateProbs);
                     r = mtfRand.nextDouble() * totalprob;
                     max = stateProbs[1];
                     stateid = 1;
@@ -502,7 +502,7 @@ public class HDPHMM extends HDPHMMLDA {
          */
         testWordStateProbs = new double[wordW * stateS];
 
-        for (int i = 0; i < wordW; ++i) {
+        for (int i = 1; i < wordW; ++i) {
             word = testIdxToWord.get(i);
             wlength = word.length();
             splitmax = wlength + 1;
@@ -529,8 +529,8 @@ public class HDPHMM extends HDPHMMLDA {
      */
     @Override
     public void normalize() {
-        stemStateDP.normalize(1, stateS, outputPerClass, null);
-        affixStemStateHDP.normalize(1, stateS, outputPerClass,
+        stemStateDP.normalize(FIRSTSTATEID, stateS, outputPerClass, null);
+        affixStemStateHDP.normalize(FIRSTSTATEID, stateS, outputPerClass,
               stemStateDP, stemTopicDP);
 
         double[] StateByWordProbs = new double[wordW * stateS];
@@ -555,10 +555,10 @@ public class HDPHMM extends HDPHMMLDA {
     @Override
     public void printTabulatedProbabilities(BufferedWriter out) throws
           IOException {
-        affixStemStateHDP.print(1, stateS, outputPerClass, stateProbs,
+        affixStemStateHDP.print(FIRSTSTATEID, stateS, outputPerClass, stateProbs,
               out);
         printNewlines(out, 4);
-        stemStateDP.print(1, stateS, outputPerClass, stateProbs, out);
+        stemStateDP.print(FIRSTSTATEID, stateS, outputPerClass, stateProbs, out);
         printNewlines(out, 4);
 
         printStates(out);
@@ -671,7 +671,7 @@ public class HDPHMM extends HDPHMMLDA {
                     }
                 } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                 }
-                totalprob = annealProbs(1, stateProbs);
+                totalprob = annealProbs(FIRSTSTATEID, stateProbs);
                 r = mtfRand.nextDouble() * totalprob;
                 max = stateProbs[1];
                 stateid = 1;
@@ -733,7 +733,7 @@ public class HDPHMM extends HDPHMMLDA {
                         }
                     } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                     }
-                    totalprob = annealProbs(1, stateProbs);
+                    totalprob = annealProbs(FIRSTSTATEID, stateProbs);
                     r = mtfRand.nextDouble() * totalprob;
                     max = stateProbs[1];
                     stateid = 1;
