@@ -35,15 +35,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * This is a pure HDPHMMLDA model. This model assumes that only a few states
- * (designated by {@link #topicSubStates}) generate topic words and the remaining
- * states generate state words. Affixes are conditioned on stems. Stems are
- * based on a DP. Affixes come from an HDP.
+ * This is a pure HDPLDA model. There is no HMM associated with the model
  * the state.
  *
  * @author tsmoon
  */
 public class HDPLDA extends HDPHMMLDA {
+
+    /**
+     * Since there is not state sequence associated with the affixes, we
+     * assign all affixes to a single state.
+     */
+    protected final int FIXEDSTATEID = 1;
 
     /**
      * Default constructor.
@@ -52,6 +55,8 @@ public class HDPLDA extends HDPHMMLDA {
      */
     public HDPLDA(CommandLineOptions options) throws IOException {
         super(options);
+        stateS = 2;
+        topicSubStates = stateS;
     }
 
     /**
@@ -63,16 +68,11 @@ public class HDPLDA extends HDPHMMLDA {
         affixBaseDistribution = new DirichletBaseDistribution(
               affixLexicon, affixBoundaryProb, muAffix);
 
-        stemStateBaseDistribution = new DirichletBaseDistribution(
-              stemLexicon, stemBoundaryProb, wgamma);
-
         stemTopicBaseDistribution = new DirichletBaseDistribution(
               stemLexicon, stemBoundaryProb, wbeta);
 
         affixStemStateHDP = new AffixStemStateHDP(affixBaseDistribution,
               affixLexicon, wgamma, stateS);
-        stemStateDP = new StemStateDP(
-              stemStateBaseDistribution, stemLexicon, wgamma);
         stemTopicDP = new StemTopicDP(
               stemTopicBaseDistribution, stemLexicon, wbeta);
     }
@@ -88,31 +88,20 @@ public class HDPLDA extends HDPHMMLDA {
 
         initalizeDistributions();
 
-        int current = 0, prev = 0, pprev = 0;
-        int wordid = 0, docid = 0, topicid = 0, stateid = 0, splitid = 0, stemid =
+        int wordid = 0, docid = 0, topicid = 0, splitid = 0, stemid =
               0, affixid = 0;
-        int docoff, wordstateoff, wordtopicoff;
+        int docoff, wordtopicoff;
         String word = "", stem = "", affix = "";
 
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
-            if (wordid == EOSi) {
-                thirdOrderTransitions[pprev * S3 + prev * S2 + current
-                      * stateS + 0]++;
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev = current = 0;
-            } else {
-
+            if (wordid != EOSi) {
                 docid = documentVector[i];
                 topicid = topicVector[i];
-                stateid = stateVector[i];
                 splitid = splitVector[i];
 
                 docoff = topicK * docid;
-                wordstateoff = wordid * stateS;
                 wordtopicoff = wordid * topicK;
 
                 word = trainIdxToWord.get(wordid);
@@ -124,26 +113,11 @@ public class HDPLDA extends HDPHMMLDA {
                 stemVector[i] = stemid;
                 affixVector[i] = affixid;
 
-                if (stateid < topicSubStates) {
-                    stemTopicDP.inc(topicid, stemid);
-                    DocumentByTopic[docoff + topicid]++;
-                    topicCounts[topicid]++;
-                    TopicByWord[wordtopicoff + topicid]++;
-                } else {
-                    stemStateDP.inc(stateid, stemid);
-                }
-
-                affixStemStateHDP.inc(stateid, stemid, affixid);
-                StateByWord[wordstateoff + stateid]++;
-                stateCounts[stateid]++;
-                secondOrderTransitions[prev * S2 + current * stateS + stateid]++;
-                thirdOrderTransitions[pprev * S3 + prev * S2 + current * stateS + stateid]++;
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev;
-                prev = current;
-                current = stateid;
+                stemTopicDP.inc(topicid, stemid);
+                DocumentByTopic[docoff + topicid]++;
+                topicCounts[topicid]++;
+                TopicByWord[wordtopicoff + topicid]++;
+                affixStemStateHDP.inc(FIXEDSTATEID, stemid, affixid);
             }
         }
     }
@@ -156,12 +130,10 @@ public class HDPLDA extends HDPHMMLDA {
         /**
          * Declaring temporary variables for training
          */
-        int wordid = 0, docid = 0, topicid = 0, stateid = 0, splitid = 0,
-              stemid = 0, affixid = 0;
-        int current = 0, prev = 0, pprev = 0;
+        int wordid = 0, docid = 0, topicid = 0, splitid = 0, stemid = 0, affixid = 0;
         double max = 0, totalprob = 0;
         double r = 0;
-        int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
+        int docoff, wordtopicoff;
         int wlength = 0;
         String word = "", stem = "", affix = "";
 
@@ -173,38 +145,18 @@ public class HDPLDA extends HDPHMMLDA {
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
-            if (wordid == EOSi) {
-                thirdOrderTransitions[pprev * S3 + prev * S2 + current
-                      * stateS + 0]++;
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev = current = 0;
-            } else {
-
+            if (wordid != EOSi) {
                 docid = documentVector[i];
                 docoff = topicK * docid;
-                wordstateoff = wordid * stateS;
                 wordtopicoff = wordid * topicK;
-
-                if (mtfRand.nextDouble() > 0.5) {
-                    stateid = stateVector[i] = mtfRand.nextInt(
-                          topicSubStates - 1) + 1;
-                } else {
-                    stateid = stateVector[i] = topicSubStates;
-                }
 
                 totalprob = 0;
                 try {
                     for (int j = 0;; ++j) {
-                        topicProbs[j] = DocumentByTopic[docoff + j]
-                              + alpha;
-                        if (stateVector[i] < topicSubStates) {
-                            topicProbs[j] *=
-                                  (TopicByWord[wordtopicoff + j] + beta)
-                                  / (topicCounts[j] + wbeta);
-                        }
-                        totalprob += topicProbs[j];
+                        totalprob += topicProbs[j] =
+                              (DocumentByTopic[docoff + j] + alpha)
+                              * (TopicByWord[wordtopicoff + j] + beta)
+                              / (topicCounts[j] + wbeta);
                     }
                 } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                 }
@@ -219,38 +171,6 @@ public class HDPLDA extends HDPHMMLDA {
                 topicVector[i] = topicid;
                 max = 0;
 
-                thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
-                secondstateoff = prev * S2 + current * stateS;
-                totalprob = 0;
-                if (stateVector[i] == topicSubStates) {
-                    double topicprob = (TopicByWord[wordtopicoff + topicid] + beta)
-                          / (topicCounts[topicid] + wbeta);
-                    for (int j = 1; j < topicSubStates; ++j) {
-                        totalprob +=
-                              stateProbs[j] = topicprob
-                              * (thirdOrderTransitions[thirdstateoff + j] + psi);
-                    }
-                    try {
-                        for (int j = topicSubStates;; j++) {
-                            totalprob += stateProbs[j] =
-                                  (StateByWord[wordstateoff + j] + gamma)
-                                  / (stateCounts[j] + wgamma)
-                                  * (thirdOrderTransitions[thirdstateoff + j]
-                                  + psi);
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    }
-
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = stateProbs[1];
-                    stateid = 1;
-                    while (r > max) {
-                        stateid++;
-                        max += stateProbs[stateid];
-                    }
-                    stateVector[i] = stateid;
-                }
-
                 word = trainIdxToWord.get(wordid);
                 wlength = word.length();
                 totalprob = 0;
@@ -259,16 +179,9 @@ public class HDPLDA extends HDPHMMLDA {
                     affix = word.substring(j, wlength);
                     stemid = stemLexicon.getIdx(stem);
                     affixid = affixLexicon.getIdx(affix);
-
-                    if (stateid < topicSubStates) {
-                        totalprob += splitProbs[j] = stemTopicDP.probNumerator(
-                              topicid, stem)
-                              * affixStemStateHDP.prob(stateid, stemid, affix);
-                    } else {
-                        totalprob += splitProbs[j] = stemStateDP.probNumerator(
-                              stateid, stem)
-                              * affixStemStateHDP.prob(stateid, stemid, affix);
-                    }
+                    totalprob += splitProbs[j] = stemTopicDP.probNumerator(
+                          topicid, stem)
+                          * affixStemStateHDP.prob(FIXEDSTATEID, stemid, affix);
                 }
                 r = mtfRand.nextDouble() * totalprob;
                 max = splitProbs[0];
@@ -285,25 +198,12 @@ public class HDPLDA extends HDPHMMLDA {
                 affixVector[i] = affixid;
                 splitVector[i] = splitid;
 
-                if (stateVector[i] < topicSubStates) {
-                    stemTopicDP.inc(topicid, stemid);
-                    TopicByWord[wordtopicoff + topicid]++;
-                    DocumentByTopic[docoff + topicid]++;
-                    topicCounts[topicid]++;
-                } else {
-                    stemStateDP.inc(stateid, stemid);
-                }
-                affixStemStateHDP.inc(stateid, stemid, affixid);
-                StateByWord[wordstateoff + stateid]++;
-                secondOrderTransitions[secondstateoff + stateid]++;
-                thirdOrderTransitions[thirdstateoff + stateid]++;
-                stateCounts[stateid]++;
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev;
-                prev = current;
-                current = stateid;
+                stemTopicDP.inc(topicid, stemid);
+                TopicByWord[wordtopicoff + topicid]++;
+                DocumentByTopic[docoff + topicid]++;
+                topicCounts[topicid]++;
+
+                affixStemStateHDP.inc(FIXEDSTATEID, stemid, affixid);
             }
         }
     }
@@ -316,13 +216,10 @@ public class HDPLDA extends HDPHMMLDA {
         /**
          * Declaring temporary variables for training
          */
-        int wordid = 0, docid = 0, topicid = 0, stateid = 0, splitid = 0,
-              stemid = 0, affixid = 0;
-        int current = 0, prev = 0, pprev = 0, next = 0,
-              nnext = 0, nnnext = 0;
+        int wordid = 0, docid = 0, topicid = 0, splitid = 0, stemid = 0, affixid = 0;
         double max = 0, totalprob = 0;
         double r = 0;
-        int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
+        int docoff, wordtopicoff;
         int wlength = 0, splitmax = 0;
         String word = "";
         String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
@@ -333,32 +230,21 @@ public class HDPLDA extends HDPHMMLDA {
         for (int initer = 0; initer < itermax; ++initer) {
             System.err.print("\n" + message + " " + initer);
             System.err.print("\tprocessing word ");
-            current = 0;
-            prev = 0;
-            pprev = 0;
-            for (int i = 0; i < wordN - 3; i++) {
+            for (int i = 0; i < wordN; i++) {
 
                 if (i % 100000 == 0) {
                     System.err.print(i + ",");
                 }
                 wordid = wordVector[i];
 
-                if (wordid == EOSi) // sentence marker
+                if (wordid != EOSi) // sentence marker
                 {
-                    thirdOrderTransitions[third[i] * S3 + second[i] * S2 + first[i] * stateS + 0]--;
-                    thirdOrderTransitions[pprev * S3 + prev * S2 + current * stateS + 0]++;
-                    first[i] = current;
-                    second[i] = prev;
-                    third[i] = pprev;
-                    current = prev = pprev = 0;
-                } else {
-                    word = trainIdxToWord.get(wordid);
                     docid = documentVector[i];
-                    stateid = stateVector[i];
                     topicid = topicVector[i];
                     stemid = stemVector[i];
                     affixid = affixVector[i];
 
+                    word = trainIdxToWord.get(wordid);
                     wlength = word.length();
                     splitmax = wlength + 1;
                     for (int k = 0; k < splitmax; ++k) {
@@ -369,26 +255,18 @@ public class HDPLDA extends HDPHMMLDA {
                     }
 
                     docoff = docid * topicK;
-                    wordstateoff = wordid * stateS;
                     wordtopicoff = wordid * topicK;
 
                     /**
                      * Decrement counts of current assignment from topics, states,
                      * switches, stems, and affixes.
                      */
-                    if (stateid < topicSubStates) {
-                        stemTopicDP.dec(topicid, stemid);
-                        DocumentByTopic[docoff + topicid]--;
-                        topicCounts[topicid]--;
-                        TopicByWord[wordtopicoff + topicid]--;
-                    } else {
-                        stemStateDP.dec(stateid, stemid);
-                    }
-                    affixStemStateHDP.dec(stateid, stemid, affixid);
-                    stateCounts[stateid]--;
-                    StateByWord[wordstateoff + stateid]--;
-                    secondOrderTransitions[second[i] * S2 + first[i] * stateS + stateid]--;
-                    thirdOrderTransitions[third[i] * S3 + second[i] * S2 + first[i] * stateS + stateid]--;
+                    stemTopicDP.dec(topicid, stemid);
+                    DocumentByTopic[docoff + topicid]--;
+                    topicCounts[topicid]--;
+                    TopicByWord[wordtopicoff + topicid]--;
+
+                    affixStemStateHDP.dec(FIXEDSTATEID, stemid, affixid);
 
                     /**
                      * Drawing new topicid
@@ -397,14 +275,12 @@ public class HDPLDA extends HDPHMMLDA {
                         for (int j = 0;; ++j) {
                             topicProbs[j] =
                                   DocumentByTopic[docoff + j] + alpha;
-                            if (stateid < topicSubStates) {
-                                totalprob = 0;
-                                for (int k = 0; k < splitmax; ++k) {
-                                    totalprob += stemTopicDP.probNumerator(j, stems[k])
-                                          * affixStemStateHDP.prob(stateid, stemidxes[k], affixes[k]);
-                                }
-                                topicProbs[j] *= totalprob;
+                            totalprob = 0;
+                            for (int k = 0; k < splitmax; ++k) {
+                                totalprob += stemTopicDP.probNumerator(j, stems[k])
+                                      * affixStemStateHDP.prob(FIXEDSTATEID, stemidxes[k], affixes[k]);
                             }
+                            topicProbs[j] *= totalprob;
                         }
                     } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                     }
@@ -421,69 +297,11 @@ public class HDPLDA extends HDPHMMLDA {
                     topicVector[i] = topicid;
 
                     /**
-                     * Drawing new stateid
-                     */
-                    next = stateVector[i + 1];
-                    nnext = stateVector[i + 2];
-                    nnnext = stateVector[i + 3];
-                    thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
-                    secondstateoff = prev * S2 + current * stateS;
-
-                    try {
-                        for (int j = 1; j < topicSubStates; ++j) {
-                            totalprob = 0;
-                            for (int k = 0; k < splitmax; ++k) {
-                                totalprob += stemTopicDP.prob(topicid, stems[k])
-                                      * affixStemStateHDP.prob(j, stemidxes[k], affixes[k]);
-                            }
-
-                            stateProbs[j] = totalprob
-                                  * (thirdOrderTransitions[thirdstateoff + j] + psi)
-                                  * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
-                                  / (secondOrderTransitions[secondstateoff + j] + spsi))
-                                  * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
-                                  / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
-                                  * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
-                                  / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
-                        }
-                        for (int j = topicSubStates;; ++j) {
-                            totalprob = 0;
-                            for (int k = 0; k < splitmax; ++k) {
-                                totalprob += stemStateDP.prob(j, stems[k])
-                                      * affixStemStateHDP.prob(j, stemidxes[k], affixes[k]);
-                            }
-                            stateProbs[j] = totalprob
-                                  * (thirdOrderTransitions[thirdstateoff + j] + psi)
-                                  * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
-                                  / (secondOrderTransitions[secondstateoff + j] + spsi))
-                                  * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
-                                  / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
-                                  * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
-                                  / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    }
-                    totalprob = annealProbs(1, stateProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = stateProbs[1];
-                    stateid = 1;
-                    while (r > max) {
-                        stateid++;
-                        max += stateProbs[stateid];
-                    }
-                    stateVector[i] = stateid;
-
-                    /**
                      * Drawing new stem and affix
                      */
                     for (int j = 0; j < splitmax; ++j) {
-                        if (stateid < topicSubStates) {
-                            splitProbs[j] = stemTopicDP.probNumerator(topicid, stems[j])
-                                  * affixStemStateHDP.prob(stateid, stemidxes[j], affixes[j]);
-                        } else {
-                            splitProbs[j] = stemStateDP.probNumerator(stateid, stems[j])
-                                  * affixStemStateHDP.prob(stateid, stemidxes[j], affixes[j]);
-                        }
+                        splitProbs[j] = stemTopicDP.probNumerator(topicid, stems[j])
+                              * affixStemStateHDP.prob(FIXEDSTATEID, stemidxes[j], affixes[j]);
                     }
                     totalprob = annealProbs(splitProbs, splitmax);
                     r = mtfRand.nextDouble() * totalprob;
@@ -503,25 +321,12 @@ public class HDPLDA extends HDPHMMLDA {
                      * Increment counts of current assignment from topics, states,
                      * switches, stems, and affixes.
                      */
-                    if (stateid < topicSubStates) {
-                        stemTopicDP.inc(topicid, stemid);
-                        DocumentByTopic[docoff + topicid]++;
-                        topicCounts[topicid]++;
-                        TopicByWord[wordtopicoff + topicid]++;
-                    } else {
-                        stemStateDP.inc(stateid, stemid);
-                        StateByWord[wordstateoff + stateid]++;
-                    }
-                    affixStemStateHDP.inc(stateid, stemid, affixid);
-                    stateCounts[stateid]++;
-                    secondOrderTransitions[secondstateoff + stateid]++;
-                    thirdOrderTransitions[thirdstateoff + stateid]++;
-                    first[i] = current;
-                    second[i] = prev;
-                    third[i] = pprev;
-                    pprev = prev;
-                    prev = current;
-                    current = stateid;
+                    stemTopicDP.inc(topicid, stemid);
+                    DocumentByTopic[docoff + topicid]++;
+                    topicCounts[topicid]++;
+                    TopicByWord[wordtopicoff + topicid]++;
+
+                    affixStemStateHDP.inc(FIXEDSTATEID, stemid, affixid);
                 }
             }
         }
@@ -548,7 +353,6 @@ public class HDPLDA extends HDPHMMLDA {
         for (int wordid = 1; wordid < wordW; ++wordid) {
             word = trainIdxToWord.get(wordid);
             int wordtopicoff = wordid * topicK;
-            int wordstateoff = wordid * stateS;
 
             wlength = word.length();
             splitmax = wlength + 1;
@@ -559,50 +363,17 @@ public class HDPLDA extends HDPHMMLDA {
                 affixidxes[k] = affixLexicon.getIdx(affixes[k]);
             }
 
-            for (int i = 1; i < topicSubStates; ++i) {
-                double ssum = 0;
-                for (int j = 0; j < topicK; ++j) {
-                    double tsum = 0;
-                    for (int k = 0; k < splitmax; ++k) {
-                        double stemProb = stemTopicDP.prob(j, stems[k]);
-                        double affixProb = affixStemStateHDP.prob(i, stemidxes[k], affixes[k]);
-                        tsum += stemProb * affixProb;
-                    }
-                    TopicByWordProbs[wordtopicoff + j] = tsum;
-                    ssum += tsum * topicProbs[j];
-                }
-                StateByWordProbs[wordstateoff + i] = ssum;
-            }
-        }
-
-        /**
-         * Calculate word probability per state (but only for non-topic states)
-         */
-        for (int wordid = 1; wordid < wordW; ++wordid) {
-            word = trainIdxToWord.get(wordid);
-            int wordstateoff = wordid * stateS;
-
-            wlength = word.length();
-            splitmax = wlength + 1;
-            for (int k = 0; k < splitmax; ++k) {
-                stems[k] = word.substring(0, k);
-                affixes[k] = word.substring(k, wlength);
-                stemidxes[k] = stemLexicon.getIdx(stems[k]);
-                affixidxes[k] = affixLexicon.getIdx(affixes[k]);
-            }
-
-            for (int i = topicSubStates; i < stateS; ++i) {
-                double p = 0;
+            for (int j = 0; j < topicK; ++j) {
+                double tsum = 0;
                 for (int k = 0; k < splitmax; ++k) {
-                    double stemProb = stemStateDP.prob(i, stems[k]);
-                    double affixProb = affixStemStateHDP.prob(i, stemidxes[k], affixes[k]);
-                    p += stemProb * affixProb;
+                    double stemProb = stemTopicDP.prob(j, stems[k]);
+                    double affixProb = affixStemStateHDP.prob(FIXEDSTATEID, stemidxes[k], affixes[k]);
+                    tsum += stemProb * affixProb;
                 }
-                StateByWordProbs[wordstateoff + i] = p;
+                TopicByWordProbs[wordtopicoff + j] = tsum;
             }
         }
 
-        setTopWordsPerState(StateByWordProbs);
         setTopWordsPerTopic(TopicByWordProbs);
     }
 
@@ -616,7 +387,7 @@ public class HDPLDA extends HDPHMMLDA {
         /**
          * Declaring temporary variables for training
          */
-        int wordid = 0, topicid = 0, stateid = 0;
+        int wordid = 0, topicid = 0;
         double totalprob = 0;
         int wlength = 0, splitmax = 0;
         String word = "";
@@ -633,7 +404,6 @@ public class HDPLDA extends HDPHMMLDA {
             if (wordid != EOSi) // sentence marker
             {
                 word = trainIdxToWord.get(wordVector[i]);
-                stateid = stateVector[i];
                 topicid = topicVector[i];
 
                 wlength = word.length();
@@ -646,16 +416,9 @@ public class HDPLDA extends HDPHMMLDA {
                 }
 
                 totalprob = 0;
-                if (stateid < topicSubStates) {
-                    for (int k = 0; k < splitmax; ++k) {
-                        totalprob += stemTopicDP.prob(topicid, stems[k])
-                              * affixStemStateHDP.prob(stateid, stemidxes[k], affixes[k]);
-                    }
-                } else {
-                    for (int k = 0; k < splitmax; ++k) {
-                        totalprob += stemStateDP.prob(stateid, stems[k])
-                              * affixStemStateHDP.prob(stateid, stemidxes[k], affixes[k]);
-                    }
+                for (int k = 0; k < splitmax; ++k) {
+                    totalprob += stemTopicDP.prob(topicid, stems[k])
+                          * affixStemStateHDP.prob(FIXEDSTATEID, stemidxes[k], affixes[k]);
                 }
                 SampleProbs[outiter] += Math.log(totalprob);
             }
@@ -668,7 +431,7 @@ public class HDPLDA extends HDPHMMLDA {
     @Override
     protected void setWordClassProbArrays() {
         double totalprob = 0;
-        int wordstateoff, wordtopicoff;
+        int wordtopicoff;
         String word = "";
         int wlength = 0, splitmax = 0;
         String[] stems = new String[MAXLEN], affixes = new String[MAXLEN];
@@ -680,9 +443,8 @@ public class HDPLDA extends HDPHMMLDA {
          * at the beginning.
          */
         testWordTopicProbs = new double[wordW * topicK];
-        testWordStateProbs = new double[wordW * stateS];
 
-        for (int i = 0; i < wordW; ++i) {
+        for (int i = 1; i < wordW; ++i) {
             word = testIdxToWord.get(i);
             wlength = word.length();
             splitmax = wlength + 1;
@@ -693,24 +455,14 @@ public class HDPLDA extends HDPHMMLDA {
                 affixidxes[k] = affixLexicon.getIdx(affixes[k]);
             }
             wordtopicoff = i * topicK;
-            wordstateoff = i * stateS;
+
             for (int j = 0; j < topicK; ++j) {
                 totalprob = 0;
-                for (int l = 1; l < topicSubStates; ++l) {
-                    for (int k = 0; k < splitmax; ++k) {
-                        totalprob += stemTopicDP.prob(j, stems[k])
-                              * affixStemStateHDP.prob(l, stemidxes[k], affixes[k]);
-                    }
+                for (int k = 0; k < splitmax; ++k) {
+                    totalprob += stemTopicDP.prob(j, stems[k])
+                          * affixStemStateHDP.prob(FIXEDSTATEID, stemidxes[k], affixes[k]);
                 }
                 testWordTopicProbs[wordtopicoff + j] = totalprob;
-            }
-            for (int j = 1; j < stateS; ++j) {
-                totalprob = 0;
-                for (int k = 0; k < splitmax; ++k) {
-                    totalprob += stemStateDP.prob(j, stems[k])
-                          * affixStemStateHDP.prob(j, stemidxes[k], affixes[k]);
-                }
-                testWordStateProbs[wordstateoff + j] = totalprob;
             }
         }
     }
@@ -720,11 +472,20 @@ public class HDPLDA extends HDPHMMLDA {
      */
     @Override
     public void normalize() {
-        stemStateDP.normalize(topicSubStates, stateS, outputPerClass, null);
         stemTopicDP.normalize(0, topicK, outputPerClass, null);
         affixStemStateHDP.normalize(topicSubStates, stateS, outputPerClass,
-              stemStateDP, stemTopicDP);
-        super.normalize();
+              null, stemTopicDP);
+
+        double[] TopicByWordProbs = new double[wordW * topicK];
+        try {
+            for (int i = 0;; ++i) {
+                TopicByWordProbs[i] = 0;
+            }
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        }
+
+        normalizeWords(null, TopicByWordProbs);
+        normalizeRawTopics();
     }
 
     /**
@@ -740,8 +501,6 @@ public class HDPLDA extends HDPHMMLDA {
         affixStemStateHDP.print(topicSubStates, stateS, outputPerClass, stateProbs,
               out);
         printNewlines(out, 4);
-        stemStateDP.print(topicSubStates, stateS, outputPerClass, stateProbs, out);
-        printNewlines(out, 4);
         stemTopicDP.print(0, topicK, outputPerClass, topicProbs, out);
         printNewlines(out, 4);
         super.printTabulatedProbabilities(out);
@@ -754,7 +513,7 @@ public class HDPLDA extends HDPHMMLDA {
      */
     @Override
     protected void sampleTestWordSplitLocations() {
-        int wordid = 0, topicid = 0, stateid = 0, splitid = 0;
+        int wordid = 0, topicid = 0, splitid = 0;
         double max = 0, totalprob = 0;
         double r = 0;
         String word = "";
@@ -769,7 +528,6 @@ public class HDPLDA extends HDPHMMLDA {
             wordid = wordVector[i];
             if (wordid != EOSi) // sentence marker
             {
-                stateid = stateVector[i];
                 topicid = topicVector[i];
 
                 word = testIdxToWord.get(wordid);
@@ -783,15 +541,9 @@ public class HDPLDA extends HDPHMMLDA {
                 }
 
                 for (int j = 0; j < splitmax; ++j) {
-                    if (stateid < topicSubStates) {
-                        splitProbs[j] = stemTopicDP.prob(topicid, stems[j])
-                              * affixStemStateHDP.prob(stateid, stemidxes[j],
-                              affixes[j]);
-                    } else {
-                        splitProbs[j] = stemStateDP.prob(stateid, stems[j])
-                              * affixStemStateHDP.prob(stateid, stemidxes[j],
-                              affixes[j]);
-                    }
+                    splitProbs[j] = stemTopicDP.prob(topicid, stems[j])
+                          * affixStemStateHDP.prob(FIXEDSTATEID, stemidxes[j],
+                          affixes[j]);
                 }
                 totalprob = annealProbs(splitProbs, splitmax);
                 r = mtfRand.nextDouble() * totalprob;
@@ -806,7 +558,7 @@ public class HDPLDA extends HDPHMMLDA {
         }
     }
 
-        /**
+    /**
      * Sample model output on test.
      *
      * @see HDPHMMLDA#setWordClassProbArrays()
@@ -833,12 +585,10 @@ public class HDPLDA extends HDPHMMLDA {
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
         }
 
-        int wordid = 0, docid = 0, topicid = 0, stateid = 0;
-        int current = 0, prev = 0, pprev = 0, next = 0,
-              nnext = 0, nnnext = 0;
+        int wordid = 0, docid = 0, topicid = 0;
         double max = 0, totalprob = 0;
         double r = 0;
-        int docoff, wordstateoff, wordtopicoff, thirdstateoff, secondstateoff;
+        int docoff, wordtopicoff;
 
         setWordClassProbArrays();
 
@@ -851,31 +601,16 @@ public class HDPLDA extends HDPHMMLDA {
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
-            if (wordid == EOSi) {
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev = current = 0;
-            } else {
+            if (wordid != EOSi) {
                 docid = documentVector[i];
                 docoff = topicK * docid;
-                wordstateoff = wordid * stateS;
                 wordtopicoff = wordid * topicK;
-
-                if (mtfRand.nextDouble() > 0.5) {
-                    stateid = stateVector[i] = mtfRand.nextInt(
-                          topicSubStates - 1) + 1;
-                } else {
-                    stateid = stateVector[i] = topicSubStates;
-                }
 
                 try {
                     for (int j = 0;; ++j) {
-                        topicProbs[j] = DocumentByTopic[docoff + j]
-                              + alpha;
-                        if (stateid < topicSubStates) {
-                            topicProbs[j] *= testWordTopicProbs[wordtopicoff + j];
-                        }
+                        topicProbs[j] =
+                              (DocumentByTopic[docoff + j] + alpha)
+                              * testWordTopicProbs[wordtopicoff + j];
                     }
                 } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                 }
@@ -889,42 +624,9 @@ public class HDPLDA extends HDPHMMLDA {
                     max += topicProbs[topicid];
                 }
                 topicVector[i] = topicid;
-                max = 0;
 
-                thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
-                if (stateVector[i] == topicSubStates) {
-                    for (int j = 1; j < topicSubStates; ++j) {
-                        stateProbs[j] = testWordTopicProbs[wordtopicoff + topicid]
-                              * (thirdOrderTransitions[thirdstateoff + j] + psi);
-                    }
-                    try {
-                        for (int j = topicSubStates;; j++) {
-                            stateProbs[j] = testWordStateProbs[wordstateoff + j]
-                                  * (thirdOrderTransitions[thirdstateoff + j] + psi);
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    }
-                    totalprob = annealProbs(1, stateProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = stateProbs[1];
-                    stateid = 1;
-                    while (r > max) {
-                        stateid++;
-                        max += stateProbs[stateid];
-                    }
-                    stateVector[i] = stateid;
-                }
-
-                if (stateid < topicSubStates) {
-                    DocumentByTopic[docoff + topicid]++;
-                    DocumentCounts[docid]++;
-                }
-                first[i] = current;
-                second[i] = prev;
-                third[i] = pprev;
-                pprev = prev;
-                prev = current;
-                current = stateid;
+                DocumentByTopic[docoff + topicid]++;
+                DocumentCounts[docid]++;
             }
         }
 
@@ -947,30 +649,18 @@ public class HDPLDA extends HDPHMMLDA {
 
                 wordid = wordVector[i];
 
-                if (wordid == EOSi) {
-                    first[i] = current;
-                    second[i] = prev;
-                    third[i] = pprev;
-                    pprev = prev = current = 0;
-                } else {
+                if (wordid != EOSi) {
                     docid = documentVector[i];
                     docoff = topicK * docid;
-                    stateid = stateVector[i];
                     topicid = topicVector[i];
-                    wordstateoff = wordid * stateS;
                     wordtopicoff = wordid * topicK;
 
-                    if (stateid < topicSubStates) {
-                        DocumentByTopic[docoff + topicid]--;
-                    }
+                    DocumentByTopic[docoff + topicid]--;
 
                     try {
                         for (int j = 0;; ++j) {
-                            topicProbs[j] = DocumentByTopic[docoff + j]
-                                  + alpha;
-                            if (stateid < topicSubStates) {
-                                topicProbs[j] *= testWordTopicProbs[wordtopicoff + j];
-                            }
+                            topicProbs[j] = (DocumentByTopic[docoff + j] + alpha)
+                                  * testWordTopicProbs[wordtopicoff + j];
                         }
                     } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                     }
@@ -984,54 +674,8 @@ public class HDPLDA extends HDPHMMLDA {
                         max += topicProbs[topicid];
                     }
                     topicVector[i] = topicid;
-                    max = 0;
 
-                    thirdstateoff = pprev * S3 + prev * S2 + current * stateS;
-                    secondstateoff = prev * S2 + current * stateS;
-                    if (stateVector[i] == topicSubStates) {
-                        for (int j = 1; j < topicSubStates; ++j) {
-                            stateProbs[j] = testWordTopicProbs[wordtopicoff + topicid]
-                                  * (thirdOrderTransitions[thirdstateoff + j] + psi)
-                                  * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
-                                  / (secondOrderTransitions[secondstateoff + j] + spsi))
-                                  * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
-                                  / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
-                                  * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
-                                  / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
-                        }
-                        try {
-                            for (int j = topicSubStates;; j++) {
-                                stateProbs[j] = testWordStateProbs[wordstateoff + j]
-                                      * (thirdOrderTransitions[thirdstateoff + j] + psi)
-                                      * (((thirdOrderTransitions[prev * S3 + current * S2 + j * stateS + next] + psi)
-                                      / (secondOrderTransitions[secondstateoff + j] + spsi))
-                                      * ((thirdOrderTransitions[current * S3 + j * S2 + next * stateS + nnext] + psi)
-                                      / (secondOrderTransitions[current * S2 + j * stateS + next] + spsi))
-                                      * ((thirdOrderTransitions[j * S3 + next * S2 + nnext * stateS + nnnext] + psi)
-                                      / (secondOrderTransitions[j * S2 + next * stateS + nnext] + spsi)));
-                            }
-                        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                        }
-                        totalprob = annealProbs(1, stateProbs);
-                        r = mtfRand.nextDouble() * totalprob;
-                        max = stateProbs[1];
-                        stateid = 1;
-                        while (r > max) {
-                            stateid++;
-                            max += stateProbs[stateid];
-                        }
-                        stateVector[i] = stateid;
-                    }
-
-                    if (stateVector[i] < topicSubStates) {
-                        DocumentByTopic[docoff + topicid]++;
-                    }
-                    first[i] = current;
-                    second[i] = prev;
-                    third[i] = pprev;
-                    pprev = prev;
-                    prev = current;
-                    current = stateid;
+                    DocumentByTopic[docoff + topicid]++;
                 }
             }
 
@@ -1044,11 +688,8 @@ public class HDPLDA extends HDPHMMLDA {
                 System.err.print("\nObtain final test sample");
                 System.err.print("\nSample " + samplenum + ":");
                 stabilizeTemperature();
-                int sampleoff = samplenum * wordN;
                 System.err.print("\tprocessing word ");
-                current = 0;
-                prev = 0;
-                pprev = 0;
+
                 for (int i = 0; i < wordN; i++) {
 
                     if (i % 100000 == 0) {
@@ -1059,19 +700,12 @@ public class HDPLDA extends HDPHMMLDA {
                     if (wordid != EOSi) // sentence marker
                     {
                         docid = documentVector[i];
-                        stateid = stateVector[i];
                         topicid = topicVector[i];
-                        wordstateoff = wordid * stateS;
                         wordtopicoff = wordid * topicK;
 
-                        totalprob = 0;
-                        if (stateid < topicSubStates) {
-                            totalprob = testWordTopicProbs[wordtopicoff + topicid]
-                                  * (DocumentByTopic[docid * topicK + topicid] + alpha)
-                                  / (DocumentCounts[docid]);
-                        } else {
-                            totalprob = testWordStateProbs[wordstateoff + stateid];
-                        }
+                        totalprob = testWordTopicProbs[wordtopicoff + topicid]
+                              * (DocumentByTopic[docid * topicK + topicid] + alpha)
+                              / (DocumentCounts[docid]); // The doc counts array already contains the talpha so don't mess with this
                     }
                     SampleProbs[samplenum] += Math.log(totalprob);
                 }

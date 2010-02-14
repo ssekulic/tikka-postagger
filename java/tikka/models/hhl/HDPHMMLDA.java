@@ -1889,7 +1889,7 @@ public abstract class HDPHMMLDA {
                         if (stateid < topicSubStates) {
                             totalprob = testWordTopicProbs[wordtopicoff + topicid]
                                   * (DocumentByTopic[docid * topicK + topicid] + alpha)
-                                  / (DocumentCounts[docid]);
+                                  / (DocumentCounts[docid]);  // The doc counts array already contains the talpha so don't mess with this
                         } else {
                             totalprob = testWordStateProbs[wordstateoff + stateid];
                         }
