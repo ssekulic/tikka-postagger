@@ -20,8 +20,8 @@ package tikka.hhl.models.base;
 import tikka.hhl.models.base.HDPHMMLDA;
 import tikka.hhl.apps.CommandLineOptions;
 
-import tikka.models.hhl.m1.HDPHMMLDAm1;
-import tikka.models.hhl.m2.HDPHMMLDAm2;
+import tikka.hhl.models.m1.HDPHMMLDAm1;
+import tikka.hhl.models.m2.HDPHMMLDAm2;
 
 import tikka.opennlp.io.DataFormatEnum;
 
@@ -36,8 +36,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import tikka.models.hhl.m3.HDPHMM;
-import tikka.models.hhl.m4.HDPLDA;
+import tikka.hhl.models.m3.HDPHMM;
+import tikka.hhl.models.m4.HDPLDA;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters

@@ -15,7 +15,7 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.models.hhl.m4;
+package tikka.hhl.models.m4;
 
 import java.io.BufferedWriter;
 import tikka.hhl.apps.CommandLineOptions;
