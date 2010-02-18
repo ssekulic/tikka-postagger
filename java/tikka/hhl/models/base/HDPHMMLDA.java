@@ -26,13 +26,13 @@ import tikka.opennlp.io.DirWriter;
 
 import tikka.structures.DoubleStringPair;
 import tikka.structures.StringDoublePair;
-import tikka.structures.distributions.AffixStateDP;
-import tikka.structures.distributions.DirichletBaseDistribution;
-import tikka.structures.distributions.HierarchicalDirichletBaseDistribution;
-import tikka.structures.distributions.StemAffixStateDP;
-import tikka.structures.distributions.StemAffixStateHDP;
-import tikka.structures.distributions.StemAffixTopicDP;
-import tikka.structures.distributions.StemAffixTopicHDP;
+import tikka.hhl.distributions.AffixStateDP;
+import tikka.hhl.distributions.DirichletBaseDistribution;
+import tikka.hhl.distributions.HierarchicalDirichletBaseDistribution;
+import tikka.hhl.distributions.StemAffixStateDP;
+import tikka.hhl.distributions.StemAffixStateHDP;
+import tikka.hhl.distributions.StemAffixTopicDP;
+import tikka.hhl.distributions.StemAffixTopicHDP;
 import tikka.structures.lexicons.Lexicon;
 
 import tikka.utils.ec.util.MersenneTwisterFast;
@@ -49,9 +49,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import tikka.structures.distributions.AffixStemStateHDP;
-import tikka.structures.distributions.StemStateDP;
-import tikka.structures.distributions.StemTopicDP;
+import tikka.hhl.distributions.AffixStemStateHDP;
+import tikka.hhl.distributions.StemStateDP;
+import tikka.hhl.distributions.StemTopicDP;
 import tikka.utils.math.SampleEval;
 
 /**
