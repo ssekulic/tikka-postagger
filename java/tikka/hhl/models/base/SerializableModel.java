@@ -15,9 +15,10 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.models.hhl;
+package tikka.hhl.models.base;
 
-import tikka.apps.CommandLineOptions;
+import tikka.hhl.models.base.HDPHMMLDA;
+import tikka.hhl.apps.CommandLineOptions;
 
 import tikka.models.hhl.m1.HDPHMMLDAm1;
 import tikka.models.hhl.m2.HDPHMMLDAm2;

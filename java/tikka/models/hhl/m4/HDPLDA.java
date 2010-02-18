@@ -18,9 +18,9 @@
 package tikka.models.hhl.m4;
 
 import java.io.BufferedWriter;
-import tikka.apps.CommandLineOptions;
+import tikka.hhl.apps.CommandLineOptions;
 
-import tikka.models.hhl.HDPHMMLDA;
+import tikka.hhl.models.base.HDPHMMLDA;
 
 import tikka.structures.DoubleStringPair;
 import tikka.structures.StringDoublePair;
