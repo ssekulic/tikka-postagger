@@ -19,10 +19,10 @@ package tikka.hhl.distributions;
 
 import tikka.structures.DoubleStringPair;
 import tikka.structures.StringDoublePair;
-import tikka.structures.lexicons.Lexicon;
-import tikka.structures.lexicons.ThreeDimProbLexicon;
-import tikka.structures.lexicons.TwoDimLexicon;
-import tikka.structures.lexicons.TwoDimProbLexicon;
+import tikka.hhl.lexicons.Lexicon;
+import tikka.hhl.lexicons.ThreeDimProbLexicon;
+import tikka.hhl.lexicons.TwoDimLexicon;
+import tikka.hhl.lexicons.TwoDimProbLexicon;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;

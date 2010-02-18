@@ -18,7 +18,7 @@
 package tikka.hhl.distributions;
 
 import tikka.structures.StringDoublePair;
-import tikka.structures.lexicons.Lexicon;
+import tikka.hhl.lexicons.Lexicon;
 
 /**
  * Dirichlet process that models dependency from affix to stem. Affixes are

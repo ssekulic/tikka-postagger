@@ -15,14 +15,18 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.structures.lexicons;
+package tikka.hhl.lexicons;
 
 import java.util.HashMap;
 
 /**
- * A table of probabilities for type indexes. Basically a glorified typedef.
- * 
+ * A table from a type index (this could be a state, a topic, or an affix)
+ * to a subtable of probabilities. The probabilities
+ * in the subtable will either be conditioned on the index in this table or
+ * be conditioned on the index in this table and the index of an enclosing table
+ * (see {@link BadMetaphor.structures.lexicons.FourDimProbLexicon}).
+ *
  * @author tsmoon
  */
-public class TwoDimProbLexicon extends HashMap<Integer, Double> {
+public class ThreeDimProbLexicon extends HashMap<Integer, TwoDimProbLexicon> {
 }

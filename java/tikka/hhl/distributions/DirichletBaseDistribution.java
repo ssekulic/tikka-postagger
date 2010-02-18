@@ -18,7 +18,7 @@
 package tikka.hhl.distributions;
 
 import tikka.exceptions.EmptyCountException;
-import tikka.structures.lexicons.Lexicon;
+import tikka.hhl.lexicons.Lexicon;
 import java.util.HashMap;
 
 /**
