@@ -22,17 +22,12 @@ import tikka.hhl.apps.CommandLineOptions;
 
 import tikka.hhl.models.base.HDPHMMLDA;
 
-import tikka.structures.DoubleStringPair;
-import tikka.structures.StringDoublePair;
-import tikka.structures.distributions.DirichletBaseDistribution;
-import tikka.structures.distributions.AffixStemStateHDP;
-import tikka.structures.distributions.StemStateDP;
-import tikka.structures.distributions.StemTopicDP;
+import tikka.hhl.distributions.DirichletBaseDistribution;
+import tikka.hhl.distributions.AffixStemStateHDP;
+import tikka.hhl.distributions.StemStateDP;
+import tikka.hhl.distributions.StemTopicDP;
 
 import java.io.IOException;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * This is a pure HDPHMMLDA model. This model assumes that only a few states
