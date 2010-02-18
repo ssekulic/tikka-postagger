@@ -20,9 +20,9 @@ package tikka.hhl.distributions;
 import tikka.exceptions.EmptyCountException;
 import tikka.exceptions.KeyRemovedException;
 import tikka.exceptions.EmptyTwoDimLexiconException;
-import tikka.structures.lexicons.Lexicon;
-import tikka.structures.lexicons.ThreeDimLexicon;
-import tikka.structures.lexicons.ThreeDimProbLexicon;
+import tikka.hhl.lexicons.Lexicon;
+import tikka.hhl.lexicons.ThreeDimLexicon;
+import tikka.hhl.lexicons.ThreeDimProbLexicon;
 import java.io.BufferedWriter;
 import java.io.IOException;
 

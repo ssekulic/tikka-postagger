@@ -15,18 +15,21 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.structures.lexicons;
 
-import java.util.HashMap;
+package tikka.hhl.lexicons;
 
 /**
- * A table from a type index (this could be a state, a topic, or an affix)
- * to a subtable of probabilities. The probabilities
- * in the subtable will either be conditioned on the index in this table or
- * be conditioned on the index in this table and the index of an enclosing table
- * (see {@link BadMetaphor.structures.lexicons.FourDimProbLexicon}).
- *
+ * A pair object for a string and its token count.
+ * 
  * @author tsmoon
  */
-public class ThreeDimProbLexicon extends HashMap<Integer, TwoDimProbLexicon> {
+public class StringCountPair {
+
+    public String string;
+    public int count;
+
+    public StringCountPair(String string, int count) {
+        this.string = string;
+        this.count = count;
+    }
 }

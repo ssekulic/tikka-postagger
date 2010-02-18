@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.hhl.distributions;
 
-import tikka.structures.lexicons.Lexicon;
+import tikka.hhl.lexicons.Lexicon;
 
 /**
  * Class skeleton for a dirichlet process.

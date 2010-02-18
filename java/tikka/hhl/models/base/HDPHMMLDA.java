@@ -33,7 +33,7 @@ import tikka.hhl.distributions.StemAffixStateDP;
 import tikka.hhl.distributions.StemAffixStateHDP;
 import tikka.hhl.distributions.StemAffixTopicDP;
 import tikka.hhl.distributions.StemAffixTopicHDP;
-import tikka.structures.lexicons.Lexicon;
+import tikka.hhl.lexicons.Lexicon;
 
 import tikka.utils.ec.util.MersenneTwisterFast;
 import tikka.utils.normalizer.WordNormalizer;
