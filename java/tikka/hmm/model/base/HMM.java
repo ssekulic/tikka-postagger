@@ -274,10 +274,6 @@ public abstract class HMM {
      * String for maintaining all model parameters. Only for printing purposes.
      */
     protected StringBuilder modelParameterStringBuilder;
-    /**
-     * Object for saving and loading trained model.
-     */
-    private SerializableModel serializableModel;
 
     public HMM(CommandLineOptions options) {
         try {
@@ -491,6 +487,9 @@ public abstract class HMM {
         }
     }
 
+    /**
+     * Learn parameters
+     */
     public void train() {
         initializeParametersRandom();
 
@@ -511,7 +510,6 @@ public abstract class HMM {
          * from a model
          */
         temperature += temperatureDecrement;
-
     }
 
     /**

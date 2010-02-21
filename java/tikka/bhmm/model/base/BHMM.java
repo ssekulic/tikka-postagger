@@ -17,17 +17,25 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.model.base;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import tikka.hmm.apps.CommandLineOptions;
+import java.io.BufferedWriter;
+import tikka.bhmm.apps.CommandLineOptions;
+
 import tikka.opennlp.io.DataFormatEnum;
 import tikka.opennlp.io.DataReader;
 import tikka.opennlp.io.DirReader;
+
 import tikka.structures.StringDoublePair;
+
 import tikka.utils.ec.util.MersenneTwisterFast;
 import tikka.utils.normalizer.WordNormalizer;
+import tikka.utils.normalizer.WordNormalizerToLowerNoNum;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import tikka.structures.DoubleStringPair;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model"
@@ -65,25 +73,25 @@ public abstract class BHMM {
      */
     protected double beta;
     /**
-     * Normalization term for word-by-topic multinomial
+     * Normalization term for word-by-content-state multinomial
      */
     protected double wbeta;
     /**
      * Hyperparameter for word-by-function-state prior
      */
-    protected double xi;
+    protected double delta;
     /**
      * Normalization term for word-by-function-state multinomial
      */
-    protected double wxi;
+    protected double wdelta;
     /**
-     * Hyperparameter for function-state-by-state prior
+     * Hyperparameter for state transition prior
      */
-    protected double psi;
+    protected double gamma;
     /**
-     * Normalization term for function-state-by-state multinomial
+     * Normalization term for state transition multinomial
      */
-    protected double spsi;
+    protected double sgamma;
     /**
      * Number of sentences
      */
@@ -117,21 +125,22 @@ public abstract class BHMM {
      */
     protected int[] sentenceVector;
     /**
-     * Number of states including topic states and sentence boundary state
+     * Number of content states
+     */
+    protected int stateC;
+    /**
+     * Number of function states
+     */
+    protected int stateF;
+    /**
+     * Sum of states that combines the start state (0), the content states and
+     * the function states
      */
     protected int stateS;
     /**
-     * Offset for 3rd order state count array
+     * Offset for 3rd, 2nd, and 1st order state count array
      */
-    protected int S3;
-    /**
-     * Offset for 2nd order state count array
-     */
-    protected int S2;
-    /**
-     * Offset for 1st order state count array
-     */
-    protected int S1;
+    protected int S3, S2, S1;
     /**
      * 3rd order state counts
      */
@@ -169,10 +178,11 @@ public abstract class BHMM {
      */
     protected int[] contentStateVector;
     /**
+     * Array of states over tokens
+     */
+    protected int[] stateVector;
+    /**
      * Array of counts for words given states.
-     * This has no effect on the model. It is merely here as a bookkeeping
-     * device to check how the segmentation model is doing compared to
-     * normalization as if the words had been dumped into their states.
      */
     protected int[] StateByWord;
     /**
@@ -180,10 +190,10 @@ public abstract class BHMM {
      */
     protected double[] stateProbs;
     /**
-     * Table of top {@link #outputPerClass} words per topic. Used in
+     * Table of top {@link #outputPerClass} words per state. Used in
      * normalization and printing.
      */
-    protected StringDoublePair[][] TopWordsPerTopic;
+    protected StringDoublePair[][] TopWordsPerState;
     /**
      * Hashtable from word to index for training data.
      */
@@ -193,9 +203,21 @@ public abstract class BHMM {
      */
     protected HashMap<Integer, String> trainIdxToWord;
     /**
+     * Hashtable from word to index for training data.
+     */
+    protected HashMap<String, Integer> testWordIdx;
+    /**
+     * Hashtable from index to word for training data.
+     */
+    protected HashMap<Integer, String> testIdxToWord;
+    /**
      * Path of training data.
      */
     protected String trainDataDir;
+    /**
+     * Path of test data.
+     */
+    protected String testDataDir;
     /**
      * Reader for each document
      */
@@ -204,6 +226,10 @@ public abstract class BHMM {
      * Reader for walking through training directories
      */
     protected DirReader trainDirReader;
+    /**
+     * Reader for walking through test directories
+     */
+    protected DirReader testDirReader;
     /**
      * Temperature at which to start annealing process
      */
@@ -224,6 +250,10 @@ public abstract class BHMM {
      * Current temperature for annealing.
      */
     protected double temperature;
+    /**
+     * Number of iterations
+     */
+    protected int iterations;
     /**
      * Number of iterations per temperature increment. This is only used
      * when simulated annealing is implemented. It is identical to
@@ -272,6 +302,98 @@ public abstract class BHMM {
     protected StringBuilder modelParameterStringBuilder;
 
     public BHMM(CommandLineOptions options) {
+        try {
+            initializeFromOptions(options);
+        } catch (IOException e) {
+        }
+    }
+
+    /**
+     * Initialize basic parameters from the command line. Depending on need
+     * many parameters will be overwritten in subsequent initialization stages.
+     *
+     * @param options Command line options
+     * @throws IOException
+     */
+    protected void initializeFromOptions(CommandLineOptions options) throws
+          IOException {
+        /**
+         * Setting input data
+         */
+        dataFormat = options.getDataFormat();
+        trainDataDir = options.getTrainDataDir();
+        if (trainDataDir != null) {
+            trainDirReader = new DirReader(trainDataDir, dataFormat);
+        } else {
+            trainDataDir = "";
+        }
+
+        testDataDir = options.getTestDataDir();
+        if (testDataDir != null) {
+            testDirReader = new DirReader(testDataDir, dataFormat);
+            testWordIdx = new HashMap<String, Integer>();
+            testIdxToWord = new HashMap<Integer, String>();
+            testWordIdx.put(EOSw, EOSi);
+            testIdxToWord.put(EOSi, EOSw);
+        } else {
+            testDataDir = "";
+        }
+
+        /**
+         * Setting lexicons
+         */
+        trainWordIdx = new HashMap<String, Integer>();
+        trainIdxToWord = new HashMap<Integer, String>();
+        trainWordIdx.put(EOSw, EOSi);
+        trainIdxToWord.put(EOSi, EOSw);
+
+        /**
+         * Setting dimensions
+         */
+        stateC = options.getContentStates();
+        stateF = options.getFunctionStates();
+        stateS = stateF + stateC + 1;
+        outputPerClass = options.getOutputPerClass();
+        S3 = stateS * stateS * stateS;
+        S2 = stateS * stateS;
+        S1 = stateS;
+
+        /**
+         * Setting iterations and temperatures
+         */
+        iterations = options.getNumIterations();
+        initialTemperature = options.getInitialTemperature();
+        temperature = initialTemperature;
+        temperatureReciprocal = 1 / temperature;
+        temperatureDecrement = options.getTemperatureDecrement();
+        targetTemperature = options.getTargetTemperature();
+        innerIterations = iterations;
+        outerIterations =
+              (int) Math.round((initialTemperature - targetTemperature)
+              / temperatureDecrement) + 1;
+        samples = options.getSamples();
+        lag = options.getLag();
+        testSetBurninIterations = options.getTestSetBurninIterations();
+
+        /**
+         * Setting hyperparameters
+         */
+        alpha = options.getAlpha();
+        beta = options.getBeta();
+        delta = options.getDelta();
+        gamma = options.getGamma();
+
+        /**
+         * Initializing random number generator, etc.
+         */
+        randomSeed = options.getRandomSeed();
+        if (randomSeed == -1) {
+            randomSeed = 0;
+        }
+        mtfRand = new MersenneTwisterFast(randomSeed);
+        wordNormalizer = new WordNormalizerToLowerNoNum();
+
+        modelName = options.getExperimentModel();
     }
 
     /**
@@ -282,9 +404,10 @@ public abstract class BHMM {
         initializeCountArrays();
     }
 
-    public void initializeParametersRandom() {
-
-    }
+    /**
+     * Randomly initialize parameters for training
+     */
+    public abstract void initializeParametersRandom();
 
     /**
      * Initialize arrays that will be used to track the state, topic, split
@@ -326,7 +449,9 @@ public abstract class BHMM {
         wordN = wordVectorT.size();
         wordW = wordIdx.size();
         wbeta = beta * wordW;
-        wxi = xi * wordW;
+        wdelta = delta * wordW;
+        calpha = alpha * stateC;
+        sgamma = gamma * stateS;
 
         wordVector = new int[wordN];
 
@@ -334,7 +459,7 @@ public abstract class BHMM {
         second = new int[wordN];
         third = new int[wordN];
 
-        functionStateVector = new int[wordN];
+        stateVector = new int[wordN];
         sentenceVector = new int[sentenceVectorT.size()];
 
         copyToArray(wordVector, wordVectorT);
@@ -396,7 +521,234 @@ public abstract class BHMM {
         }
     }
 
-    public abstract void train();
+    /**
+     * Learn parameters
+     */
+    public void train() {
+        initializeParametersRandom();
+
+        /**
+         * Training iterations
+         */
+        for (int outiter = 0; outiter < outerIterations;
+              ++outiter) {
+            System.err.print("\nouter iteration " + outiter + ":");
+            System.err.print("annealing temperature " + temperature);
+            stabilizeTemperature();
+            trainInnerIter(innerIterations, "inner iteration");
+            temperature -= temperatureDecrement;
+            temperatureReciprocal = 1 / temperature;
+        }
+        /**
+         * Increment it so sampling resumes at same temperature if it is loaded
+         * from a model
+         */
+        temperature += temperatureDecrement;
+    }
+
+    /**
+     * Anneal an array of probabilities. For use when every array from starti
+     * is meaningfully populated. Discards with bounds checking.
+     *
+     * @param starti    Index of first element
+     * @param classes   Array of probabilities
+     * @return  Sum of annealed probabilities. Is not 1.
+     */
+    protected double annealProbs(int starti, double[] classes) {
+        double sum = 0, sumw = 0;
+        try {
+            for (int i = starti;; ++i) {
+                sum += classes[i];
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+        if (temperatureReciprocal != 1) {
+            try {
+                for (int i = starti;; ++i) {
+                    classes[i] /= sum;
+                    sumw += classes[i] = Math.pow(classes[i],
+                          temperatureReciprocal);
+                }
+            } catch (ArrayIndexOutOfBoundsException e) {
+            }
+        } else {
+            sumw = sum;
+        }
+        try {
+            for (int i = starti;; ++i) {
+                classes[i] /= sumw;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+        /**
+         * For now, we set everything so that it sums to one.
+         */
+        return 1;
+    }
+
+    /**
+     * The temperature changes in floating point increments. There is a later
+     * need to check whether the temperature is equal to one or not during
+     * the training process. If the temperature is close enough to one,
+     * this will set the temperature to one.
+     *
+     * @return Whether temperature has been set to one
+     */
+    protected boolean stabilizeTemperature() {
+        if (Math.abs(temperatureReciprocal - 1) < EPSILON) {
+            temperatureReciprocal = 1;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Training routine for the inner iterations
+     *
+     * @param itermax Maximum number of iterations to perform
+     * @param message Message to generate
+     * @see HDPHMMLDA#sampleFromTrain()
+     */
+    protected abstract void trainInnerIter(int itermax, String message);
+
+    /**
+     * Normalize the sample counts.
+     */
+    public void normalize() {
+        normalizeStates();
+    }
+
+    /**
+     * Normalize the sample counts for words given state.
+     */
+    protected void normalizeStates() {
+        TopWordsPerState = new StringDoublePair[stateS][];
+        for (int i = 1; i < stateS; ++i) {
+            TopWordsPerState[i] = new StringDoublePair[outputPerClass];
+        }
+
+        double sum = 0.;
+        for (int i = 1; i < stateS; ++i) {
+            sum += stateProbs[i] = stateCounts[i] + wdelta;
+            ArrayList<DoubleStringPair> topWords =
+                  new ArrayList<DoubleStringPair>();
+            /**
+             * Start at one to leave out EOSi
+             */
+            for (int j = EOSi + 1; j < wordW; ++j) {
+                topWords.add(new DoubleStringPair(
+                      StateByWord[j * stateS + i] + delta, trainIdxToWord.get(
+                      j)));
+            }
+            Collections.sort(topWords);
+            for (int j = 0; j < outputPerClass; ++j) {
+                TopWordsPerState[i][j] =
+                      new StringDoublePair(
+                      topWords.get(j).stringValue,
+                      topWords.get(j).doubleValue / stateProbs[i]);
+            }
+        }
+
+        for (int i = 1; i < stateS; ++i) {
+            stateProbs[i] /= sum;
+        }
+    }
+
+    /**
+     * Print the normalized sample counts to out. Print only the top {@link
+     * #outputPerTopic} per given state and topic.
+     *
+     * @param out Output buffer to write to.
+     * @throws IOException
+     */
+    public void printTabulatedProbabilities(BufferedWriter out) throws
+          IOException {
+        printStates(out);
+        out.close();
+    }
+
+    /**
+     * Prints empty newlines in output. For pretty printing purposes.
+     *
+     * @param out   Destination of output
+     * @param n     Number of new lines to create in output
+     * @throws IOException
+     */
+    protected void printNewlines(BufferedWriter out, int n) throws IOException {
+        for (int i = 0; i < n; ++i) {
+            out.newLine();
+        }
+    }
+
+    /**
+     * Print the normalized sample counts for each state to out. Print only the top {@link
+     * #outputPerTopic} per given state.
+     *
+     * @param out
+     * @throws IOException
+     */
+    protected void printStates(BufferedWriter out) throws IOException {
+        int startt = 1, M = 4, endt = Math.min(M + 1, stateProbs.length);
+        out.write("***** Word Probabilities by State *****\n\n");
+        while (startt < stateS) {
+            for (int i = startt; i < endt; ++i) {
+                String header = "State_" + i;
+                header = String.format("%25s\t%6.5f\t", header, stateProbs[i]);
+                out.write(header);
+            }
+
+            out.newLine();
+            out.newLine();
+
+            for (int i = 0; i < outputPerClass; ++i) {
+                for (int c = startt; c < endt; ++c) {
+                    String line = String.format("%25s\t%6.5f\t",
+                          TopWordsPerState[c][i].stringValue,
+                          TopWordsPerState[c][i].doubleValue);
+                    out.write(line);
+                }
+                out.newLine();
+            }
+            out.newLine();
+            out.newLine();
+
+            startt = endt;
+            endt = java.lang.Math.min(stateS, startt + M);
+        }
+    }
+
+    /**
+     * Creates a string stating the parameters used in the model. The
+     * string is used for pretty printing purposes and clarity in other
+     * output routines.
+     */
+    public void setModelParameterStringBuilder() {
+        modelParameterStringBuilder = new StringBuilder();
+        String line = null;
+        line = String.format("stateS:%d", stateS) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordW:%d", wordW) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordN:%d", wordN) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("gamma:%f", gamma) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("initialTemperature:%f", initialTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("temperatureDecrement:%f", temperatureDecrement) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("targetTemperature:%f", targetTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("iterations:%d", iterations) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("randomSeed:%d", randomSeed) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("rootDir:%s", trainDataDir) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("testRootDir:%s", testDataDir) + newline;
+        modelParameterStringBuilder.append(line);
+    }
 
     /**
      * Copy a sequence of numbers from @ta to array @ia.
