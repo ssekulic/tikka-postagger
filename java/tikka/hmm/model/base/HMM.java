@@ -642,7 +642,7 @@ public abstract class HMM {
      * @param out Output buffer to write to.
      * @throws IOException
      */
-    public void print(BufferedWriter out) throws IOException {
+    public void printTabulatedProbabilities(BufferedWriter out) throws IOException {
         printStates(out);
         out.close();
     }
@@ -668,7 +668,7 @@ public abstract class HMM {
      * @throws IOException
      */
     protected void printStates(BufferedWriter out) throws IOException {
-        int startt = 1, M = 4, endt = M;
+        int startt = 1, M = 4, endt = Math.min(M + 1, stateProbs.length);
         out.write("***** Word Probabilities by State *****\n\n");
         while (startt < stateS) {
             for (int i = startt; i < endt; ++i) {
@@ -695,6 +695,38 @@ public abstract class HMM {
             startt = endt;
             endt = java.lang.Math.min(stateS, startt + M);
         }
+    }
+
+    /**
+     * Creates a string stating the parameters used in the model. The
+     * string is used for pretty printing purposes and clarity in other
+     * output routines.
+     */
+    public void setModelParameterStringBuilder() {
+        modelParameterStringBuilder = new StringBuilder();
+        String line = null;
+        line = String.format("stateS:%d", stateS) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordW:%d", wordW) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordN:%d", wordN) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("gamma:%f", gamma) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("initialTemperature:%f", initialTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("temperatureDecrement:%f", temperatureDecrement) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("targetTemperature:%f", targetTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("iterations:%d", iterations) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("randomSeed:%d", randomSeed) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("rootDir:%s", trainDataDir) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("testRootDir:%s", testDataDir) + newline;
+        modelParameterStringBuilder.append(line);
     }
 
     /**

@@ -24,13 +24,7 @@ import tikka.structures.DoubleStringPair;
 import tikka.structures.StringDoublePair;
 
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -254,7 +248,8 @@ public class HMMLDA extends HMM {
      * @throws IOException
      */
     @Override
-    public void print(BufferedWriter out) throws IOException {
+    public void printTabulatedProbabilities(BufferedWriter out) throws
+          IOException {
         printStates(out);
         printNewlines(out, 4);
         printTopics(out);
@@ -496,5 +491,26 @@ public class HMMLDA extends HMM {
                 }
             }
         }
+    }
+
+    /**
+     * Creates a string stating the parameters used in the model. The
+     * string is used for pretty printing purposes and clarity in other
+     * output routines.
+     */
+    @Override
+    public void setModelParameterStringBuilder() {
+        super.setModelParameterStringBuilder();
+        String line = null;
+        line = String.format("topicK:%d", topicK) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("documentD:%d", documentD) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("alpha:%f", alpha) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("beta:%f", beta) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wbeta:%f", wbeta) + newline;
+        modelParameterStringBuilder.append(line);
     }
 }
