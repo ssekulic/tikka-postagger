@@ -151,6 +151,10 @@ public class HMMLDA extends HMM {
         wdelta = delta * wordW;
         sgamma = gamma * stateS;
 
+        wordVector = new int[wordN];
+        sentenceVector = new int[wordN];
+        documentVector = new int[wordN];
+
         copyToArray(wordVector, wordVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
         copyToArray(documentVector, documentVectorT);
@@ -172,12 +176,20 @@ public class HMMLDA extends HMM {
             topicProbs[i] = 0.;
         }
 
+        topicVector = new int[wordN];
+        try {
+            for (int i = 0;; ++i) {
+                topicVector[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+
         TopicByWord = new int[topicK * wordW];
         try {
             for (int i = 0;; ++i) {
                 TopicByWord[i] = 0;
             }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        } catch (ArrayIndexOutOfBoundsException e) {
         }
 
         DocumentByTopic = new int[documentD * topicK];
@@ -185,15 +197,8 @@ public class HMMLDA extends HMM {
             for (int i = 0;; ++i) {
                 DocumentByTopic[i] = 0;
             }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        } catch (ArrayIndexOutOfBoundsException e) {
         }
-    }
-
-    /**
-     * Randomly initialize and train the model.
-     */
-    @Override
-    public void train() {
     }
 
     /**
