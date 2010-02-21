@@ -20,8 +20,13 @@ package tikka.hmm.apps;
 import java.io.*;
 
 import org.apache.commons.cli.*;
+
 import tikka.hmm.model.base.HMM;
+import tikka.hmm.model.base.SerializableModel;
 import tikka.hmm.model.em.EMHMM;
+import tikka.hmm.model.hmmlda.HMMLDA;
+import tikka.hmm.model.hmmlda.SerializableModelHMMLDA;
+import tikka.hmm.model.mcmc.GibbsHMM;
 
 /**
  * Train and test a tagger.
@@ -50,6 +55,7 @@ public class Train extends MainBase {
             CommandLineOptions modelOptions = new CommandLineOptions(cline);
 
             HMM hmm = null;
+            HMMLDA hmmlda = null;
 
             String experimentModel = modelOptions.getExperimentModel();
 
@@ -57,11 +63,53 @@ public class Train extends MainBase {
                 System.err.println("Using EM HMM!");
                 hmm = new EMHMM(modelOptions);
             } else if (experimentModel.equals("m2")) {
+                System.err.println("Using MCMC HMM!");
+                hmm = new GibbsHMM(modelOptions);
+            } else if (experimentModel.equals("m3")) {
+                System.err.println("Using HMM LDA!");
+                /**
+                 * Trick to sidestep a design flaw, namely the derived class
+                 * has new fields with no access through a shared class interface.
+                 */
+                hmm = hmmlda = new HMMLDA(modelOptions);
             }
 
+            System.err.println("Randomly initializing values!");
+            hmm.initializeFromTrainingData();
+            System.err.println("Beginning training!");
             hmm.train();
-            hmm.normalize();
 
+            /**
+             * Save model if specified
+             */
+            String modelOutputPath = modelOptions.getModelOutputPath();
+            if (modelOutputPath != null) {
+                System.err.println("Saving model to :"
+                      + modelOutputPath);
+                SerializableModel serializableModel = null;
+
+                if (experimentModel.equals("m1")) {
+                    serializableModel = new SerializableModel(hmm);
+                } else if (experimentModel.equals("m2")) {
+                    serializableModel = new SerializableModel(hmm);
+                } else if (experimentModel.equals("m3")) {
+                    serializableModel = new SerializableModelHMMLDA(hmmlda);
+                }
+
+                serializableModel.saveModel(modelOutputPath);
+            }
+
+            /**
+             * Save tabulated probabilities
+             */
+            if (modelOptions.getTabularOutputFilename() != null) {
+                System.err.println("Normalizing parameters!");
+                hmm.normalize();
+                System.err.println("Printing tabulated output to :"
+                      + modelOptions.getTabularOutputFilename());
+                hmm.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
+            }
+            
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:" + exp.getMessage());
         } catch (IOException exp) {
