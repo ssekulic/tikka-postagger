@@ -466,20 +466,20 @@ public abstract class HMM {
             for (int i = 0;; ++i) {
                 thirdOrderTransitions[i] = 0;
             }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        } catch (ArrayIndexOutOfBoundsException e) {
         }
         try {
             for (int i = 0;; ++i) {
                 secondOrderTransitions[i] = 0;
             }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        } catch (ArrayIndexOutOfBoundsException e) {
         }
 
         try {
             for (int i = 0;; ++i) {
                 firstOrderTransitions[i] = 0;
             }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        } catch (ArrayIndexOutOfBoundsException e) {
         }
 
         SampleProbs = new double[samples];
