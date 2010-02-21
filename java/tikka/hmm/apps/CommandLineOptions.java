@@ -15,7 +15,7 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.hhl.apps;
+package tikka.hmm.apps;
 
 import tikka.opennlp.io.DataFormatEnum;
 
@@ -51,6 +51,14 @@ public class CommandLineOptions {
      * Hyperparameter for word/topic prior
      */
     protected double beta = 0.1;
+    /**
+     * Hyperparameter for state transition priors
+     */
+    protected double gamma = 0.1;
+    /**
+     * Hyperparameter for word emission priors
+     */
+    protected double delta = 0.0001;
     /**
      * Path for training data. Should be a full directory
      */
@@ -132,46 +140,13 @@ public class CommandLineOptions {
      */
     protected double targetTemperature = 1;
     /**
-     * Hyperparameters for (hierarchical) dirichlet processes
-     */
-    protected double muStem = 300, muStemBase = 3000, muAffixBase = 3000,
-          muAffix = 300, betaStemBase = 3000, betaStem = 300;
-    /**
-     * Probability of null morph or ,equivalently, the probability of a
-     * morpheme boundary
-     */
-    protected double stemBoundaryProb = 0.2, affixBoundaryProb = 0.25;
-    /**
-     * Hyperparameter for state transition priors
-     */
-    protected double psi = 0.1;
-    /**
-     * Hyperparameter for "switch" prior. See {@link  #switchVector}
-     * and {@link #fourthOrderSwitches}.
-     */
-    protected double xi = 0.1;
-    /**
-     * The total number of switch types. There are only two. One which bears
-     * topical content and one which does not.
-     */
-    protected final int switchQ = 2;
-    /**
      * Model to use for training. Use unhelpful, non-mnemonic names
      */
     protected String experimentModel = "m1";
     /**
-     * Hyperparameter for word emission priors
-     */
-    protected double gamma = 0.0001;
-    /**
      * Number of states in HMM.
      */
     protected int states = 15;
-    /**
-     * Number of topic states. This is a less than {@link #stateS} and entails
-     * that the topic states are a subset of the full states.
-     */
-    protected int topicSubStates = 1;
     /**
      * Number of samples to take
      */
@@ -182,7 +157,7 @@ public class CommandLineOptions {
     protected int lag = 10;
 
     /**
-     * 
+     *
      * @param cline
      * @throws IOException
      */
@@ -298,7 +273,7 @@ public class CommandLineOptions {
                     }
                     break;
                 case 'q':
-                    topicSubStates = Integer.valueOf(value);
+                    delta = Double.parseDouble(value);
                     break;
                 case 'r':
                     randomSeed = Integer.valueOf(value);
@@ -312,30 +287,6 @@ public class CommandLineOptions {
                 case 'w':
                     outputPerClass = Integer.parseInt(value);
                     break;
-                case 'x':
-                    opt = option.getOpt();
-                    if (opt.equals("xmustembase")) {
-                        muStemBase = Double.parseDouble(value);
-                    } else if (opt.equals("xmustem")) {
-                        muStem = Double.parseDouble(value);
-                    } else if (opt.equals("xbetastembase")) {
-                        betaStemBase = Double.parseDouble(value);
-                    } else if (opt.equals("xbetastem")) {
-                        betaStem = Double.parseDouble(value);
-                    } else if (opt.equals("xmuaffixbase")) {
-                        muAffixBase = Double.parseDouble(value);
-                    } else if (opt.equals("xmuaffix")) {
-                        muAffix = Double.parseDouble(value);
-                    } else if (opt.equals("xpsi")) {
-                        psi = Double.parseDouble(value);
-                    } else if (opt.equals("xxi")) {
-                        xi = Double.parseDouble(value);
-                    } else if (opt.equals("xstemboundaryprob")) {
-                        stemBoundaryProb = Double.parseDouble(value);
-                    } else if (opt.equals("xaffixboundaryprob")) {
-                        affixBoundaryProb = Double.parseDouble(value);
-                    }
-                    break;
             }
         }
     }
@@ -346,6 +297,14 @@ public class CommandLineOptions {
 
     public double getBeta() {
         return beta;
+    }
+
+    public double getGamma() {
+        return gamma;
+    }
+
+    public double getDelta() {
+        return delta;
     }
 
     public String getTrainDataDir() {
@@ -396,60 +355,12 @@ public class CommandLineOptions {
         return topics;
     }
 
-    public double getBetaStemBase() {
-        return betaStemBase;
-    }
-
-    public double getBetaStem() {
-        return betaStem;
-    }
-
     public String getExperimentModel() {
         return experimentModel;
     }
 
-    public double getMuStemBase() {
-        return muStemBase;
-    }
-
-    public double getMuAffixBase() {
-        return muAffixBase;
-    }
-
-    public double getMuStem() {
-        return muStem;
-    }
-
-    public double getMuAffix() {
-        return muAffix;
-    }
-
-    public double getPsi() {
-        return psi;
-    }
-
-    public double getXi() {
-        return xi;
-    }
-
-    public double getStemBoundaryProb() {
-        return stemBoundaryProb;
-    }
-
-    public double getAffixBoundaryProb() {
-        return affixBoundaryProb;
-    }
-
-    public double getGamma() {
-        return gamma;
-    }
-
     public int getStates() {
         return states;
-    }
-
-    public int getTopicSubStates() {
-        return topicSubStates;
     }
 
     public String getModelInputPath() {
