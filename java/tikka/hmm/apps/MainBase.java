@@ -45,7 +45,7 @@ public class MainBase {
         options.addOption("d", "train-data-dir", true,
               "full path to directory containing training documents");
         options.addOption("e", "experiment-model", true,
-              "model to use [m1,m2; default=m1]");
+              "model to use [m1,m2,m3; default=m1]");
         options.addOption("f", "test-data-dir", true,
               "full path to directory containing test documents");
         options.addOption("g", "gamma", true,
@@ -75,10 +75,10 @@ public class MainBase {
               "path of tabulated probability output");
         options.addOption("pi", "initial-temperature", true,
               "initial temperature for annealing regime (default=0.1)");
-        options.addOption("pr", "target-temperature", true,
+        options.addOption("pd", "temperature-decrement", true,
+              "temperature decrement steps (default=0.1)");
+        options.addOption("pt", "target-temperature", true,
               "temperature at which to stop annealing (default=1)");
-        options.addOption("pt", "temperature-increment", true,
-              "temperature increment steps (default=0.1)");
         options.addOption("q", "delta", true, "set delta value (default=0.0001");
         options.addOption("r", "random-seed", true,
               "seed random number generator (default=false)");

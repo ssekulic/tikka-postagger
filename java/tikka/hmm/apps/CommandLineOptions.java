@@ -266,10 +266,10 @@ public class CommandLineOptions {
                     opt = option.getOpt();
                     if (opt.equals("pi")) {
                         initialTemperature = Double.parseDouble(value);
-                    } else if (opt.equals("pr")) {
-                        targetTemperature = Double.parseDouble(value);
-                    } else if (opt.equals("pt")) {
+                    } else if (opt.equals("pd")) {
                         temperatureDecrement = Double.parseDouble(value);
+                    } else if (opt.equals("pd")) {
+                        targetTemperature = Double.parseDouble(value);
                     }
                     break;
                 case 'q':

@@ -111,7 +111,8 @@ public class GibbsHMM extends HMM {
                 } else {
                     stateid = stateVector[i];
                     wordstateoff = wordid * stateS;
-
+                    
+                    StateByWord[wordstateoff + stateid]--;
                     stateCounts[stateid]--;
                     firstOrderTransitions[first[i] * stateS + stateid]--;
 
