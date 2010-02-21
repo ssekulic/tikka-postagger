@@ -309,6 +309,10 @@ public abstract class HMM {
         testDataDir = options.getTestDataDir();
         if (testDataDir != null) {
             testDirReader = new DirReader(testDataDir, dataFormat);
+            testWordIdx = new HashMap<String, Integer>();
+            testIdxToWord = new HashMap<Integer, String>();
+            testWordIdx.put(EOSw, EOSi);
+            testIdxToWord.put(EOSi, EOSw);
         } else {
             testDataDir = "";
         }
@@ -320,11 +324,6 @@ public abstract class HMM {
         trainIdxToWord = new HashMap<Integer, String>();
         trainWordIdx.put(EOSw, EOSi);
         trainIdxToWord.put(EOSi, EOSw);
-
-        testWordIdx = new HashMap<String, Integer>();
-        testIdxToWord = new HashMap<Integer, String>();
-        testWordIdx.put(EOSw, EOSi);
-        testIdxToWord.put(EOSi, EOSw);
 
         /**
          * Setting dimensions
@@ -642,7 +641,8 @@ public abstract class HMM {
      * @param out Output buffer to write to.
      * @throws IOException
      */
-    public void printTabulatedProbabilities(BufferedWriter out) throws IOException {
+    public void printTabulatedProbabilities(BufferedWriter out) throws
+          IOException {
         printStates(out);
         out.close();
     }
