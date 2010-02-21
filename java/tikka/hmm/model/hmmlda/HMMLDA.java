@@ -219,7 +219,7 @@ public class HMMLDA extends HMM {
             TopWordsPerTopic[i] = new StringDoublePair[outputPerClass];
         }
 
-        Double sum = 0.;
+        double sum = 0.;
         for (int i = 0; i < topicK; ++i) {
             sum += topicProbs[i] = topicCounts[i] + wbeta;
             ArrayList<DoubleStringPair> topWords =
@@ -242,6 +242,80 @@ public class HMMLDA extends HMM {
 
         for (int i = 0; i < topicK; ++i) {
             topicProbs[i] /= sum;
+        }
+    }
+
+    /**
+     * Normalize the sample counts for words given state. Unlike the base class,
+     * it marginalizes word probabilities over the topics for the topic state,
+     * i.e. state 1.
+     */
+    @Override
+    protected void normalizeStates() {
+        TopWordsPerState = new StringDoublePair[stateS][];
+        for (int i = 1; i < stateS; ++i) {
+            TopWordsPerState[i] = new StringDoublePair[outputPerClass];
+        }
+
+        double sum = 0.;
+        double[] marginalwordprobs = new double[wordN];
+        try {
+            for (int i = 0;; ++i) {
+                marginalwordprobs[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+
+        for (int j = EOSi + 1; j < wordW; ++j) {
+            int wordoff = j * topicK;
+            for (int i = 0; i < topicK; ++i) {
+                marginalwordprobs[j] += topicProbs[i]
+                      * (TopicByWord[wordoff + i] + beta)
+                      / (topicCounts[i] + wbeta);
+            }
+        }
+
+        {
+            sum += stateProbs[1] = stateCounts[1] + wdelta;
+            ArrayList<DoubleStringPair> topWords =
+                  new ArrayList<DoubleStringPair>();
+            for (int j = EOSi + 1; j < wordW; ++j) {
+                topWords.add(new DoubleStringPair(
+                      marginalwordprobs[j], trainIdxToWord.get(
+                      j)));
+            }
+            Collections.sort(topWords);
+            for (int j = 0; j < outputPerClass; ++j) {
+                TopWordsPerState[1][j] =
+                      new StringDoublePair(
+                      topWords.get(j).stringValue,
+                      topWords.get(j).doubleValue);
+            }
+        }
+
+        for (int i = 2; i < stateS; ++i) {
+            sum += stateProbs[i] = stateCounts[i] + wdelta;
+            ArrayList<DoubleStringPair> topWords =
+                  new ArrayList<DoubleStringPair>();
+            /**
+             * Start at one to leave out EOSi
+             */
+            for (int j = EOSi + 1; j < wordW; ++j) {
+                topWords.add(new DoubleStringPair(
+                      StateByWord[j * stateS + i] + delta, trainIdxToWord.get(
+                      j)));
+            }
+            Collections.sort(topWords);
+            for (int j = 0; j < outputPerClass; ++j) {
+                TopWordsPerState[i][j] =
+                      new StringDoublePair(
+                      topWords.get(j).stringValue,
+                      topWords.get(j).doubleValue / stateProbs[i]);
+            }
+        }
+
+        for (int i = 1; i < stateS; ++i) {
+            stateProbs[i] /= sum;
         }
     }
 
