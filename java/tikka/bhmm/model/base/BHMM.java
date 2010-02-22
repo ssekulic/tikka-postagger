@@ -125,7 +125,8 @@ public abstract class BHMM {
      */
     protected int[] sentenceVector;
     /**
-     * Number of content states
+     * Number of content states. It also includes the initial start state
+     * as an offset.
      */
     protected int stateC;
     /**
@@ -158,6 +159,10 @@ public abstract class BHMM {
      */
     protected int[] stateCounts;
     /**
+     * Array of counts per sentence
+     */
+    protected int[] sentenceCounts;
+    /**
      * Array of states one word before in previous iteration
      */
     protected int[] first;
@@ -170,21 +175,25 @@ public abstract class BHMM {
      */
     protected int[] third;
     /**
-     * Array of function states over tokens
-     */
-    protected int[] functionStateVector;
-    /**
-     * Array of content states over tokens
-     */
-    protected int[] contentStateVector;
-    /**
      * Array of states over tokens
      */
     protected int[] stateVector;
     /**
-     * Array of counts for words given states.
+     * Array of counts for words given content states.
      */
-    protected int[] StateByWord;
+    protected int[] contentStateByWord;
+    /**
+     * Array of counts for words given function states.
+     */
+    protected int[] functionStateByWord;
+    /**
+     * Array of counts for words given all states
+     */
+    protected int[] stateByWord;
+    /**
+     * Array of counts for content states given sentence
+     */
+    protected int[] contentStateBySentence;
     /**
      * Probability of each state
      */
@@ -193,7 +202,7 @@ public abstract class BHMM {
      * Table of top {@link #outputPerClass} words per state. Used in
      * normalization and printing.
      */
-    protected StringDoublePair[][] TopWordsPerState;
+    protected StringDoublePair[][] topWordsPerState;
     /**
      * Hashtable from word to index for training data.
      */
@@ -295,7 +304,7 @@ public abstract class BHMM {
     /**
      * Probability table of tokens per sample.
      */
-    protected double[] SampleProbs;
+    protected double[] sampleProbs;
     /**
      * String for maintaining all model parameters. Only for printing purposes.
      */
@@ -350,9 +359,9 @@ public abstract class BHMM {
         /**
          * Setting dimensions
          */
-        stateC = options.getContentStates();
+        stateC = options.getContentStates() + 1;
         stateF = options.getFunctionStates();
-        stateS = stateF + stateC + 1;
+        stateS = stateF + stateC;
         outputPerClass = options.getOutputPerClass();
         S3 = stateS * stateS * stateS;
         S2 = stateS * stateS;
@@ -454,13 +463,13 @@ public abstract class BHMM {
         sgamma = gamma * stateS;
 
         wordVector = new int[wordN];
+        sentenceVector = new int[sentenceVectorT.size()];
 
         first = new int[wordN];
         second = new int[wordN];
         third = new int[wordN];
 
         stateVector = new int[wordN];
-        sentenceVector = new int[sentenceVectorT.size()];
 
         copyToArray(wordVector, wordVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
@@ -480,12 +489,50 @@ public abstract class BHMM {
             stateProbs[i] = 0;
         }
 
-        StateByWord = new int[stateS * wordW];
+        stateByWord = new int[stateS * wordW];
         try {
             for (int i = 0;; ++i) {
-                StateByWord[i] = 0;
+                stateByWord[i] = 0;
             }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+
+//        contentStateByWord = new int[stateC * wordW];
+//        try {
+//            for (int i = 0;; ++i) {
+//                contentStateByWord[i] = 0;
+//            }
+//        } catch (ArrayIndexOutOfBoundsException e) {
+//        }
+//
+//        functionStateByWord = new int[stateF * wordW];
+//        try {
+//            for (int i = 0;; ++i) {
+//                functionStateByWord[i] = 0;
+//            }
+//        } catch (ArrayIndexOutOfBoundsException e) {
+//        }
+
+        contentStateBySentence = new int[stateC * sentenceS];
+        try {
+            for (int i = 0;; ++i) {
+                contentStateBySentence[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+
+        sentenceCounts = new int[sentenceS];
+        try {
+            for (int i = 0;; ++i) {
+                sentenceCounts[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+        try {
+            for (int i = 0;; ++i) {
+                sentenceCounts[sentenceVector[i]]++;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
         }
 
         thirdOrderTransitions = new int[stateS * stateS * stateS * stateS];
@@ -512,10 +559,10 @@ public abstract class BHMM {
         } catch (java.lang.ArrayIndexOutOfBoundsException e) {
         }
 
-        SampleProbs = new double[samples];
+        sampleProbs = new double[samples];
         try {
             for (int i = 0;; ++i) {
-                SampleProbs[i] = 0;
+                sampleProbs[i] = 0;
             }
         } catch (ArrayIndexOutOfBoundsException e) {
         }
@@ -623,13 +670,41 @@ public abstract class BHMM {
      * Normalize the sample counts for words given state.
      */
     protected void normalizeStates() {
-        TopWordsPerState = new StringDoublePair[stateS][];
+        topWordsPerState = new StringDoublePair[stateS][];
         for (int i = 1; i < stateS; ++i) {
-            TopWordsPerState[i] = new StringDoublePair[outputPerClass];
+            topWordsPerState[i] = new StringDoublePair[outputPerClass];
         }
 
         double sum = 0.;
-        for (int i = 1; i < stateS; ++i) {
+        int i = 1;
+        /**
+         * Normalize content states
+         */
+        for (; i < stateC; ++i) {
+            sum += stateProbs[i] = stateCounts[i] + wbeta;
+            ArrayList<DoubleStringPair> topWords =
+                  new ArrayList<DoubleStringPair>();
+            /**
+             * Start at one to leave out EOSi
+             */
+            for (int j = EOSi + 1; j < wordW; ++j) {
+                topWords.add(new DoubleStringPair(
+                      stateByWord[j * stateS + i] + beta, trainIdxToWord.get(
+                      j)));
+            }
+            Collections.sort(topWords);
+            for (int j = 0; j < outputPerClass; ++j) {
+                topWordsPerState[i][j] =
+                      new StringDoublePair(
+                      topWords.get(j).stringValue,
+                      topWords.get(j).doubleValue / stateProbs[i]);
+            }
+        }
+
+        /**
+         * Normalize function states
+         */
+        for (; i < stateS; ++i) {
             sum += stateProbs[i] = stateCounts[i] + wdelta;
             ArrayList<DoubleStringPair> topWords =
                   new ArrayList<DoubleStringPair>();
@@ -638,19 +713,19 @@ public abstract class BHMM {
              */
             for (int j = EOSi + 1; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
-                      StateByWord[j * stateS + i] + delta, trainIdxToWord.get(
+                      stateByWord[j * stateS + i] + delta, trainIdxToWord.get(
                       j)));
             }
             Collections.sort(topWords);
             for (int j = 0; j < outputPerClass; ++j) {
-                TopWordsPerState[i][j] =
+                topWordsPerState[i][j] =
                       new StringDoublePair(
                       topWords.get(j).stringValue,
                       topWords.get(j).doubleValue / stateProbs[i]);
             }
         }
 
-        for (int i = 1; i < stateS; ++i) {
+        for (i = 1; i < stateS; ++i) {
             stateProbs[i] /= sum;
         }
     }
@@ -704,8 +779,8 @@ public abstract class BHMM {
             for (int i = 0; i < outputPerClass; ++i) {
                 for (int c = startt; c < endt; ++c) {
                     String line = String.format("%25s\t%6.5f\t",
-                          TopWordsPerState[c][i].stringValue,
-                          TopWordsPerState[c][i].doubleValue);
+                          topWordsPerState[c][i].stringValue,
+                          topWordsPerState[c][i].doubleValue);
                     out.write(line);
                 }
                 out.newLine();

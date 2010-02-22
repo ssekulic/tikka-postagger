@@ -268,7 +268,7 @@ public class CommandLineOptions {
                         initialTemperature = Double.parseDouble(value);
                     } else if (opt.equals("pd")) {
                         temperatureDecrement = Double.parseDouble(value);
-                    } else if (opt.equals("pd")) {
+                    } else if (opt.equals("pt")) {
                         targetTemperature = Double.parseDouble(value);
                     }
                     break;

@@ -31,6 +31,9 @@ public class GibbsHMM extends HMM {
         super(options);
     }
 
+    /**
+     * Randomly initialize learning parameters
+     */
     @Override
     public void initializeParametersRandom() {
         int wordid, stateid;
@@ -54,18 +57,16 @@ public class GibbsHMM extends HMM {
 
                 totalprob = 0;
                 stateoff = current * stateS;
-                if (stateVector[i] == 0) {
-                    try {
-                        for (int j = 1;; j++) {
-                            totalprob += stateProbs[j] =
-                                  (StateByWord[wordstateoff + j] + delta)
-                                  / (stateCounts[j] + wdelta)
-                                  * (firstOrderTransitions[stateoff + j] + gamma);
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                try {
+                    for (int j = 1;; j++) {
+                        totalprob += stateProbs[j] =
+                              (StateByWord[wordstateoff + j] + delta)
+                              / (stateCounts[j] + wdelta)
+                              * (firstOrderTransitions[stateoff + j] + gamma);
                     }
-
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                 }
+
                 r = mtfRand.nextDouble() * totalprob;
                 max = stateProbs[1];
                 stateid = 1;
@@ -97,7 +98,7 @@ public class GibbsHMM extends HMM {
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
             current = 0;
-            for (int i = 0; i < wordN - 3; i++) {
+            for (int i = 0; i < wordN - 1; i++) {
                 if (i % 100000 == 0) {
                     System.err.println("\tProcessing word " + i);
                 }
@@ -105,13 +106,14 @@ public class GibbsHMM extends HMM {
 
                 if (wordid == EOSi) // sentence marker
                 {
+                    firstOrderTransitions[first[i] * stateS + 0]--;
                     firstOrderTransitions[current * stateS + 0]++;
                     first[i] = current;
                     current = 0;
                 } else {
                     stateid = stateVector[i];
                     wordstateoff = wordid * stateS;
-                    
+
                     StateByWord[wordstateoff + stateid]--;
                     stateCounts[stateid]--;
                     firstOrderTransitions[first[i] * stateS + stateid]--;
