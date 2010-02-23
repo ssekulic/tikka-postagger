@@ -20,7 +20,10 @@ package tikka.bhmm.model.base;
 import tikka.opennlp.io.DataFormatEnum;
 
 import tikka.bhmm.apps.CommandLineOptions;
+
 import tikka.bhmm.model.m1.BHMMm1;
+import tikka.bhmm.model.m2.BHMMm2;
+import tikka.bhmm.model.m3.BHMMm3;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -69,11 +72,19 @@ public class SerializableModel implements Serializable {
      */
     protected int wordN;
     /**
+     * Hyperparameter for content state distributions given sentences
+     */
+    protected double alpha;
+    /**
+     * Hyperparameter for word emissions for content states
+     */
+    protected double beta;
+    /**
      * Hyperparameter for state emissions
      */
     protected double gamma;
     /**
-     * Hyperparameter for word emissions
+     * Hyperparameter for word emissions for function states
      */
     protected double delta;
     /**
@@ -123,6 +134,8 @@ public class SerializableModel implements Serializable {
      * @param hmm Model to be saved
      */
     public SerializableModel(BHMM m) {
+        alpha = m.alpha;
+        beta = m.beta;
         dataFormat = m.dataFormat;
         delta = m.delta;
         gamma = m.gamma;
@@ -175,6 +188,10 @@ public class SerializableModel implements Serializable {
         BHMM hmm = null;
         if (modelName.equals("m1")) {
             hmm = new BHMMm1(options);
+        } else if (modelName.equals("m2")) {
+            hmm = new BHMMm2(options);
+        } else if (modelName.equals("m3")) {
+            hmm = new BHMMm3(options);
         }
 
         return copy(hmm);
@@ -195,6 +212,8 @@ public class SerializableModel implements Serializable {
     }
 
     protected void copy(SerializableModel sm) {
+        alpha = sm.alpha;
+        beta = sm.beta;
         dataFormat = sm.dataFormat;
         gamma = sm.gamma;
         initialTemperature = sm.initialTemperature;
@@ -214,6 +233,8 @@ public class SerializableModel implements Serializable {
     }
 
     protected BHMM copy(BHMM hmm) {
+        hmm.alpha = alpha;
+        hmm.beta = beta;
         hmm.dataFormat = dataFormat;
         hmm.gamma = gamma;
         hmm.initialTemperature = initialTemperature;
@@ -230,7 +251,7 @@ public class SerializableModel implements Serializable {
         hmm.wordN = wordN;
         hmm.wordVector = wordVector;
         hmm.wordW = wordW;
-        
+
         return hmm;
     }
 }

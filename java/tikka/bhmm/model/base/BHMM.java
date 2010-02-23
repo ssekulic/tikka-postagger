@@ -47,7 +47,7 @@ public abstract class BHMM {
     /**
      * Machine epsilon for comparing equality in floating point numbers.
      */
-    protected static final double EPSILON = 1e-12;
+    protected static final double EPSILON = 1e-6;
     /**
      * OS neutral newline character
      */
@@ -580,7 +580,7 @@ public abstract class BHMM {
         for (int outiter = 0; outiter < outerIterations;
               ++outiter) {
             System.err.print("\nouter iteration " + outiter + ":");
-            System.err.print("annealing temperature " + temperature);
+            System.err.println("annealing temperature " + temperature);
             stabilizeTemperature();
             trainInnerIter(innerIterations, "inner iteration");
             temperature -= temperatureDecrement;
@@ -643,6 +643,7 @@ public abstract class BHMM {
      */
     protected boolean stabilizeTemperature() {
         if (Math.abs(temperatureReciprocal - 1) < EPSILON) {
+            System.err.println("Temperature stabilized to 1!");
             temperatureReciprocal = 1;
             return true;
         } else {

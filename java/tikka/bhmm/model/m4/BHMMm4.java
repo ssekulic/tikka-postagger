@@ -15,20 +15,21 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.bhmm.model.m1;
+package tikka.bhmm.model.m4;
 
 import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
 
 /**
- * The "barely hidden markov model" or "bicameral hidden markov model". This
- * is the basic, first model.
+ * The "barely hidden markov model" or "bicameral hidden markov model" (M4). This
+ * is a correction of the m1. I think that the conditioning sentence count should
+ * be only on those states which are content states, and not just all states.
  *
  * @author tsmoon
  */
-public class BHMMm1 extends BHMM {
+public class BHMMm4 extends BHMM {
 
-    public BHMMm1(CommandLineOptions options) {
+    public BHMMm4(CommandLineOptions options) {
         super(options);
     }
 
@@ -65,6 +66,7 @@ public class BHMMm1 extends BHMM {
 
                     if (stateid < stateC) {
                         contentStateBySentence[sentenceoff + stateid]--;
+                        sentenceCounts[sentenceid]--;
                     }
                     stateByWord[wordstateoff + stateid]--;
                     stateCounts[stateid]--;
@@ -100,6 +102,7 @@ public class BHMMm1 extends BHMM {
 
                     if (stateid < stateC) {
                         contentStateBySentence[sentenceoff + stateid]++;
+                        sentenceCounts[sentenceid]++;
                     }
                     stateByWord[wordstateoff + stateid]++;
                     stateCounts[stateid]++;
@@ -112,10 +115,24 @@ public class BHMMm1 extends BHMM {
     }
 
     /**
+     * This resets the sentenceCounts array to zero for all elements. This has
+     * to be done since the values are set in initializeCounts.
+     */
+    public void initializeSentenceCounts() {
+        try {
+            for (int i = 0;; ++i) {
+                sentenceCounts[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+    }
+
+    /**
      * Randomly initialize learning parameters
      */
     @Override
     public void initializeParametersRandom() {
+        initializeSentenceCounts();
         int wordid, sentenceid, stateid;
         int current = 0;
         double max = 0, totalprob = 0;
@@ -165,6 +182,7 @@ public class BHMMm1 extends BHMM {
 
                 if (stateid < stateC) {
                     contentStateBySentence[sentenceoff + stateid]++;
+                    sentenceCounts[sentenceid]++;
                 }
                 stateByWord[wordstateoff + stateid]++;
                 stateCounts[stateid]++;

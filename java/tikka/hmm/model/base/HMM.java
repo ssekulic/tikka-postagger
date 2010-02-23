@@ -324,7 +324,7 @@ public abstract class HMM {
         /**
          * Setting dimensions
          */
-        stateS = options.getStates();
+        stateS = options.getStates() + 1;
         outputPerClass = options.getOutputPerClass();
         S3 = stateS * stateS * stateS;
         S2 = stateS * stateS;
@@ -499,7 +499,7 @@ public abstract class HMM {
         for (int outiter = 0; outiter < outerIterations;
               ++outiter) {
             System.err.print("\nouter iteration " + outiter + ":");
-            System.err.print("annealing temperature " + temperature);
+            System.err.println("annealing temperature " + temperature);
             stabilizeTemperature();
             trainInnerIter(innerIterations, "inner iteration");
             temperature -= temperatureDecrement;
