@@ -17,14 +17,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.apps;
 
+import tikka.bhmm.model.base.BHMM;
+import tikka.bhmm.model.base.SerializableModel;
+
+import tikka.bhmm.model.m1.BHMMm1;
+import tikka.bhmm.model.m2.BHMMm2;
+import tikka.bhmm.model.m3.BHMMm3;
+
 import java.io.*;
 
 import org.apache.commons.cli.*;
-import tikka.bhmm.model.base.BHMM;
-import tikka.bhmm.model.m1.BHMMm1;
-
-import tikka.bhmm.model.base.SerializableModel;
-
+import tikka.bhmm.model.m4.BHMMm4;
+import tikka.bhmm.model.m5.BHMMm5;
 /**
  * Train and test a tagger.
  *
@@ -56,8 +60,20 @@ public class Train extends MainBase {
             String experimentModel = modelOptions.getExperimentModel();
 
             if (experimentModel.equals("m1")) {
-                System.err.println("Using EM HMM!");
+                System.err.println("Using BHMM M1!");
                 hmm = new BHMMm1(modelOptions);
+            } else if (experimentModel.equals("m2")) {
+                System.err.println("Using BHMM M2!");
+                hmm = new BHMMm2(modelOptions);
+            } else if (experimentModel.equals("m3")) {
+                System.err.println("Using BHMM M3!");
+                hmm = new BHMMm3(modelOptions);
+            } else if (experimentModel.equals("m4")) {
+                System.err.println("Using BHMM M4!");
+                hmm = new BHMMm4(modelOptions);
+            } else if (experimentModel.equals("m5")) {
+                System.err.println("Using BHMM M5!");
+                hmm = new BHMMm5(modelOptions);
             }
 
             System.err.println("Randomly initializing values!");
@@ -74,10 +90,7 @@ public class Train extends MainBase {
                       + modelOutputPath);
                 SerializableModel serializableModel = null;
 
-                if (experimentModel.equals("m1")) {
-                    serializableModel = new SerializableModel(hmm);
-                }
-
+                serializableModel = new SerializableModel(hmm);
                 serializableModel.saveModel(modelOutputPath);
             }
 
@@ -91,7 +104,7 @@ public class Train extends MainBase {
                       + modelOptions.getTabularOutputFilename());
                 hmm.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
             }
-            
+
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:" + exp.getMessage());
         } catch (IOException exp) {
