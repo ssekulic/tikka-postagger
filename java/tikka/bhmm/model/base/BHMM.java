@@ -97,6 +97,10 @@ public abstract class BHMM {
      */
     protected int sentenceS;
     /**
+     * Number of documents
+     */
+    protected int documentD;
+    /**
      * End of sentence marker index
      */
     protected final int EOSi = 0;
@@ -124,6 +128,10 @@ public abstract class BHMM {
      * Array of sentence indexes. Of length {@link #wordN}.
      */
     protected int[] sentenceVector;
+    /**
+     * Array of document indexes
+     */
+    protected int[] documentVector;
     /**
      * Number of content states. It also includes the initial start state
      * as an offset.
@@ -163,6 +171,10 @@ public abstract class BHMM {
      */
     protected int[] sentenceCounts;
     /**
+     * Array of counts per document
+     */
+    protected int[] documentCounts;
+    /**
      * Array of states one word before in previous iteration
      */
     protected int[] first;
@@ -179,6 +191,18 @@ public abstract class BHMM {
      */
     protected int[] stateVector;
     /**
+     * Array of gold tags
+     */
+    protected int[] goldTagVector;
+    /**
+     * Hashtable from gold tag to index for evaluation
+     */
+    HashMap<String, Integer> goldTagToIdx;
+    /**
+     * Hashtable from index to gold tag
+     */
+    HashMap<Integer, String> idxToGoldTag;
+    /**
      * Array of counts for words given content states.
      */
     protected int[] contentStateByWord;
@@ -194,6 +218,10 @@ public abstract class BHMM {
      * Array of counts for content states given sentence
      */
     protected int[] contentStateBySentence;
+    /**
+     * Array of function states over documents
+     */
+    protected int[] functionStateByDocument;
     /**
      * Probability of each state
      */
@@ -429,9 +457,10 @@ public abstract class BHMM {
      */
     protected void initializeTokenArrays(DirReader dirReader,
           HashMap<String, Integer> wordIdx, HashMap<Integer, String> idxToWord) {
-        sentenceS = 0;
+        documentD = sentenceS = 0;
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
-              sentenceVectorT = new ArrayList<Integer>();
+              sentenceVectorT = new ArrayList<Integer>(),
+              documentVectorT = new ArrayList<Integer>();
         while ((dataReader = dirReader.nextDocumentReader()) != null) {
             try {
                 String[][] sentence;
@@ -445,25 +474,29 @@ public abstract class BHMM {
                             }
                             wordVectorT.add(wordIdx.get(word));
                             sentenceVectorT.add(sentenceS);
+                            documentVectorT.add(documentD);
                         }
                     }
                     wordVectorT.add(EOSi);
                     sentenceVectorT.add(sentenceS);
+                    documentVectorT.add(documentD);
                     sentenceS++;
                 }
             } catch (IOException e) {
             }
+            documentD++;
         }
 
         wordN = wordVectorT.size();
         wordW = wordIdx.size();
         wbeta = beta * wordW;
         wdelta = delta * wordW;
-        calpha = alpha * stateC;
+        calpha = alpha * (stateC - 1);
         sgamma = gamma * stateS;
 
         wordVector = new int[wordN];
-        sentenceVector = new int[sentenceVectorT.size()];
+        sentenceVector = new int[wordN];
+        documentVector = new int[wordN];
 
         first = new int[wordN];
         second = new int[wordN];
@@ -473,6 +506,7 @@ public abstract class BHMM {
 
         copyToArray(wordVector, wordVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
+        copyToArray(documentVector, documentVectorT);
     }
 
     /**
@@ -534,6 +568,23 @@ public abstract class BHMM {
             }
         } catch (ArrayIndexOutOfBoundsException e) {
         }
+
+        documentCounts = new int[documentD];
+        try {
+            for (int i = 0;; ++i) {
+                documentCounts[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+
+        functionStateByDocument = new int[stateS * documentD];
+        try {
+            for (int i = 0;; ++i) {
+                functionStateByDocument[i] = 0;
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+        }
+
 
         thirdOrderTransitions = new int[stateS * stateS * stateS * stateS];
         secondOrderTransitions = new int[stateS * stateS * stateS];

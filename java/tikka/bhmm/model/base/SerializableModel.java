@@ -39,6 +39,7 @@ import java.util.zip.GZIPOutputStream;
 import tikka.bhmm.model.m4.BHMMm4;
 import tikka.bhmm.model.m5.BHMMm5;
 import tikka.bhmm.model.m5.s2.BHMMm5s2;
+import tikka.bhmm.model.m6.BHMMm6;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters
@@ -201,6 +202,8 @@ public class SerializableModel implements Serializable {
             hmm = new BHMMm5(options);
         } else if (modelName.equals("m5s2")) {
             hmm = new BHMMm5s2(options);
+        } else if (modelName.equals("m6")) {
+            hmm = new BHMMm6(options);
         }
 
         return copy(hmm);
