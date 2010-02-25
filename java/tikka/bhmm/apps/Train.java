@@ -30,6 +30,8 @@ import org.apache.commons.cli.*;
 import tikka.bhmm.model.m4.BHMMm4;
 import tikka.bhmm.model.m5.BHMMm5;
 import tikka.bhmm.model.m5.s2.BHMMm5s2;
+import tikka.bhmm.model.m6.BHMMm6;
+import tikka.bhmm.model.m7.BHMMm7;
 /**
  * Train and test a tagger.
  *
@@ -78,6 +80,12 @@ public class Train extends MainBase {
             } else if (experimentModel.equals("m5s2")) {
                 System.err.println("Using BHMM M5 S2!");
                 hmm = new BHMMm5s2(modelOptions);
+            } else if (experimentModel.equals("m6")) {
+                System.err.println("Using BHMM M6!");
+                hmm = new BHMMm6(modelOptions);
+            } else if (experimentModel.equals("m7")) {
+                System.err.println("Using BHMM M7!");
+                hmm = new BHMMm7(modelOptions);
             }
 
             System.err.println("Randomly initializing values!");
