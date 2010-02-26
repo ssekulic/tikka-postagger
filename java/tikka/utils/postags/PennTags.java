@@ -11,16 +11,17 @@ import java.util.HashSet;
  *
  * @author tsmoon
  */
-public class PennTags extends TagSet {
+public class PennTags extends TagMap {
 
     @Override
-    public HashSet<String> setTags() {
-        return setPennTags();
+    protected HashSet<String> setTags() {
+        setPennTags();
+        setIdxMap(fullTagSet);
+        return fullTagSet;
     }
 
     @Override
-    public HashSet<String> reduceTag() {
+    protected HashSet<String> reduceTag() {
         return reducedTagSet;
-        
     }
 }
