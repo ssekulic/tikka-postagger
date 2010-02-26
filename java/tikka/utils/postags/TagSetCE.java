@@ -8,12 +8,12 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 /**
- * TagSet for handling reduced tag set used in Noah Smith's Contrastive
+ * TagMap for handling reduced tag set used in Noah Smith's Contrastive
  * Estimation (2005) paper
  *
  * @author tsmoon
  */
-public abstract class TagSetCE extends TagSet {
+public abstract class TagSetCE extends TagMap {
 
     TagSetCE() {
         reducedTagSet = new HashSet<String>(Arrays.asList(

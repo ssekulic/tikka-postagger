@@ -9,21 +9,39 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Class for handling mappings from and to gold tag sets
+ * Class for handling mappings from gold tag sets and their indexes. It also
+ * manages the reduced tag set and their mappings.
  * 
  * @author tsmoon
  */
-public abstract class TagSet extends HashMap<String, String> {
+public abstract class TagMap extends HashMap<String, Integer> {
 
-    protected HashSet<String> tagSet;
+    protected HashSet<String> fullTagSet;
     protected HashSet<String> reducedTagSet;
+    protected HashMap<Integer, String> idxToTag;
+    protected HashMap<String, String> fullTagToReducedTag;
 
-    public TagSet() {
+    public TagMap() {
         setTags();
+        reduceTag();
+    }
+
+    protected void setIdxMap(HashSet<String> tagSet) {
+        idxToTag = new HashMap<Integer, String>();
+        int count = 0;
+        for (String tag : tagSet) {
+            idxToTag.put(count, tag);
+            put(tag, count++);
+        }
+    }
+
+    protected void reset() {
+        clear();
+        idxToTag = new HashMap<Integer, String>();
     }
 
     protected HashSet<String> setBrownTags() {
-        tagSet = new HashSet<String>(Arrays.asList(
+        fullTagSet = new HashSet<String>(Arrays.asList(
               ".", //sentence closer (. ; ? *)
               "(", //left paren
               ")", //right paren
@@ -107,11 +125,12 @@ public abstract class TagSet extends HashMap<String, String> {
               "WQL", //wh- qualifier (how)
               "WRB" //wh- adverb (how, where, when)
               ));
-        return tagSet;
+
+        return fullTagSet;
     }
 
     protected HashSet<String> setPennTags() {
-        tagSet = new HashSet<String>(Arrays.asList(
+        fullTagSet = new HashSet<String>(Arrays.asList(
               "$", //dollar $ -$ --$ A$ C$ HK$ M$ NZ$ S$ U.S.$ US$
               "``", //opening quotation mark ` ``
               "''", //closing quotation mark ' ''
@@ -158,10 +177,10 @@ public abstract class TagSet extends HashMap<String, String> {
               "WP$", //Possessive wh-pronoun
               "WRB" //Wh-adverb
               ));
-        return tagSet;
+        return fullTagSet;
     }
 
-    public abstract HashSet<String> setTags();
+    protected abstract HashSet<String> setTags();
 
-    public abstract HashSet<String> reduceTag();
+    protected abstract HashSet<String> reduceTag();
 }
