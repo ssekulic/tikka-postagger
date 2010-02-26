@@ -15,42 +15,23 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.bhmm.model.m3;
+package tikka.bhmm.models;
 
+import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
 import tikka.utils.annealer.Annealer;
-import tikka.bhmm.model.base.BHMM;
+import tikka.bhmm.models.BHMMm5;
 
 /**
- * The "barely hidden markov model" or "bicameral hidden markov model" (M3).
- * There is no conditioning on sentences here. Only the hyperparameters are
- * different from the content states and the function states
+ * The "barely hidden markov model" or "bicameral hidden markov model" (M6).
+ * This model weights function words over documents.
  *
  * @author tsmoon
  */
-public class BHMMm3 extends BHMM {
+public class BHMMm6 extends BHMMm5 {
 
-    /**
-     * Hyperparameter normalization constant for statecounts. Is a sum of
-     * wbeta+wdelta.
-     */
-    protected double statenorm;
-
-    public BHMMm3(CommandLineOptions options) {
+    public BHMMm6(CommandLineOptions options) {
         super(options);
-    }
-
-    /**
-     * This sets the hyperparameters at the beginning of the random initialization
-     * routine. Pulled out so it's easily noted
-     */
-    protected void setHyper() {
-        statenorm = wbeta + wdelta;
-        /**
-         * This overwrites the default normalization terms so that I don't have
-         * to rewrite the normalization routine in the base class.
-         */
-        wbeta = wdelta = statenorm;
     }
 
     /**
@@ -58,11 +39,11 @@ public class BHMMm3 extends BHMM {
      */
     @Override
     protected void trainInnerIter(int itermax, Annealer annealer) {
-        int wordid, stateid;
+        int wordid, sentenceid, stateid, docid;
         int current = 0, next;
         double max = 0, totalprob = 0;
         double r = 0;
-        int wordstateoff, stateoff;
+        int wordstateoff, sentenceoff, stateoff, docoff;
 
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
@@ -78,10 +59,21 @@ public class BHMMm3 extends BHMM {
                     first[i] = current;
                     current = 0;
                 } else {
+                    sentenceid = sentenceVector[i];
+                    docid = documentVector[i];
                     stateid = stateVector[i];
-                    stateoff = current * stateS;
+                    docoff = stateS * docid;
+                    stateoff = stateS * current;
                     wordstateoff = stateS * wordid;
+                    sentenceoff = stateC * sentenceid;
 
+                    if (stateid < stateC) {
+                        contentStateBySentence[sentenceoff + stateid]--;
+                        sentenceCounts[sentenceid]--;
+                    } else {
+                        functionStateByDocument[docoff + stateid]--;
+                        documentCounts[docid]--;
+                    }
                     stateByWord[wordstateoff + stateid]--;
                     stateCounts[stateid]--;
                     firstOrderTransitions[first[i] * stateS + stateid]--;
@@ -96,14 +88,18 @@ public class BHMMm3 extends BHMM {
                     for (; j < stateC; j++) {
                         stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + beta)
-                              / (stateCounts[j] + statenorm))
+                              / (stateCounts[j] + wbeta))
+                              * ((contentStateBySentence[sentenceoff + j] + alpha)
+                              / (sentenceCounts[sentenceid] + calpha))
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
                     for (; j < stateS; j++) {
                         stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + delta)
-                              / (stateCounts[j] + statenorm))
+                              / (stateCounts[j] + wdelta))
+                              * ((functionStateByDocument[docoff + j] + alpha)
+                              / (documentCounts[docid] + falpha))
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
@@ -117,6 +113,13 @@ public class BHMMm3 extends BHMM {
                     }
                     stateVector[i] = stateid;
 
+                    if (stateid < stateC) {
+                        contentStateBySentence[sentenceoff + stateid]++;
+                        sentenceCounts[sentenceid]++;
+                    } else {
+                        functionStateByDocument[docoff + stateid]++;
+                        documentCounts[docid]++;
+                    }
                     stateByWord[wordstateoff + stateid]++;
                     stateCounts[stateid]++;
                     firstOrderTransitions[stateoff + stateid]++;
@@ -132,13 +135,12 @@ public class BHMMm3 extends BHMM {
      */
     @Override
     public void initializeParametersRandom() {
-        setHyper();
-
-        int wordid, stateid;
+        initializeSentenceCounts();
+        int wordid, sentenceid, stateid, docid;
         int current = 0;
         double max = 0, totalprob = 0;
         double r = 0;
-        int wordstateoff, stateoff;
+        int wordstateoff, sentenceoff, stateoff, docoff;
 
         /**
          * Initialize by assigning random topic indices to words
@@ -151,36 +153,43 @@ public class BHMMm3 extends BHMM {
                 first[i] = current;
                 current = 0;
             } else {
-                stateoff = current * stateS;
+                sentenceid = sentenceVector[i];
+                docid = documentVector[i];
+                docoff = stateS * docid;
+                stateoff = stateS * current;
                 wordstateoff = stateS * wordid;
+                sentenceoff = sentenceid * stateC;
 
                 totalprob = 0;
-                if (mtfRand.nextDouble() > 0.5) {
-                    for (int j = 1; j < stateC; j++) {
-                        totalprob += stateProbs[j] =
-                              ((stateByWord[wordstateoff + j] + beta)
-                              / (stateCounts[j] + statenorm))
-                              * (firstOrderTransitions[stateoff + j] + gamma);
-                    }
-                    stateid = 1;
-                } else {
-                    for (int j = stateC; j < stateS; j++) {
-                        totalprob += stateProbs[j] =
-                              ((stateByWord[wordstateoff + j] + delta)
-                              / (stateCounts[j] + statenorm))
-                              * (firstOrderTransitions[stateoff + j] + gamma);
-                    }
-                    r = mtfRand.nextDouble() * totalprob;
-                    stateid = stateC;
+                int j = 1;
+                for (; j < stateC; j++) {
+                    totalprob += stateProbs[j] =
+                          ((stateByWord[wordstateoff + j] + beta)
+                          / (stateCounts[j] + wbeta))
+                          * (firstOrderTransitions[stateoff + j] + gamma);
+                }
+                for (; j < stateS; j++) {
+                    totalprob += stateProbs[j] =
+                          ((stateByWord[wordstateoff + j] + delta)
+                          / (stateCounts[j] + wdelta))
+                          * (firstOrderTransitions[stateoff + j] + gamma);
                 }
                 r = mtfRand.nextDouble() * totalprob;
-                max = stateProbs[stateid];
+                max = stateProbs[1];
+                stateid = 1;
                 while (r > max) {
                     stateid++;
                     max += stateProbs[stateid];
                 }
                 stateVector[i] = stateid;
 
+                if (stateid < stateC) {
+                    contentStateBySentence[sentenceoff + stateid]++;
+                    sentenceCounts[sentenceid]++;
+                } else {
+                    functionStateByDocument[docoff + stateid]++;
+                    documentCounts[docid]++;
+                }
                 stateByWord[wordstateoff + stateid]++;
                 stateCounts[stateid]++;
                 firstOrderTransitions[stateoff + stateid]++;

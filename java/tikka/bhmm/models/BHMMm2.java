@@ -15,10 +15,10 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.bhmm.model.m2;
+package tikka.bhmm.models;
 
 import tikka.bhmm.apps.CommandLineOptions;
-import tikka.bhmm.model.m1.BHMMm1;
+import tikka.bhmm.models.BHMMm1;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model" (M2). This

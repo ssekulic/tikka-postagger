@@ -15,34 +15,30 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.bhmm.model.m5;
+package tikka.bhmm.models;
 
-import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
 import tikka.utils.annealer.Annealer;
+import tikka.bhmm.models.BHMMm4;
 
 /**
- * The "barely hidden markov model" or "bicameral hidden markov model" (M5). This
- * model adds a weighting factor to the calculation of function state words
- * as well.
+ * The "barely hidden markov model" or "bicameral hidden markov model" (M7). This
+ * takes M4 and makes the transitions to be local as well.
  *
  * @author tsmoon
  */
-public class BHMMm5 extends BHMM {
+public class BHMMm7 extends BHMMm4 {
 
     /**
-     * Keeps track of the overall function states that were allocated
+     * Hyperparameter for transition out of content states
      */
-    protected int functionStateCount;
-    /**
-     * Normalization term for function state by global function count multinomial
-     */
-    protected double falpha;
+    protected double psi;
+    protected double spsi;
 
-    public BHMMm5(CommandLineOptions options) {
+    public BHMMm7(CommandLineOptions options) {
         super(options);
-        functionStateCount = 0;
-        falpha = alpha * stateF;
+        psi = 10;
+        spsi = psi * 10;
     }
 
     /**
@@ -55,6 +51,8 @@ public class BHMMm5 extends BHMM {
         double max = 0, totalprob = 0;
         double r = 0;
         int wordstateoff, sentenceoff, stateoff;
+
+        double prevprior;
 
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
@@ -76,11 +74,15 @@ public class BHMMm5 extends BHMM {
                     wordstateoff = stateS * wordid;
                     sentenceoff = stateC * sentenceid;
 
+                    if (current < stateC) {
+                        prevprior = psi;
+                    } else {
+                        prevprior = gamma;
+                    }
+
                     if (stateid < stateC) {
                         contentStateBySentence[sentenceoff + stateid]--;
                         sentenceCounts[sentenceid]--;
-                    } else {
-                        functionStateCount--;
                     }
                     stateByWord[wordstateoff + stateid]--;
                     stateCounts[stateid]--;
@@ -99,16 +101,14 @@ public class BHMMm5 extends BHMM {
                               / (stateCounts[j] + wbeta))
                               * ((contentStateBySentence[sentenceoff + j] + alpha)
                               / (sentenceCounts[sentenceid] + calpha))
-                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
-                              * (firstOrderTransitions[j * stateS + next] + gamma);
+                              * (firstOrderTransitions[stateoff + j] + prevprior) / (stateCounts[j] + spsi)
+                              * (firstOrderTransitions[j * stateS + next] + psi);
                     }
                     for (; j < stateS; j++) {
                         stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + delta)
                               / (stateCounts[j] + wdelta))
-                              * ((stateCounts[j] + alpha)
-                              / (functionStateCount + falpha))
-                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
+                              * (firstOrderTransitions[stateoff + j] + prevprior) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
                     totalprob = annealer.annealProbs(1, stateProbs);
@@ -124,8 +124,6 @@ public class BHMMm5 extends BHMM {
                     if (stateid < stateC) {
                         contentStateBySentence[sentenceoff + stateid]++;
                         sentenceCounts[sentenceid]++;
-                    } else {
-                        functionStateCount++;
                     }
                     stateByWord[wordstateoff + stateid]++;
                     stateCounts[stateid]++;
@@ -192,8 +190,6 @@ public class BHMMm5 extends BHMM {
                     totalprob += stateProbs[j] =
                           ((stateByWord[wordstateoff + j] + delta)
                           / (stateCounts[j] + wdelta))
-                          * ((stateCounts[j] + alpha)
-                          / (functionStateCount + falpha))
                           * (firstOrderTransitions[stateoff + j] + gamma);
                 }
                 r = mtfRand.nextDouble() * totalprob;
@@ -208,8 +204,6 @@ public class BHMMm5 extends BHMM {
                 if (stateid < stateC) {
                     contentStateBySentence[sentenceoff + stateid]++;
                     sentenceCounts[sentenceid]++;
-                } else {
-                    functionStateCount++;
                 }
                 stateByWord[wordstateoff + stateid]++;
                 stateCounts[stateid]++;
