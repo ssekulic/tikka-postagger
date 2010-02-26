@@ -15,30 +15,22 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.bhmm.model.m7;
+package tikka.bhmm.models;
 
+import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
 import tikka.utils.annealer.Annealer;
-import tikka.bhmm.model.m4.BHMMm4;
 
 /**
- * The "barely hidden markov model" or "bicameral hidden markov model" (M7). This
- * takes M4 and makes the transitions to be local as well.
+ * The "barely hidden markov model" or "bicameral hidden markov model". This
+ * is the basic, first model.
  *
  * @author tsmoon
  */
-public class BHMMm7 extends BHMMm4 {
+public class BHMMm1 extends BHMM {
 
-    /**
-     * Hyperparameter for transition out of content states
-     */
-    protected double psi;
-    protected double spsi;
-
-    public BHMMm7(CommandLineOptions options) {
+    public BHMMm1(CommandLineOptions options) {
         super(options);
-        psi = 10;
-        spsi = psi * 10;
     }
 
     /**
@@ -51,8 +43,6 @@ public class BHMMm7 extends BHMMm4 {
         double max = 0, totalprob = 0;
         double r = 0;
         int wordstateoff, sentenceoff, stateoff;
-
-        double prevprior;
 
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
@@ -74,15 +64,8 @@ public class BHMMm7 extends BHMMm4 {
                     wordstateoff = stateS * wordid;
                     sentenceoff = stateC * sentenceid;
 
-                    if (current < stateC) {
-                        prevprior = psi;
-                    } else {
-                        prevprior = gamma;
-                    }
-
                     if (stateid < stateC) {
                         contentStateBySentence[sentenceoff + stateid]--;
-                        sentenceCounts[sentenceid]--;
                     }
                     stateByWord[wordstateoff + stateid]--;
                     stateCounts[stateid]--;
@@ -101,14 +84,14 @@ public class BHMMm7 extends BHMMm4 {
                               / (stateCounts[j] + wbeta))
                               * ((contentStateBySentence[sentenceoff + j] + alpha)
                               / (sentenceCounts[sentenceid] + calpha))
-                              * (firstOrderTransitions[stateoff + j] + prevprior) / (stateCounts[j] + spsi)
-                              * (firstOrderTransitions[j * stateS + next] + psi);
+                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
+                              * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
                     for (; j < stateS; j++) {
                         stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + delta)
                               / (stateCounts[j] + wdelta))
-                              * (firstOrderTransitions[stateoff + j] + prevprior) / (stateCounts[j] + sgamma)
+                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
                     totalprob = annealer.annealProbs(1, stateProbs);
@@ -123,7 +106,6 @@ public class BHMMm7 extends BHMMm4 {
 
                     if (stateid < stateC) {
                         contentStateBySentence[sentenceoff + stateid]++;
-                        sentenceCounts[sentenceid]++;
                     }
                     stateByWord[wordstateoff + stateid]++;
                     stateCounts[stateid]++;
@@ -136,24 +118,10 @@ public class BHMMm7 extends BHMMm4 {
     }
 
     /**
-     * This resets the sentenceCounts array to zero for all elements. This has
-     * to be done since the values are set in initializeCounts.
-     */
-    public void initializeSentenceCounts() {
-        try {
-            for (int i = 0;; ++i) {
-                sentenceCounts[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
-    }
-
-    /**
      * Randomly initialize learning parameters
      */
     @Override
     public void initializeParametersRandom() {
-        initializeSentenceCounts();
         int wordid, sentenceid, stateid;
         int current = 0;
         double max = 0, totalprob = 0;
@@ -203,7 +171,6 @@ public class BHMMm7 extends BHMMm4 {
 
                 if (stateid < stateC) {
                     contentStateBySentence[sentenceoff + stateid]++;
-                    sentenceCounts[sentenceid]++;
                 }
                 stateByWord[wordstateoff + stateid]++;
                 stateCounts[stateid]++;

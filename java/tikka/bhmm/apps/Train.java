@@ -17,21 +17,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.apps;
 
-import tikka.bhmm.model.base.BHMM;
-import tikka.bhmm.model.base.SerializableModel;
-
-import tikka.bhmm.model.m1.BHMMm1;
-import tikka.bhmm.model.m2.BHMMm2;
-import tikka.bhmm.model.m3.BHMMm3;
+import tikka.bhmm.model.base.*;
+import tikka.bhmm.models.*;
 
 import java.io.*;
 
 import org.apache.commons.cli.*;
-import tikka.bhmm.model.m4.BHMMm4;
-import tikka.bhmm.model.m5.BHMMm5;
-import tikka.bhmm.model.m5.s2.BHMMm5s2;
-import tikka.bhmm.model.m6.BHMMm6;
-import tikka.bhmm.model.m7.BHMMm7;
+
 /**
  * Train and test a tagger.
  *

@@ -21,9 +21,9 @@ import tikka.opennlp.io.DataFormatEnum;
 
 import tikka.bhmm.apps.CommandLineOptions;
 
-import tikka.bhmm.model.m1.BHMMm1;
-import tikka.bhmm.model.m2.BHMMm2;
-import tikka.bhmm.model.m3.BHMMm3;
+import tikka.bhmm.models.BHMMm1;
+import tikka.bhmm.models.BHMMm2;
+import tikka.bhmm.models.BHMMm3;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,10 +36,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import tikka.bhmm.model.m4.BHMMm4;
-import tikka.bhmm.model.m5.BHMMm5;
-import tikka.bhmm.model.m5.s2.BHMMm5s2;
-import tikka.bhmm.model.m6.BHMMm6;
+import tikka.bhmm.models.BHMMm4;
+import tikka.bhmm.models.BHMMm5;
+import tikka.bhmm.models.BHMMm5s2;
+import tikka.bhmm.models.BHMMm6;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters
