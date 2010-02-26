@@ -19,6 +19,7 @@ package tikka.hmm.model.mcmc;
 
 import tikka.hmm.apps.CommandLineOptions;
 import tikka.hmm.model.base.HMM;
+import tikka.utils.annealer.Annealer;
 
 /**
  *
@@ -88,7 +89,7 @@ public class GibbsHMM extends HMM {
      * Training routine for the inner iterations
      */
     @Override
-    protected void trainInnerIter(int itermax, String message) {
+    protected void trainInnerIter(int itermax, Annealer annealer) {
         int wordid, stateid;
         int current = 0, next = 0;
         double max = 0, totalprob = 0;
@@ -129,7 +130,7 @@ public class GibbsHMM extends HMM {
                         }
                     } catch (ArrayIndexOutOfBoundsException e) {
                     }
-                    totalprob = annealProbs(1, stateProbs);
+                    totalprob = annealer.annealProbs(1, stateProbs);
                     r = mtfRand.nextDouble() * totalprob;
                     max = stateProbs[1];
                     stateid = 1;

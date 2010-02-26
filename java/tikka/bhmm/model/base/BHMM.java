@@ -17,6 +17,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.model.base;
 
+import tikka.utils.annealer.Annealer;
+import tikka.utils.annealer.SimulatedAnnealer;
+import tikka.utils.annealer.MaximumPosteriorDecoder;
 import java.io.BufferedWriter;
 import tikka.bhmm.apps.CommandLineOptions;
 
@@ -44,10 +47,6 @@ import tikka.structures.DoubleStringPair;
  */
 public abstract class BHMM {
 
-    /**
-     * Machine epsilon for comparing equality in floating point numbers.
-     */
-    protected static final double EPSILON = 1e-6;
     /**
      * OS neutral newline character
      */
@@ -625,6 +624,7 @@ public abstract class BHMM {
     public void train() {
         initializeParametersRandom();
 
+        Annealer annealer = new SimulatedAnnealer();
         /**
          * Training iterations
          */
@@ -632,8 +632,10 @@ public abstract class BHMM {
               ++outiter) {
             System.err.print("\nouter iteration " + outiter + ":");
             System.err.println("annealing temperature " + temperature);
-            stabilizeTemperature();
-            trainInnerIter(innerIterations, "inner iteration");
+            annealer.stabilizeTemperature();
+            annealer.setTemperatureReciprocal(temperatureReciprocal);
+            trainInnerIter(innerIterations, annealer);
+//            trainInnerIter(innerIterations, "inner iteration");
             temperature -= temperatureDecrement;
             temperatureReciprocal = 1 / temperature;
         }
@@ -645,71 +647,21 @@ public abstract class BHMM {
     }
 
     /**
-     * Anneal an array of probabilities. For use when every array from starti
-     * is meaningfully populated. Discards with bounds checking.
-     *
-     * @param starti    Index of first element
-     * @param classes   Array of probabilities
-     * @return  Sum of annealed probabilities. Is not 1.
-     */
-    protected double annealProbs(int starti, double[] classes) {
-        double sum = 0, sumw = 0;
-        try {
-            for (int i = starti;; ++i) {
-                sum += classes[i];
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
-        if (temperatureReciprocal != 1) {
-            try {
-                for (int i = starti;; ++i) {
-                    classes[i] /= sum;
-                    sumw += classes[i] = Math.pow(classes[i],
-                          temperatureReciprocal);
-                }
-            } catch (ArrayIndexOutOfBoundsException e) {
-            }
-        } else {
-            sumw = sum;
-        }
-        try {
-            for (int i = starti;; ++i) {
-                classes[i] /= sumw;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
-        /**
-         * For now, we set everything so that it sums to one.
-         */
-        return 1;
-    }
-
-    /**
-     * The temperature changes in floating point increments. There is a later
-     * need to check whether the temperature is equal to one or not during
-     * the training process. If the temperature is close enough to one,
-     * this will set the temperature to one.
-     *
-     * @return Whether temperature has been set to one
-     */
-    protected boolean stabilizeTemperature() {
-        if (Math.abs(temperatureReciprocal - 1) < EPSILON) {
-            System.err.println("Temperature stabilized to 1!");
-            temperatureReciprocal = 1;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * Training routine for the inner iterations
      *
      * @param itermax Maximum number of iterations to perform
-     * @param message Message to generate
+     * @param annealer Callback to annealing process
      * @see HDPHMMLDA#sampleFromTrain()
      */
-    protected abstract void trainInnerIter(int itermax, String message);
+    protected abstract void trainInnerIter(int itermax, Annealer annealer);
+
+    /**
+     * Maximum posterior decoding of tag sequence
+     */
+    public void decode() {
+        Annealer annealer = new MaximumPosteriorDecoder();
+        trainInnerIter(1, annealer);
+    }
 
     /**
      * Normalize the sample counts.
@@ -878,7 +830,7 @@ public abstract class BHMM {
     }
 
     /**
-     * Copy a sequence of numbers from @ta to array @ia.
+     * Copy a sequence of numbers from ta to array ia.
      *
      * @param <T>   Any number type
      * @param ia    Target array of integers to be copied to
