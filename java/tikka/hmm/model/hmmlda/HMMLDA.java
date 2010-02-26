@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import tikka.opennlp.io.DirReader;
+import tikka.utils.annealer.Annealer;
 
 /**
  *
@@ -469,7 +470,7 @@ public class HMMLDA extends HMM {
     }
 
     @Override
-    protected void trainInnerIter(int itermax, String message) {
+    protected void trainInnerIter(int itermax, Annealer annealer) {
         int wordid, docid, topicid, stateid;
         int current = 0, next;
         double max = 0, totalprob = 0;
@@ -520,7 +521,7 @@ public class HMMLDA extends HMM {
                         }
                     } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                     }
-                    totalprob = annealProbs(topicProbs);
+                    totalprob = annealer.annealProbs(topicProbs);
                     r = mtfRand.nextDouble() * totalprob;
                     max = topicProbs[0];
 
@@ -545,7 +546,7 @@ public class HMMLDA extends HMM {
                               * ((firstOrderTransitions[j * stateS + next] + gamma)
                               / (stateCounts[j] + sgamma));
                     }
-                    totalprob = annealProbs(1, stateProbs);
+                    totalprob = annealer.annealProbs(1, stateProbs);
                     r = mtfRand.nextDouble() * totalprob;
                     max = stateProbs[1];
                     stateid = 1;

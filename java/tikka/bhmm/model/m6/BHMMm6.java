@@ -19,6 +19,7 @@ package tikka.bhmm.model.m6;
 
 import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
+import tikka.utils.annealer.Annealer;
 import tikka.bhmm.model.m5.BHMMm5;
 
 /**
@@ -37,7 +38,7 @@ public class BHMMm6 extends BHMMm5 {
      * Training routine for the inner iterations
      */
     @Override
-    protected void trainInnerIter(int itermax, String message) {
+    protected void trainInnerIter(int itermax, Annealer annealer) {
         int wordid, sentenceid, stateid, docid;
         int current = 0, next;
         double max = 0, totalprob = 0;
@@ -47,7 +48,7 @@ public class BHMMm6 extends BHMMm5 {
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
             current = 0;
-            for (int i = 0; i < wordN - 1; ++i) {
+            for (int i = 0; i < wordN; ++i) {
                 if (i % 100000 == 0) {
                     System.err.println("\tProcessing word " + i);
                 }
@@ -77,7 +78,12 @@ public class BHMMm6 extends BHMMm5 {
                     stateCounts[stateid]--;
                     firstOrderTransitions[first[i] * stateS + stateid]--;
 
-                    next = stateVector[i + 1];
+                    try {
+                        next = stateVector[i + 1];
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        next = 0;
+                    }
+
                     int j = 1;
                     for (; j < stateC; j++) {
                         stateProbs[j] =
@@ -97,7 +103,7 @@ public class BHMMm6 extends BHMMm5 {
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
-                    totalprob = annealProbs(1, stateProbs);
+                    totalprob = annealer.annealProbs(1, stateProbs);
                     r = mtfRand.nextDouble() * totalprob;
                     max = stateProbs[1];
                     stateid = 1;

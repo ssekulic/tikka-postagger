@@ -19,6 +19,7 @@ package tikka.bhmm.model.m5.s2;
 
 import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
+import tikka.utils.annealer.Annealer;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model" (M5). 
@@ -47,7 +48,7 @@ public class BHMMm5s2 extends BHMM {
      * Training routine for the inner iterations
      */
     @Override
-    protected void trainInnerIter(int itermax, String message) {
+    protected void trainInnerIter(int itermax, Annealer annealer) {
         int wordid, sentenceid, stateid;
         int prev = 0, current = 0, next, nnext;
         double max = 0, totalprob = 0;
@@ -57,7 +58,7 @@ public class BHMMm5s2 extends BHMM {
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
             current = 0;
-            for (int i = 0; i < wordN - 2; ++i) {
+            for (int i = 0; i < wordN; ++i) {
                 if (i % 100000 == 0) {
                     System.err.println("\tProcessing word " + i);
                 }
@@ -88,8 +89,16 @@ public class BHMMm5s2 extends BHMM {
                     secondOrderTransitions[second[i] * S2 + first[i] * S1 + stateid]--;
                     firstOrderTransitions[first[i] * S1 + stateid]--;
 
-                    next = stateVector[i + 1];
-                    nnext = stateVector[i + 2];
+                    try {
+                        next = stateVector[i + 1];
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        next = 0;
+                    }
+                    try {
+                        nnext = stateVector[i + 2];
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        nnext = 0;
+                    }
                     int j = 1;
                     for (; j < stateC; j++) {
                         stateProbs[j] =
@@ -115,7 +124,7 @@ public class BHMMm5s2 extends BHMM {
                               * ((secondOrderTransitions[j * S2 + next * S1 + nnext])
                               / (firstOrderTransitions[j * S1 + next] + sgamma));
                     }
-                    totalprob = annealProbs(1, stateProbs);
+                    totalprob = annealer.annealProbs(1, stateProbs);
                     r = mtfRand.nextDouble() * totalprob;
                     max = stateProbs[1];
                     stateid = 1;
