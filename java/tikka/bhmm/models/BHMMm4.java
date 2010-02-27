@@ -54,68 +54,63 @@ public class BHMMm4 extends BHMM {
                 }
                 wordid = wordVector[i];
 
-                if (wordid == EOSi) {
-                    firstOrderTransitions[current * stateS + 0]++;
-                    first[i] = current;
-                    current = 0;
-                } else {
-                    sentenceid = sentenceVector[i];
-                    stateid = stateVector[i];
-                    stateoff = current * stateS;
-                    wordstateoff = stateS * wordid;
-                    sentenceoff = stateC * sentenceid;
+                sentenceid = sentenceVector[i];
+                stateid = stateVector[i];
+                stateoff = current * stateS;
+                wordstateoff = stateS * wordid;
+                sentenceoff = stateC * sentenceid;
 
-                    if (stateid < stateC) {
-                        contentStateBySentence[sentenceoff + stateid]--;
-                        sentenceCounts[sentenceid]--;
-                    }
-                    stateByWord[wordstateoff + stateid]--;
-                    stateCounts[stateid]--;
-                    firstOrderTransitions[first[i] * stateS + stateid]--;
-
-                    try {
-                        next = stateVector[i + 1];
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                        next = 0;
-                    }
-
-                    int j = 1;
-                    for (; j < stateC; j++) {
-                        stateProbs[j] =
-                              ((stateByWord[wordstateoff + j] + beta)
-                              / (stateCounts[j] + wbeta))
-                              * ((contentStateBySentence[sentenceoff + j] + alpha)
-                              / (sentenceCounts[sentenceid] + calpha))
-                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
-                              * (firstOrderTransitions[j * stateS + next] + gamma);
-                    }
-                    for (; j < stateS; j++) {
-                        stateProbs[j] =
-                              ((stateByWord[wordstateoff + j] + delta)
-                              / (stateCounts[j] + wdelta))
-                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
-                              * (firstOrderTransitions[j * stateS + next] + gamma);
-                    }
-                    totalprob = annealer.annealProbs(1, stateProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = stateProbs[1];
-                    stateid = 1;
-                    while (r > max) {
-                        stateid++;
-                        max += stateProbs[stateid];
-                    }
-                    stateVector[i] = stateid;
-
-                    if (stateid < stateC) {
-                        contentStateBySentence[sentenceoff + stateid]++;
-                        sentenceCounts[sentenceid]++;
-                    }
-                    stateByWord[wordstateoff + stateid]++;
-                    stateCounts[stateid]++;
-                    firstOrderTransitions[stateoff + stateid]++;
-                    first[i] = current;
-                    current = stateid;
+                if (stateid < stateC) {
+                    contentStateBySentence[sentenceoff + stateid]--;
+                    sentenceCounts[sentenceid]--;
                 }
+                stateByWord[wordstateoff + stateid]--;
+                stateCounts[stateid]--;
+                firstOrderTransitions[first[i] * stateS + stateid]--;
+
+                try {
+                    next = stateVector[i + 1];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    next = 0;
+                }
+
+                int j = 0;
+                for (; j < stateC; j++) {
+                    stateProbs[j] =
+                          ((stateByWord[wordstateoff + j] + beta)
+                          / (stateCounts[j] + wbeta))
+                          * ((contentStateBySentence[sentenceoff + j] + alpha)
+                          / (sentenceCounts[sentenceid] + calpha))
+                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
+                          * (firstOrderTransitions[j * stateS + next] + gamma);
+                }
+                for (; j < stateS; j++) {
+                    stateProbs[j] =
+                          ((stateByWord[wordstateoff + j] + delta)
+                          / (stateCounts[j] + wdelta))
+                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
+                          * (firstOrderTransitions[j * stateS + next] + gamma);
+                }
+                totalprob = annealer.annealProbs(1, stateProbs);
+                r = mtfRand.nextDouble() * totalprob;
+                max = stateProbs[1];
+                stateid = 0;
+                while (r > max) {
+                    stateid++;
+                    max += stateProbs[stateid];
+                }
+                stateVector[i] = stateid;
+
+                if (stateid < stateC) {
+                    contentStateBySentence[sentenceoff + stateid]++;
+                    sentenceCounts[sentenceid]++;
+                }
+                stateByWord[wordstateoff + stateid]++;
+                stateCounts[stateid]++;
+                firstOrderTransitions[stateoff + stateid]++;
+                first[i] = current;
+                current = stateid;
+
             }
         }
     }
@@ -151,51 +146,46 @@ public class BHMMm4 extends BHMM {
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
-            if (wordid == EOSi) {
-                firstOrderTransitions[current * stateS + 0]++;
-                first[i] = current;
-                current = 0;
-            } else {
-                sentenceid = sentenceVector[i];
-                stateoff = current * stateS;
-                wordstateoff = stateS * wordid;
-                sentenceoff = sentenceid * stateC;
+            sentenceid = sentenceVector[i];
+            stateoff = current * stateS;
+            wordstateoff = stateS * wordid;
+            sentenceoff = sentenceid * stateC;
 
-                totalprob = 0;
-                int j = 1;
-                for (; j < stateC; j++) {
-                    totalprob += stateProbs[j] =
-                          ((stateByWord[wordstateoff + j] + beta)
-                          / (stateCounts[j] + wbeta))
-                          * ((contentStateBySentence[sentenceoff + j] + alpha)
-                          / (sentenceCounts[sentenceid] + calpha))
-                          * (firstOrderTransitions[stateoff + j] + gamma);
-                }
-                for (; j < stateS; j++) {
-                    totalprob += stateProbs[j] =
-                          ((stateByWord[wordstateoff + j] + delta)
-                          / (stateCounts[j] + wdelta))
-                          * (firstOrderTransitions[stateoff + j] + gamma);
-                }
-                r = mtfRand.nextDouble() * totalprob;
-                max = stateProbs[1];
-                stateid = 1;
-                while (r > max) {
-                    stateid++;
-                    max += stateProbs[stateid];
-                }
-                stateVector[i] = stateid;
-
-                if (stateid < stateC) {
-                    contentStateBySentence[sentenceoff + stateid]++;
-                    sentenceCounts[sentenceid]++;
-                }
-                stateByWord[wordstateoff + stateid]++;
-                stateCounts[stateid]++;
-                firstOrderTransitions[stateoff + stateid]++;
-                first[i] = current;
-                current = stateid;
+            totalprob = 0;
+            int j = 0;
+            for (; j < stateC; j++) {
+                totalprob += stateProbs[j] =
+                      ((stateByWord[wordstateoff + j] + beta)
+                      / (stateCounts[j] + wbeta))
+                      * ((contentStateBySentence[sentenceoff + j] + alpha)
+                      / (sentenceCounts[sentenceid] + calpha))
+                      * (firstOrderTransitions[stateoff + j] + gamma);
             }
+            for (; j < stateS; j++) {
+                totalprob += stateProbs[j] =
+                      ((stateByWord[wordstateoff + j] + delta)
+                      / (stateCounts[j] + wdelta))
+                      * (firstOrderTransitions[stateoff + j] + gamma);
+            }
+            r = mtfRand.nextDouble() * totalprob;
+            max = stateProbs[1];
+            stateid = 0;
+            while (r > max) {
+                stateid++;
+                max += stateProbs[stateid];
+            }
+            stateVector[i] = stateid;
+
+            if (stateid < stateC) {
+                contentStateBySentence[sentenceoff + stateid]++;
+                sentenceCounts[sentenceid]++;
+            }
+            stateByWord[wordstateoff + stateid]++;
+            stateCounts[stateid]++;
+            firstOrderTransitions[stateoff + stateid]++;
+            first[i] = current;
+            current = stateid;
+
         }
     }
 }

@@ -13,6 +13,10 @@ import java.util.HashSet;
  */
 public class BrownTagsCE extends TagSetCE {
 
+    public BrownTagsCE(int modelTagSize) {
+        super(modelTagSize);
+    }
+
     @Override
     protected HashSet<String> setTags() {
         return setBrownTags();
@@ -20,6 +24,7 @@ public class BrownTagsCE extends TagSetCE {
 
     @Override
     protected HashSet<String> reduceTag() {
+        super.reduceTag();
         fullTagToReducedTag.put(".", "ENDPUNC"); //sentence closer (. ; ? *)
         fullTagToReducedTag.put("(", "LPUNC"); //left paren
         fullTagToReducedTag.put(")", "RPUNC"); //right paren

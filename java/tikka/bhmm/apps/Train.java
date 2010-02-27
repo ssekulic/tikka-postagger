@@ -109,6 +109,23 @@ public class Train extends MainBase {
                 hmm.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
             }
 
+            /**
+             * Set the string of parameters.
+             */
+            hmm.setModelParameterStringBuilder();
+
+            /**
+             * Tag and segment training files from last iteration if specified
+             */
+            String annotatedTextDir = modelOptions.getAnnotatedTrainTextOutDir();
+            if (annotatedTextDir != null) {
+                System.err.println("Printing annotated text to :"
+                      + annotatedTextDir);
+                hmm.decode();
+                hmm.printAnnotatedTrainText(annotatedTextDir);
+            }
+
+
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:" + exp.getMessage());
         } catch (IOException exp) {

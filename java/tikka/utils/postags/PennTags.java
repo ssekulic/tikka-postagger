@@ -13,15 +13,13 @@ import java.util.HashSet;
  */
 public class PennTags extends TagMap {
 
-    @Override
-    protected HashSet<String> setTags() {
-        setPennTags();
-        setIdxMap(fullTagSet);
-        return fullTagSet;
+    public PennTags(int modelTagSize) {
+        super(modelTagSize);
     }
 
     @Override
-    protected HashSet<String> reduceTag() {
-        return reducedTagSet;
+    protected HashSet<String> setTags() {
+        setPennTags();
+        return fullTagSet;
     }
 }

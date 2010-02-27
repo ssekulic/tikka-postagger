@@ -20,26 +20,48 @@ public abstract class TagMap extends HashMap<String, Integer> {
     protected HashSet<String> reducedTagSet;
     protected HashMap<Integer, String> idxToTag;
     protected HashMap<String, String> fullTagToReducedTag;
+    protected HashMap<Integer, Integer> modelToGoldTagMap;
+    protected HashMap<Integer, Integer> goldToModelTagMap;
 
-    public TagMap() {
+    /**
+     * 
+     * @param modelTagSize
+     */
+    public TagMap(int modelTagSize) {
+        modelToGoldTagMap = new HashMap<Integer, Integer>();
+        for (int i = 0; i < modelTagSize; ++i) {
+            modelToGoldTagMap.put(i, -1);
+        }
+        goldToModelTagMap = new HashMap<Integer, Integer>();
         setTags();
         reduceTag();
     }
 
+    /**
+     * 
+     * @param tagSet
+     */
     protected void setIdxMap(HashSet<String> tagSet) {
         idxToTag = new HashMap<Integer, String>();
-        int count = 0;
+        int idx = 0;
         for (String tag : tagSet) {
-            idxToTag.put(count, tag);
-            put(tag, count++);
+            idxToTag.put(idx, tag);
+            put(tag, idx++);
         }
     }
 
+    /**
+     *
+     */
     protected void reset() {
         clear();
         idxToTag = new HashMap<Integer, String>();
     }
 
+    /**
+     *
+     * @return
+     */
     protected HashSet<String> setBrownTags() {
         fullTagSet = new HashSet<String>(Arrays.asList(
               ".", //sentence closer (. ; ? *)
@@ -129,6 +151,10 @@ public abstract class TagMap extends HashMap<String, Integer> {
         return fullTagSet;
     }
 
+    /**
+     * 
+     * @return
+     */
     protected HashSet<String> setPennTags() {
         fullTagSet = new HashSet<String>(Arrays.asList(
               "$", //dollar $ -$ --$ A$ C$ HK$ M$ NZ$ S$ U.S.$ US$
@@ -180,7 +206,46 @@ public abstract class TagMap extends HashMap<String, Integer> {
         return fullTagSet;
     }
 
+    /**
+     *
+     * @return
+     */
     protected abstract HashSet<String> setTags();
 
-    protected abstract HashSet<String> reduceTag();
+    /**
+     *
+     * @return
+     */
+    protected HashSet<String> reduceTag() {
+        reducedTagSet = fullTagSet;
+        fullTagToReducedTag = new HashMap<String, String>();
+        for(String tag : fullTagSet) {
+            fullTagToReducedTag.put(tag, tag);
+        }
+
+        setIdxMap(reducedTagSet);
+        return reducedTagSet;
+    }
+
+    /**
+     * If the tag exists in the reduced dictionary
+     * @param tag
+     * @return
+     */
+    public String getTag(String tag) {
+        String rtag = "";
+        if (reducedTagSet.contains(tag)) {
+            rtag = fullTagToReducedTag.get(tag);
+        }
+
+        return rtag;
+    }
+
+    public int getGoldTagSize() {
+        return reducedTagSet.size();
+    }
+
+    public int getModelTagSize() {
+        return modelToGoldTagMap.size();
+    }
 }
