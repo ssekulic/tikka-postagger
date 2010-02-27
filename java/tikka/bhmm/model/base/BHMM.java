@@ -21,6 +21,8 @@ import tikka.utils.annealer.Annealer;
 import tikka.utils.annealer.SimulatedAnnealer;
 import tikka.utils.annealer.MaximumPosteriorDecoder;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import tikka.bhmm.apps.CommandLineOptions;
 
 import tikka.opennlp.io.DataFormatEnum;
@@ -34,11 +36,17 @@ import tikka.utils.normalizer.WordNormalizer;
 import tikka.utils.normalizer.WordNormalizerToLowerNoNum;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import tikka.opennlp.io.DirWriter;
 import tikka.structures.DoubleStringPair;
+import tikka.utils.normalizer.WordNormalizerToLower;
+import tikka.utils.postags.TagMap;
+import tikka.utils.postags.TagMapGenerator;
+import tikka.utils.postags.TagSetEnum.TagSet;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model"
@@ -336,6 +344,11 @@ public abstract class BHMM {
      * String for maintaining all model parameters. Only for printing purposes.
      */
     protected StringBuilder modelParameterStringBuilder;
+    /**
+     * Object that handles the both model and gold tag sets. It also finds
+     * the best mapping from one to the other.
+     */
+    protected TagMap tagMap;
 
     public BHMM(CommandLineOptions options) {
         try {
@@ -386,7 +399,7 @@ public abstract class BHMM {
         /**
          * Setting dimensions
          */
-        stateC = options.getContentStates() + 1;
+        stateC = options.getContentStates();
         stateF = options.getFunctionStates();
         stateS = stateF + stateC;
         outputPerClass = options.getOutputPerClass();
@@ -427,7 +440,9 @@ public abstract class BHMM {
             randomSeed = 0;
         }
         mtfRand = new MersenneTwisterFast(randomSeed);
-        wordNormalizer = new WordNormalizerToLowerNoNum();
+
+        tagMap = TagMapGenerator.generate(options.getTagSet(), options.getReductionLevel(), stateS);
+        wordNormalizer = new WordNormalizerToLower(tagMap);
 
         modelName = options.getExperimentModel();
     }
@@ -458,6 +473,7 @@ public abstract class BHMM {
           HashMap<String, Integer> wordIdx, HashMap<Integer, String> idxToWord) {
         documentD = sentenceS = 0;
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
+              tagVectorT = new ArrayList<Integer>(),
               sentenceVectorT = new ArrayList<Integer>(),
               documentVectorT = new ArrayList<Integer>();
         while ((dataReader = dirReader.nextDocumentReader()) != null) {
@@ -465,7 +481,9 @@ public abstract class BHMM {
                 String[][] sentence;
                 while ((sentence = dataReader.nextSequence()) != null) {
                     for (String[] line : sentence) {
-                        String word = wordNormalizer.normalize(line)[0];
+                        wordNormalizer.normalize(line);
+                        String word = wordNormalizer.getWord();
+                        String tag = wordNormalizer.getTag();
                         if (!word.isEmpty()) {
                             if (!wordIdx.containsKey(word)) {
                                 wordIdx.put(word, wordIdx.size());
@@ -474,11 +492,17 @@ public abstract class BHMM {
                             wordVectorT.add(wordIdx.get(word));
                             sentenceVectorT.add(sentenceS);
                             documentVectorT.add(documentD);
+                            if (tag != null) {
+                                tagVectorT.add(tagMap.get(tag));
+                            } else {
+                                tagVectorT.add(-1);
+                            }
                         }
                     }
-                    wordVectorT.add(EOSi);
-                    sentenceVectorT.add(sentenceS);
-                    documentVectorT.add(documentD);
+//                    wordVectorT.add(EOSi);
+//                    tagVectorT.add(tagMap.get(tag));
+//                    sentenceVectorT.add(sentenceS);
+//                    documentVectorT.add(documentD);
                     sentenceS++;
                 }
             } catch (IOException e) {
@@ -490,10 +514,11 @@ public abstract class BHMM {
         wordW = wordIdx.size();
         wbeta = beta * wordW;
         wdelta = delta * wordW;
-        calpha = alpha * (stateC - 1);
+        calpha = alpha * stateC;
         sgamma = gamma * stateS;
 
         wordVector = new int[wordN];
+        goldTagVector = new int[wordN];
         sentenceVector = new int[wordN];
         documentVector = new int[wordN];
 
@@ -504,6 +529,7 @@ public abstract class BHMM {
         stateVector = new int[wordN];
 
         copyToArray(wordVector, wordVectorT);
+        copyToArray(goldTagVector, tagVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
         copyToArray(documentVector, documentVectorT);
     }
@@ -523,98 +549,51 @@ public abstract class BHMM {
         }
 
         stateByWord = new int[stateS * wordW];
-        try {
-            for (int i = 0;; ++i) {
-                stateByWord[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < stateS * wordW; ++i) {
+            stateByWord[i] = 0;
         }
 
-//        contentStateByWord = new int[stateC * wordW];
-//        try {
-//            for (int i = 0;; ++i) {
-//                contentStateByWord[i] = 0;
-//            }
-//        } catch (ArrayIndexOutOfBoundsException e) {
-//        }
-//
-//        functionStateByWord = new int[stateF * wordW];
-//        try {
-//            for (int i = 0;; ++i) {
-//                functionStateByWord[i] = 0;
-//            }
-//        } catch (ArrayIndexOutOfBoundsException e) {
-//        }
-
         contentStateBySentence = new int[stateC * sentenceS];
-        try {
-            for (int i = 0;; ++i) {
-                contentStateBySentence[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < stateC * sentenceS; ++i) {
+            contentStateBySentence[i] = 0;
         }
 
         sentenceCounts = new int[sentenceS];
-        try {
-            for (int i = 0;; ++i) {
-                sentenceCounts[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < sentenceS; ++i) {
+            sentenceCounts[i] = 0;
         }
-        try {
-            for (int i = 0;; ++i) {
-                sentenceCounts[sentenceVector[i]]++;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < sentenceS; ++i) {
+            sentenceCounts[sentenceVector[i]]++;
         }
 
         documentCounts = new int[documentD];
-        try {
-            for (int i = 0;; ++i) {
-                documentCounts[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < documentD; ++i) {
+            documentCounts[i] = 0;
         }
 
         functionStateByDocument = new int[stateS * documentD];
-        try {
-            for (int i = 0;; ++i) {
-                functionStateByDocument[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < stateS * documentD; ++i) {
+            functionStateByDocument[i] = 0;
         }
-
 
         thirdOrderTransitions = new int[stateS * stateS * stateS * stateS];
         secondOrderTransitions = new int[stateS * stateS * stateS];
         firstOrderTransitions = new int[stateS * stateS];
 
-        try {
-            for (int i = 0;; ++i) {
-                thirdOrderTransitions[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < stateS * stateS * stateS * stateS; ++i) {
+            thirdOrderTransitions[i] = 0;
         }
-        try {
-            for (int i = 0;; ++i) {
-                secondOrderTransitions[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < stateS * stateS * stateS; ++i) {
+            secondOrderTransitions[i] = 0;
         }
 
-        try {
-            for (int i = 0;; ++i) {
-                firstOrderTransitions[i] = 0;
-            }
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < stateS * stateS; ++i) {
+            firstOrderTransitions[i] = 0;
         }
 
         sampleProbs = new double[samples];
-        try {
-            for (int i = 0;; ++i) {
-                sampleProbs[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        for (int i = 0; i < samples; ++i) {
+            sampleProbs[i] = 0;
         }
     }
 
@@ -732,6 +711,65 @@ public abstract class BHMM {
         for (i = 1; i < stateS; ++i) {
             stateProbs[i] /= sum;
         }
+    }
+
+    /**
+     * Print text that has been segmented/tagged in a training sample to output.
+     *
+     * @param outDir Root of path to generate output to
+     * @throws IOException
+     */
+    public void printAnnotatedTrainText(String outDir) throws IOException {
+        printAnnotatedText(outDir, trainDataDir, trainDirReader, trainIdxToWord);
+    }
+
+    /**
+     * Print annotated text.
+     *
+     * @param outDir Root of path to generate output to
+     * @param dataDir   Origin of data
+     * @param dirReader DirReader for data
+     * @param idxToWord Dictionary from index to word
+     * @throws IOException
+     * @see HDPHMMLDA#printAnnotatedTestText(java.lang.String)
+     * @see HDPHMMLDA#printAnnotatedTrainText(java.lang.String)
+     */
+    public void printAnnotatedText(String outDir, String dataDir,
+          DirReader dirReader, HashMap<Integer, String> idxToWord)
+          throws IOException {
+        DirWriter dirWriter = new DirWriter(outDir, dataDir, dirReader);
+        String root = dirWriter.getRoot();
+
+        BufferedWriter bufferedWriter;
+
+        int docid = 0;
+        String word;
+        bufferedWriter = dirWriter.nextOutputBuffer();
+
+        for (int i = 0; i < wordN; ++i) {
+            if (docid != documentVector[i]) {
+                bufferedWriter.close();
+                bufferedWriter = dirWriter.nextOutputBuffer();
+                docid = documentVector[i];
+            }
+            int wordid = wordVector[i];
+            if (wordid != EOSi) {
+                word = idxToWord.get(wordid);
+                bufferedWriter.write(word);
+                bufferedWriter.write("\t");
+                int stateid = stateVector[i];
+                String line = String.format("S:%d", stateid);
+                bufferedWriter.write(line);
+            }
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.close();
+
+        bufferedWriter = new BufferedWriter(new OutputStreamWriter(
+              new FileOutputStream(root + File.separator + "PARAMETERS")));
+
+        bufferedWriter.write(modelParameterStringBuilder.toString());
+        bufferedWriter.close();
     }
 
     /**

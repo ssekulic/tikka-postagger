@@ -15,7 +15,16 @@ import java.util.HashSet;
  */
 public abstract class TagSetCE extends TagMap {
 
-    TagSetCE() {
+    public TagSetCE(int modelTagSize) {
+        super(modelTagSize);
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    protected HashSet<String> reduceTag() {
         reducedTagSet = new HashSet<String>(Arrays.asList(
               "ADJ", //CD JJ JJR JJS PRP$
               "CONJ",//CC
@@ -35,5 +44,6 @@ public abstract class TagSetCE extends TagMap {
               "W",//WDT WP$ WP WRB
               "VBN"//VBN
               ));
+        return reducedTagSet;
     }
 }

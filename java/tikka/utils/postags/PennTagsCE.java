@@ -13,6 +13,10 @@ import java.util.HashSet;
  */
 public class PennTagsCE extends TagMap {
 
+    public PennTagsCE(int modelTagSize) {
+        super(modelTagSize);
+    }
+    
     @Override
     protected HashSet<String> setTags() {
         return setPennTags();
@@ -20,6 +24,7 @@ public class PennTagsCE extends TagMap {
 
     @Override
     protected HashSet<String> reduceTag() {
+        super.reduceTag();
         fullTagToReducedTag.put("CD", "ADJ");
         fullTagToReducedTag.put("JJ", "ADJ");
         fullTagToReducedTag.put("JJR", "ADJ");

@@ -17,6 +17,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.normalizer;
 
+import tikka.utils.postags.TagMap;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,18 +31,26 @@ public class WordNormalizer {
     protected Pattern pattern;
     protected Matcher matcher;
     protected String[] strings;
+    protected String word, tag;
+    protected TagMap tagMap;
+
+    public WordNormalizer(TagMap tagMap) {
+        this.tagMap = tagMap;
+    }
+
+    public WordNormalizer() {
+    }
 
     public String[] normalize(String[] strings) {
         this.strings = new String[strings.length];
-        String tag = "", word = "";
         try {
             tag = strings[1];
-            pattern = Pattern.compile("^\\w.*$");
-            matcher = pattern.matcher(tag);
-            if (!matcher.find()) {
-                tag = "";
-            }
-            this.strings[1] = tag;
+//            pattern = Pattern.compile("^\\w.*$");
+//            matcher = pattern.matcher(tag);
+//            if (!matcher.find()) {
+//                tag = "";
+//            }
+            this.strings[1] = tagMap.getTag(tag);
         } catch (ArrayIndexOutOfBoundsException e) {
             tag = null;
         }
@@ -74,5 +84,13 @@ public class WordNormalizer {
         } else {
             return "";
         }
+    }
+
+    public String getWord() {
+        return word;
+    }
+
+    public String getTag() {
+        return tag;
     }
 }
