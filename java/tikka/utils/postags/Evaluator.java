@@ -17,8 +17,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.postags;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Random;
 
 /**
  * Class for evaluating model tags based on gold tags
@@ -128,10 +131,21 @@ public class Evaluator {
             }
         }
 
-        oneToOneTagMap.put(imin, jmin);
+        if (min == 1) {
+            ArrayList<Integer> tl = new ArrayList<Integer>(rows);
+            Collections.shuffle(tl);
+            imin = tl.get(0);
+
+            tl = new ArrayList<Integer>(cols);
+            Collections.shuffle(tl);
+            jmin = tl.get(0);
+        }
 
         rows.remove(imin);
         cols.remove(jmin);
+
+        oneToOneTagMap.put(imin, jmin);
+
         if (!rows.isEmpty() && !cols.isEmpty()) {
             buildOneToOneMap(costMatrix);
         }
