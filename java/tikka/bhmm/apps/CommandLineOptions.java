@@ -281,7 +281,7 @@ public class CommandLineOptions {
                         trainDataSampleScoreOutputFilename = value;
                         trainDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
                               new FileOutputStream(trainDataSampleScoreOutputFilename)));
-                    } else if (opt.equals("ostr")) {
+                    } else if (opt.equals("oe")) {
                         evaluationOutputFilename = value;
                         evaluationOutput = new BufferedWriter(new OutputStreamWriter(
                               new FileOutputStream(getEvaluationOutputFilename())));

@@ -71,7 +71,7 @@ public abstract class TagMap extends HashMap<String, Integer> {
               "(", //left paren
               ")", //right paren
               "*", //not, n't
-              "--", //dash
+//              "--", //dash
               ",", //comma
               ":", //colon
               "ABL", //pre-qualifier (quite, rather)
@@ -109,7 +109,7 @@ public abstract class TagMap extends HashMap<String, Integer> {
               "JJS", //semantically superlative adjective (chief, top)
               "JJT", //morphologically superlative adjective (biggest)
               "MD", //modal auxiliary (can, should, will)
-              "NC", //cited word (hyphenated after regular tag)
+//              "NC", //cited word (hyphenated after regular tag)
               "NN", //singular or mass noun
               "NN$", //possessive singular noun
               "NNS", //plural noun

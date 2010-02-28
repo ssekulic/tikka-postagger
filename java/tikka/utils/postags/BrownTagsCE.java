@@ -25,6 +25,7 @@ public class BrownTagsCE extends TagSetCE {
     @Override
     protected HashSet<String> reduceTag() {
         super.reduceTag();
+
         fullTagToReducedTag.put(".", "ENDPUNC"); //sentence closer (. ; ? *)
         fullTagToReducedTag.put("(", "LPUNC"); //left paren
         fullTagToReducedTag.put(")", "RPUNC"); //right paren

@@ -25,6 +25,7 @@ public abstract class TagSetCE extends TagMap {
      */
     @Override
     protected HashSet<String> reduceTag() {
+        super.reduceTag();
         reducedTagSet = new HashSet<String>(Arrays.asList(
               "ADJ", //CD JJ JJR JJS PRP$
               "CONJ",//CC
