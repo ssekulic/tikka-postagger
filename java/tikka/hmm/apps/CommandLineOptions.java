@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import org.apache.commons.cli.*;
+import tikka.utils.postags.TagSetEnum;
 
 /**
  * Handles options from the command line. Also sets the default parameter
@@ -104,6 +105,18 @@ public class CommandLineOptions {
     protected DataFormatEnum.DataFormat dataFormat =
           DataFormatEnum.DataFormat.CONLL2K;
     /**
+     * Specifier of training data format.
+     */
+    protected TagSetEnum.TagSet tagSet = TagSetEnum.TagSet.PTB;
+    /**
+     * Option on how much the tagset should be reduced. Default is 0 (none).
+     */
+    protected int reductionLevel = 1;
+    /**
+     * Name of file to generate evaluation scores to
+     */
+    protected String evaluationOutputFilename = null;
+    /**
      * Name of file to generate tabulated output to
      */
     protected String tabularOutputFilename = null;
@@ -115,6 +128,10 @@ public class CommandLineOptions {
      * Name of file to dump training data sample scores (bayes factor) to
      */
     protected String trainDataSampleScoreOutputFilename = null;
+    /**
+     * Output buffer to write evaluation scores to
+     */
+    protected BufferedWriter evaluationOutput;
     /**
      * Output buffer to write normalized, tabulated data to.
      */
@@ -260,6 +277,10 @@ public class CommandLineOptions {
                         trainDataSampleScoreOutputFilename = value;
                         trainDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
                               new FileOutputStream(trainDataSampleScoreOutputFilename)));
+                    } else if (opt.equals("oe")) {
+                        evaluationOutputFilename = value;
+                        evaluationOutput = new BufferedWriter(new OutputStreamWriter(
+                              new FileOutputStream(evaluationOutputFilename)));
                     }
                     break;
                 case 'p':
@@ -284,6 +305,21 @@ public class CommandLineOptions {
                 case 't':
                     topics = Integer.parseInt(value);
                     break;
+                case 'u':
+                    opt = option.getOpt();
+                    if (opt.equals("ut")) {
+                        if (value.equals("b")) {
+                            tagSet = TagSetEnum.TagSet.BROWN;
+                        } else if (value.equals("p")) {
+                            tagSet = TagSetEnum.TagSet.PTB;
+                        } else if (value.equals("t")) {
+                            tagSet = TagSetEnum.TagSet.TIGER;
+                        }
+                    } else if (opt.equals("ur")) {
+                        reductionLevel = Integer.parseInt(value);
+                    }
+                    break;
+
                 case 'w':
                     outputPerClass = Integer.parseInt(value);
                     break;
@@ -411,5 +447,27 @@ public class CommandLineOptions {
 
     public int getTestSetBurninIterations() {
         return testSetBurninIterations;
+    }
+
+    /**
+     * @return the evaluationOutputFilename
+     */
+    public String getEvaluationOutputFilename() {
+        return evaluationOutputFilename;
+    }
+
+    /**
+     * @return the evaluationOutput
+     */
+    public BufferedWriter getEvaluationOutput() {
+        return evaluationOutput;
+    }
+
+    public TagSetEnum.TagSet getTagSet() {
+        return tagSet;
+    }
+
+    public int getReductionLevel() {
+        return reductionLevel;
     }
 }

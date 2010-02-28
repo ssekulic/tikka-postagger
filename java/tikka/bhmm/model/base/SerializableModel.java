@@ -24,6 +24,10 @@ import tikka.bhmm.apps.CommandLineOptions;
 import tikka.bhmm.models.BHMMm1;
 import tikka.bhmm.models.BHMMm2;
 import tikka.bhmm.models.BHMMm3;
+import tikka.bhmm.models.BHMMm4;
+import tikka.bhmm.models.BHMMm5;
+import tikka.bhmm.models.BHMMm5s2;
+import tikka.bhmm.models.BHMMm6;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,10 +40,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import tikka.bhmm.models.BHMMm4;
-import tikka.bhmm.models.BHMMm5;
-import tikka.bhmm.models.BHMMm5s2;
-import tikka.bhmm.models.BHMMm6;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters

@@ -47,17 +47,9 @@ public class SerializableModelHMMLDA extends SerializableModel {
      */
     protected double beta;
     /**
-     * Number of documents
-     */
-    protected int documentD;
-    /**
      * Number of topic types.
      */
     protected int topicK;
-    /**
-     * Array of document indexes. Of length {@link #wordN}.
-     */
-    protected int[] documentVector;
     /**
      * Array of topic indexes. Of length {@link #wordN}.
      */
@@ -72,7 +64,6 @@ public class SerializableModelHMMLDA extends SerializableModel {
         super(m);
         alpha = m.alpha;
         beta = m.beta;
-        documentVector = m.documentVector;
         topicK = m.topicK;
         topicVector = m.topicVector;
     }
@@ -131,9 +122,6 @@ public class SerializableModelHMMLDA extends SerializableModel {
         super.copy(sm);
         alpha = sm.alpha;
         beta = sm.beta;
-        documentD = sm.documentD;
-        documentVector = sm.documentVector;
-        gamma = sm.gamma;
         topicK = sm.topicK;
         topicVector = sm.topicVector;
     }
@@ -142,8 +130,6 @@ public class SerializableModelHMMLDA extends SerializableModel {
         super.copy(hmmlda);
         hmmlda.alpha = alpha;
         hmmlda.beta = beta;
-        hmmlda.documentD = documentD;
-        hmmlda.documentVector = documentVector;
         hmmlda.topicK = topicK;
         hmmlda.topicVector = topicVector;
 

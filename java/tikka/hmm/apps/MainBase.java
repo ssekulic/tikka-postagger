@@ -67,6 +67,8 @@ public class MainBase {
               "full path to save model to");
         options.addOption("n", "annotated-text", true,
               "full path to save annotated text to");
+        options.addOption("oe", "output-evaluation-score", true,
+              "path of output for evaluation results");
         options.addOption("oste", "output-test-sample-score", true,
               "path of output for perplexity measures for samples taken for the test data");
         options.addOption("ostr", "output-train-sample-score", true,
@@ -85,6 +87,8 @@ public class MainBase {
         options.addOption("s", "states", true,
               "number of states in HMM (default=15)");
         options.addOption("t", "topics", true, "number of topics (default=50)");
+        options.addOption("ut", "tagset", true, "tagset used in the data"
+              + " [b=brown, p=penntreebank, t=tiger; default=b]");
         options.addOption("w", "words-class", true,
               "number of words to print per class (default=50)");
     }

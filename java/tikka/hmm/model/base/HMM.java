@@ -18,27 +18,25 @@
 package tikka.hmm.model.base;
 
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import tikka.hmm.apps.CommandLineOptions;
 
-import tikka.opennlp.io.DataFormatEnum;
-import tikka.opennlp.io.DataReader;
-import tikka.opennlp.io.DirReader;
+import tikka.opennlp.io.*;
 
-import tikka.structures.StringDoublePair;
+import tikka.structures.*;
+import tikka.utils.annealer.*;
+import tikka.utils.postags.*;
 
 import tikka.utils.ec.util.MersenneTwisterFast;
-import tikka.utils.normalizer.WordNormalizer;
-import tikka.utils.normalizer.WordNormalizerToLowerNoNum;
+import tikka.utils.normalizer.*;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import tikka.structures.DoubleStringPair;
-import tikka.utils.annealer.Annealer;
-import tikka.utils.annealer.MaximumPosteriorDecoder;
-import tikka.utils.annealer.SimulatedAnnealer;
 
 /**
  *
@@ -95,6 +93,10 @@ public abstract class HMM {
      */
     protected int wordN;
     /**
+     * Number of documents
+     */
+    protected int documentD;
+    /**
      * Number of sentences
      */
     protected int sentenceS;
@@ -106,6 +108,10 @@ public abstract class HMM {
      * Array of word indexes. Of length {@link #wordN}.
      */
     protected int[] wordVector;
+    /**
+     * Array of document indexes. Of length {@link #wordN}.
+     */
+    protected int[] documentVector;
     /**
      * Array of sentence indexes. Of length {@link #wordN}.
      */
@@ -158,6 +164,10 @@ public abstract class HMM {
      * Array of states over tokens
      */
     protected int[] stateVector;
+    /**
+     * Array of full gold tags
+     */
+    protected int[] goldTagVector;
     /**
      * Array of counts for words given states.
      */
@@ -277,6 +287,15 @@ public abstract class HMM {
      * String for maintaining all model parameters. Only for printing purposes.
      */
     protected StringBuilder modelParameterStringBuilder;
+    /**
+     * Object that handles the both model and gold tag sets. It also finds
+     * the best mapping from one to the other.
+     */
+    protected TagMap tagMap;
+    /**
+     * Class for dealing with evaluation
+     */
+    protected Evaluator evaluator;
 
     public HMM(CommandLineOptions options) {
         try {
@@ -364,7 +383,9 @@ public abstract class HMM {
             randomSeed = 0;
         }
         mtfRand = new MersenneTwisterFast(randomSeed);
-        wordNormalizer = new WordNormalizerToLowerNoNum();
+
+        tagMap = TagMapGenerator.generate(options.getTagSet(), options.getReductionLevel(), stateS);
+        wordNormalizer = new WordNormalizerToLower(tagMap);
 
         modelName = options.getExperimentModel();
     }
@@ -393,15 +414,20 @@ public abstract class HMM {
      */
     protected void initializeTokenArrays(DirReader dirReader,
           HashMap<String, Integer> wordIdx, HashMap<Integer, String> idxToWord) {
-        sentenceS = 0;
+        documentD = sentenceS = 0;
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
-              sentenceVectorT = new ArrayList<Integer>();
+              goldFullTagVectorT = new ArrayList<Integer>(),
+              sentenceVectorT = new ArrayList<Integer>(),
+              documentVectorT = new ArrayList<Integer>();
+
         while ((dataReader = dirReader.nextDocumentReader()) != null) {
             try {
                 String[][] sentence;
                 while ((sentence = dataReader.nextSequence()) != null) {
                     for (String[] line : sentence) {
-                        String word = wordNormalizer.normalize(line)[0];
+                        wordNormalizer.normalize(line);
+                        String word = wordNormalizer.getWord();
+                        String tag = wordNormalizer.getTag();
                         if (!word.isEmpty()) {
                             if (!wordIdx.containsKey(word)) {
                                 wordIdx.put(word, wordIdx.size());
@@ -409,14 +435,38 @@ public abstract class HMM {
                             }
                             wordVectorT.add(wordIdx.get(word));
                             sentenceVectorT.add(sentenceS);
+                            documentVectorT.add(documentD);
+                            if (tag != null) {
+                                goldFullTagVectorT.add(tagMap.get(tag));
+                            } else {
+                                goldFullTagVectorT.add(-1);
+                            }
                         }
                     }
-                    wordVectorT.add(EOSi);
-                    sentenceVectorT.add(sentenceS);
                     sentenceS++;
                 }
             } catch (IOException e) {
             }
+            documentD++;
+//                        wordNormalizer.normalize(line);
+//                        String word = wordNormalizer.getWord();
+//                        String tag = wordNormalizer.getTag();
+////                        String word = wordNormalizer.normalize(line)[0];
+//                        if (!word.isEmpty()) {
+//                            if (!wordIdx.containsKey(word)) {
+//                                wordIdx.put(word, wordIdx.size());
+//                                idxToWord.put(idxToWord.size(), word);
+//                            }
+//                            wordVectorT.add(wordIdx.get(word));
+//                            sentenceVectorT.add(sentenceS);
+//                        }
+//                    }
+//                    wordVectorT.add(EOSi);
+//                    sentenceVectorT.add(sentenceS);
+//                    sentenceS++;
+//                }
+//            } catch (IOException e) {
+//            }
         }
 
         wordN = wordVectorT.size();
@@ -425,10 +475,14 @@ public abstract class HMM {
         sgamma = gamma * stateS;
 
         wordVector = new int[wordN];
+        goldTagVector = new int[wordN];
         sentenceVector = new int[wordN];
+        documentVector = new int[wordN];
 
         copyToArray(wordVector, wordVectorT);
+        copyToArray(goldTagVector, goldFullTagVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
+        copyToArray(documentVector, documentVectorT);
     }
 
     /**
@@ -534,6 +588,20 @@ public abstract class HMM {
         trainInnerIter(1, annealer);
     }
 
+    public void evaluate() {
+        evaluator = new Evaluator(tagMap, DistanceMeasureEnum.Measure.JACCARD);
+        evaluator.evaluateTags(stateVector, goldTagVector);
+        System.err.println("One to one accuracy is " + evaluator.getOneToOneAccuracy());
+        System.err.println("Many to one accuracy is " + evaluator.getManyToOneAccuracy());
+    }
+
+    public void printEvaluationScore(BufferedWriter out) throws IOException {
+        out.write(modelParameterStringBuilder.toString());
+        printNewlines(out, 2);
+        out.write("One to one accuracy: " + evaluator.getOneToOneAccuracy());
+        out.write("Many to one accuracy: " + evaluator.getManyToOneAccuracy());
+    }
+
     /**
      * Normalize the sample counts.
      */
@@ -588,6 +656,78 @@ public abstract class HMM {
           IOException {
         printStates(out);
         out.close();
+    }
+
+    /**
+     * Print text that has been segmented/tagged in a training sample to output.
+     *
+     * @param outDir Root of path to generate output to
+     * @throws IOException
+     */
+    public void printAnnotatedTrainText(String outDir) throws IOException {
+        printAnnotatedText(outDir, trainDataDir, trainDirReader, trainIdxToWord);
+    }
+
+    /**
+     * Print annotated text.
+     *
+     * @param outDir Root of path to generate output to
+     * @param dataDir   Origin of data
+     * @param dirReader DirReader for data
+     * @param idxToWord Dictionary from index to word
+     * @throws IOException
+     * @see HDPHMMLDA#printAnnotatedTestText(java.lang.String)
+     * @see HDPHMMLDA#printAnnotatedTrainText(java.lang.String)
+     */
+    public void printAnnotatedText(String outDir, String dataDir,
+          DirReader dirReader, HashMap<Integer, String> idxToWord)
+          throws IOException {
+        DirWriter dirWriter = new DirWriter(outDir, dataDir, dirReader);
+        String root = dirWriter.getRoot();
+
+        BufferedWriter bufferedWriter;
+
+        int docid = 0, cursent = 0, prevsent = 0;
+        String word;
+        bufferedWriter = dirWriter.nextOutputBuffer();
+
+        for (int i = 0; i < wordN; ++i) {
+            cursent = sentenceVector[i];
+            if (docid != documentVector[i]) {
+                bufferedWriter.close();
+                bufferedWriter = dirWriter.nextOutputBuffer();
+                docid = documentVector[i];
+            }
+
+            int wordid = wordVector[i];
+
+            word = idxToWord.get(wordid);
+            bufferedWriter.write(word);
+            bufferedWriter.write("\t");
+            int stateid = stateVector[i];
+            int goldid = goldTagVector[i];
+            String tag = String.format("F:%s", tagMap.getOneToOneTagString(stateid));
+            bufferedWriter.write(tag);
+            bufferedWriter.write("\t");
+            tag = String.format("R:%s", tagMap.getManyToOneTagString(stateid));
+            bufferedWriter.write(tag);
+            bufferedWriter.write("\t");
+            tag = String.format("G:%s", tagMap.getGoldReducedTagString(goldid));
+            bufferedWriter.write(tag);
+            bufferedWriter.newLine();
+
+            if (cursent != prevsent) {
+                bufferedWriter.newLine();
+            }
+            prevsent = cursent;
+        }
+        bufferedWriter.close();
+
+        bufferedWriter = new BufferedWriter(new OutputStreamWriter(
+              new FileOutputStream(root + File.separator + "PARAMETERS")));
+
+        bufferedWriter.write(modelParameterStringBuilder.toString());
+        bufferedWriter.close();
     }
 
     /**

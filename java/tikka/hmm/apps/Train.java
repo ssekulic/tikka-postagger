@@ -99,6 +99,33 @@ public class Train extends MainBase {
                 serializableModel.saveModel(modelOutputPath);
             }
 
+            System.err.println("Maximum posterior decoding");
+            hmm.decode();
+
+            /**
+             * Set the string of parameters.
+             */
+            hmm.setModelParameterStringBuilder();
+
+            String evaluationOutputFilename = modelOptions.getEvaluationOutputFilename();
+            if (evaluationOutputFilename != null) {
+                System.err.println("Performing evaluation");
+                hmm.evaluate();
+                System.err.println("Also printing evaluation results to " + evaluationOutputFilename);
+                hmm.printEvaluationScore(modelOptions.getEvaluationOutput());
+                modelOptions.getEvaluationOutput().close();
+            }
+
+            /**
+             * Tag and segment training files from last iteration if specified
+             */
+            String annotatedTextDir = modelOptions.getAnnotatedTrainTextOutDir();
+            if (annotatedTextDir != null) {
+                System.err.println("Printing annotated text to :"
+                      + annotatedTextDir);
+                hmm.printAnnotatedTrainText(annotatedTextDir);
+            }
+
             /**
              * Save tabulated probabilities
              */
@@ -109,7 +136,7 @@ public class Train extends MainBase {
                       + modelOptions.getTabularOutputFilename());
                 hmm.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
             }
-            
+
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:" + exp.getMessage());
         } catch (IOException exp) {

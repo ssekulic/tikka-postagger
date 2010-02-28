@@ -42,26 +42,32 @@ public class WordNormalizerToLower extends WordNormalizer {
 //                reducedTag = "";
 //            }
 //            this.strings[1] = reducedTag;
-            this.strings[1] = reducedTag;
+//            this.strings[1] = reducedTag;
         } catch (ArrayIndexOutOfBoundsException e) {
             reducedTag = null;
         }
 
-        if (reducedTag == null || !reducedTag.isEmpty()) {
+        if (!reducedTag.isEmpty()) {
             word = strings[0].toLowerCase();
-            pattern = Pattern.compile("^\\W*$");
-            matcher = pattern.matcher(word);
-            if (!matcher.find()) {
-                pattern = Pattern.compile("(^\\W*(\\w.*\\w)\\W*$|(^\\w+$)|.*)");
-                matcher = pattern.matcher(word);
-                word = matcher.replaceAll("$2$3");
-            } else {
-                word = "";
-            }
         } else {
             word = "";
         }
-        this.strings[0] = word;
+
+//        if (reducedTag == null || !reducedTag.isEmpty()) {
+//            word = strings[0].toLowerCase();
+//            pattern = Pattern.compile("^\\W*$");
+//            matcher = pattern.matcher(word);
+//            if (!matcher.find()) {
+//                pattern = Pattern.compile("(^\\W*(\\w.*\\w)\\W*$|(^\\w+$)|.*)");
+//                matcher = pattern.matcher(word);
+//                word = matcher.replaceAll("$2$3");
+//            } else {
+//                word = "";
+//            }
+//        } else {
+//            word = "";
+//        }
+//        this.strings[0] = word;
 
         return this.strings;
     }

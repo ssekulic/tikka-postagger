@@ -19,7 +19,6 @@ package tikka.bhmm.models;
 
 import tikka.bhmm.apps.CommandLineOptions;
 import tikka.utils.annealer.Annealer;
-import tikka.bhmm.models.BHMMm4;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model" (M7). This
@@ -132,19 +131,6 @@ public class BHMMm7 extends BHMMm4 {
                     current = stateid;
                 }
             }
-        }
-    }
-
-    /**
-     * This resets the sentenceCounts array to zero for all elements. This has
-     * to be done since the values are set in initializeCounts.
-     */
-    public void initializeSentenceCounts() {
-        try {
-            for (int i = 0;; ++i) {
-                sentenceCounts[i] = 0;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
         }
     }
 

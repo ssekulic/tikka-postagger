@@ -55,10 +55,6 @@ public class HMMLDA extends HMM {
      */
     protected int topicK;
     /**
-     * Number of documents
-     */
-    protected int documentD;
-    /**
      * Number of documents in the test set
      */
     protected int testDocumentD;
@@ -86,10 +82,6 @@ public class HMMLDA extends HMM {
      * normalization and printing.
      */
     protected StringDoublePair[][] TopWordsPerTopic;
-    /**
-     * Array of document indexes. Of length {@link #wordN}.
-     */
-    protected int[] documentVector;
     /**
      * Array of topic indexes. Of length {@link #wordN}.
      */
