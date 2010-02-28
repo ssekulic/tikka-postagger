@@ -91,9 +91,9 @@ public class BHMMm4 extends BHMM {
                           * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                           * (firstOrderTransitions[j * stateS + next] + gamma);
                 }
-                totalprob = annealer.annealProbs(1, stateProbs);
+                totalprob = annealer.annealProbs(stateProbs);
                 r = mtfRand.nextDouble() * totalprob;
-                max = stateProbs[1];
+                max = stateProbs[0];
                 stateid = 0;
                 while (r > max) {
                     stateid++;
@@ -110,7 +110,6 @@ public class BHMMm4 extends BHMM {
                 firstOrderTransitions[stateoff + stateid]++;
                 first[i] = current;
                 current = stateid;
-
             }
         }
     }
@@ -168,7 +167,7 @@ public class BHMMm4 extends BHMM {
                       * (firstOrderTransitions[stateoff + j] + gamma);
             }
             r = mtfRand.nextDouble() * totalprob;
-            max = stateProbs[1];
+            max = stateProbs[0];
             stateid = 0;
             while (r > max) {
                 stateid++;

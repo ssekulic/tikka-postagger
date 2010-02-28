@@ -15,31 +15,39 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-
 package tikka.utils.postags;
 
-import java.util.HashSet;
-
 /**
- * TagMap for handling full Brown corpus tagset. Does not reduce any of the tags.
+ * Distance measure class to populate cost matrix in Evaluator
  * 
  * @author tsmoon
  */
-public class BrownTags extends TagMap {
+public abstract class DistanceMeasure {
 
-    public BrownTags(int modelTagSize) {
-        super(modelTagSize);
+    protected int[] modelTags, goldTags, cooccurrenceMatrix, modelTagCounts, goldTagCounts;
+    protected int M, N;
+
+    /**
+     * Default constructor. Requires full access to the Evaluator that it is called from
+     * 
+     * @param evaluator Calling Evaluator class object.
+     */
+    public DistanceMeasure(Evaluator evaluator) {
+        this.modelTags = evaluator.modelTags;
+        this.goldTags = evaluator.goldTags;
+        this.cooccurrenceMatrix = evaluator.cooccurrenceMatrix;
+        this.modelTagCounts = evaluator.modelTagCounts;
+        this.goldTagCounts = evaluator.goldTagCounts;
+        this.M = evaluator.M;
+        this.N = evaluator.N;
     }
 
-    @Override
-    protected HashSet<String> setTags() {
-        setBrownTags();
-        return fullTagSet;
-    }
-
-    @Override
-    public String getReducedTag(String tag) {
-        String[] tags = tag.split("[+\\-]");
-        return super.getReducedTag(tags[0]);
-    }
+    /**
+     * Calculate distance between two tags i and j.
+     * 
+     * @param i tag in model
+     * @param j tag in gold
+     * @return distance between two tags
+     */
+    public abstract double cost(int i, int j);
 }
