@@ -17,38 +17,24 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.model.base;
 
-import tikka.utils.annealer.Annealer;
-import tikka.utils.annealer.SimulatedAnnealer;
-import tikka.utils.annealer.MaximumPosteriorDecoder;
+import tikka.bhmm.apps.CommandLineOptions;
+import tikka.opennlp.io.*;
+import tikka.structures.*;
+import tikka.utils.ec.util.MersenneTwisterFast;
+import tikka.utils.annealer.*;
+import tikka.utils.normalizer.*;
+import tikka.utils.postags.*;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import tikka.bhmm.apps.CommandLineOptions;
-
-import tikka.opennlp.io.DataFormatEnum;
-import tikka.opennlp.io.DataReader;
-import tikka.opennlp.io.DirReader;
-
-import tikka.structures.StringDoublePair;
-
-import tikka.utils.ec.util.MersenneTwisterFast;
-import tikka.utils.normalizer.WordNormalizer;
-import tikka.utils.normalizer.WordNormalizerToLowerNoNum;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import tikka.opennlp.io.DirWriter;
-import tikka.structures.DoubleStringPair;
-import tikka.utils.normalizer.WordNormalizerToLower;
-import tikka.utils.postags.DistanceMeasureEnum;
-import tikka.utils.postags.Evaluator;
-import tikka.utils.postags.TagMap;
-import tikka.utils.postags.TagMapGenerator;
-import tikka.utils.postags.TagSetEnum.TagSet;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model"
@@ -202,11 +188,11 @@ public abstract class BHMM {
     /**
      * Array of full gold tags
      */
-    protected int[] goldFullTagVector;
-    /**
-     * Array of reduced gold tags
-     */
-    protected int[] goldReducedTagVector;
+    protected int[] goldTagVector;
+//    /**
+//     * Array of reduced gold tags
+//     */
+//    protected int[] goldReducedTagVector;
 //    /**
 //     * Hashtable from gold tag to index for evaluation
 //     */
@@ -484,7 +470,7 @@ public abstract class BHMM {
         documentD = sentenceS = 0;
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
               goldFullTagVectorT = new ArrayList<Integer>(),
-              goldReducedTagVectorT = new ArrayList<Integer>(),
+//              goldReducedTagVectorT = new ArrayList<Integer>(),
               sentenceVectorT = new ArrayList<Integer>(),
               documentVectorT = new ArrayList<Integer>();
         while ((dataReader = dirReader.nextDocumentReader()) != null) {
@@ -529,8 +515,8 @@ public abstract class BHMM {
         sgamma = gamma * stateS;
 
         wordVector = new int[wordN];
-        goldFullTagVector = new int[wordN];
-        goldReducedTagVector = new int[wordN];
+        goldTagVector = new int[wordN];
+//        goldReducedTagVector = new int[wordN];
         sentenceVector = new int[wordN];
         documentVector = new int[wordN];
 
@@ -541,7 +527,7 @@ public abstract class BHMM {
         stateVector = new int[wordN];
 
         copyToArray(wordVector, wordVectorT);
-        copyToArray(goldFullTagVector, goldFullTagVectorT);
+        copyToArray(goldTagVector, goldFullTagVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
         copyToArray(documentVector, documentVectorT);
     }
@@ -654,6 +640,20 @@ public abstract class BHMM {
         trainInnerIter(1, annealer);
     }
 
+    public void evaluate() {
+        evaluator = new Evaluator(tagMap, DistanceMeasureEnum.Measure.JACCARD);
+        evaluator.evaluateTags(stateVector, goldTagVector);
+        System.err.println("One to one accuracy is " + evaluator.getOneToOneAccuracy());
+        System.err.println("Many to one accuracy is " + evaluator.getManyToOneAccuracy());
+    }
+
+    public void printEvaluationScore(BufferedWriter out) throws IOException {
+        out.write(modelParameterStringBuilder.toString());
+        printNewlines(out, 2);
+        out.write("One to one accuracy: " + evaluator.getOneToOneAccuracy());
+        out.write("Many to one accuracy: " + evaluator.getManyToOneAccuracy());
+    }
+
     /**
      * Normalize the sample counts.
      */
@@ -754,26 +754,39 @@ public abstract class BHMM {
 
         BufferedWriter bufferedWriter;
 
-        int docid = 0;
+        int docid = 0, cursent = 0, prevsent = 0;
         String word;
         bufferedWriter = dirWriter.nextOutputBuffer();
 
         for (int i = 0; i < wordN; ++i) {
+            cursent = sentenceVector[i];
             if (docid != documentVector[i]) {
                 bufferedWriter.close();
                 bufferedWriter = dirWriter.nextOutputBuffer();
                 docid = documentVector[i];
             }
+
             int wordid = wordVector[i];
-            if (wordid != EOSi) {
-                word = idxToWord.get(wordid);
-                bufferedWriter.write(word);
-                bufferedWriter.write("\t");
-                int stateid = stateVector[i];
-                String line = String.format("S:%d", stateid);
-                bufferedWriter.write(line);
-            }
+
+            word = idxToWord.get(wordid);
+            bufferedWriter.write(word);
+            bufferedWriter.write("\t");
+            int stateid = stateVector[i];
+            int goldid = goldTagVector[i];
+            String tag = String.format("F:%s", tagMap.getOneToOneTagString(stateid));
+            bufferedWriter.write(tag);
+            bufferedWriter.write("\t");
+            tag = String.format("R:%s", tagMap.getManyToOneTagString(stateid));
+            bufferedWriter.write(tag);
+            bufferedWriter.write("\t");
+            tag = String.format("G:%s", tagMap.getGoldReducedTagString(goldid));
+            bufferedWriter.write(tag);
             bufferedWriter.newLine();
+
+            if (cursent != prevsent) {
+                bufferedWriter.newLine();
+            }
+            prevsent = cursent;
         }
         bufferedWriter.close();
 
@@ -889,19 +902,5 @@ public abstract class BHMM {
         for (int i = 0; i < ta.size(); ++i) {
             ia[i] = ta.get(i).intValue();
         }
-    }
-
-    public void evaluate() {
-        evaluator = new Evaluator(tagMap, DistanceMeasureEnum.Measure.JACCARD);
-        evaluator.evaluateTags(stateVector, goldFullTagVector);
-        System.err.println("One to one accuracy is " + evaluator.getOneToOneAccuracy());
-        System.err.println("Many to one accuracy is " + evaluator.getManyToOneAccuracy());
-    }
-
-    public void printEvaluationScore(BufferedWriter out) throws IOException {
-        out.write(modelParameterStringBuilder.toString());
-        printNewlines(out, 2);
-        out.write("One to one accuracy: " + evaluator.getOneToOneAccuracy());
-        out.write("Many to one accuracy: " + evaluator.getManyToOneAccuracy());
     }
 }

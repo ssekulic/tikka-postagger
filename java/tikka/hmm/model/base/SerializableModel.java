@@ -34,6 +34,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
 /**
  * Object where model parameters are saved. Includes both constant parameters
  * and inferred parameters.
@@ -61,6 +62,10 @@ public class SerializableModel implements Serializable {
      */
     protected int iterations;
     /**
+     * Number of documents
+     */
+    protected int documentD;
+    /**
      * Number of word types
      */
     protected int wordW;
@@ -76,6 +81,10 @@ public class SerializableModel implements Serializable {
      * Hyperparameter for word emissions
      */
     protected double delta;
+    /**
+     * Array of document indexes. Of length {@link #wordN}.
+     */
+    protected int[] documentVector;
     /**
      * Hashtable from word to index.
      */
@@ -125,6 +134,8 @@ public class SerializableModel implements Serializable {
     public SerializableModel(HMM m) {
         dataFormat = m.dataFormat;
         delta = m.delta;
+        documentVector = m.documentVector;
+        documentD = m.documentD;
         gamma = m.gamma;
         initialTemperature = m.initialTemperature;
         iterations = m.iterations;
@@ -198,6 +209,8 @@ public class SerializableModel implements Serializable {
 
     protected void copy(SerializableModel sm) {
         dataFormat = sm.dataFormat;
+        documentD = sm.documentD;
+        documentVector = sm.documentVector;
         gamma = sm.gamma;
         initialTemperature = sm.initialTemperature;
         iterations = sm.iterations;
@@ -217,6 +230,8 @@ public class SerializableModel implements Serializable {
 
     protected HMM copy(HMM hmm) {
         hmm.dataFormat = dataFormat;
+        hmm.documentD = documentD;
+        hmm.documentVector = documentVector;
         hmm.gamma = gamma;
         hmm.initialTemperature = initialTemperature;
         hmm.iterations = iterations;
@@ -232,7 +247,7 @@ public class SerializableModel implements Serializable {
         hmm.wordN = wordN;
         hmm.wordVector = wordVector;
         hmm.wordW = wordW;
-        
+
         return hmm;
     }
 }
