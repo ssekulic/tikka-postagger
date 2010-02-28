@@ -114,4 +114,10 @@ public class BrownTagsCE extends TagSetCE {
         setIdxMap(reducedTagSet);
         return reducedTagSet;
     }
+
+    @Override
+    public String getReducedTag(String tag) {
+        String[] tags = tag.split("[+\\-]");
+        return super.getReducedTag(tags[0]);
+    }
 }
