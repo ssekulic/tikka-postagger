@@ -18,28 +18,26 @@
 
 package tikka.utils.postags;
 
-import java.util.HashSet;
-
 /**
- * TagMap for handling full Brown corpus tagset. Does not reduce any of the tags.
- * 
+ * Jensen Shannon divergence measure for populating cost matrix in Evaluator
+ *
  * @author tsmoon
  */
-public class BrownTags extends TagMap {
+public class JensenShannonMeasure extends DistanceMeasure {
 
-    public BrownTags(int modelTagSize) {
-        super(modelTagSize);
+    public JensenShannonMeasure(Evaluator evaluator) {
+        super(evaluator);
     }
 
+    /**
+     * Not yet implemented
+     * 
+     * @param i
+     * @param j
+     * @return
+     */
     @Override
-    protected HashSet<String> setTags() {
-        setBrownTags();
-        return fullTagSet;
-    }
-
-    @Override
-    public String getReducedTag(String tag) {
-        String[] tags = tag.split("[+\\-]");
-        return super.getReducedTag(tags[0]);
+    public double cost(int i, int j) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

@@ -29,21 +29,21 @@ public class WordNormalizerToLowerNoNum extends WordNormalizer {
     @Override
     public String[] normalize(String[] strings) {
         this.strings = new String[strings.length];
-//        String tag = "", word = "";
+//        String reducedTag = "", word = "";
         try {
-            tag = strings[1];
+            reducedTag = strings[1];
             pattern = Pattern.compile("^\\w.*$");
-            matcher = pattern.matcher(tag);
+            matcher = pattern.matcher(reducedTag);
             if (!matcher.find()) {
-                tag = "";
+                reducedTag = "";
             }
-            this.strings[1] = tag;
-//            this.strings[1] = tagMap.getTag(tag);
+            this.strings[1] = reducedTag;
+//            this.strings[1] = tagMap.getTag(reducedTag);
         } catch (ArrayIndexOutOfBoundsException e) {
-            tag = null;
+            reducedTag = null;
         }
 
-        if (tag == null || !tag.isEmpty()) {
+        if (reducedTag == null || !reducedTag.isEmpty()) {
             word = strings[0].toLowerCase();
             pattern = Pattern.compile("^\\W*$");
             matcher = pattern.matcher(word);

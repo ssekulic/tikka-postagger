@@ -20,7 +20,8 @@ public abstract class TagMap extends HashMap<String, Integer> {
     protected HashSet<String> reducedTagSet;
     protected HashMap<Integer, String> idxToTag;
     protected HashMap<String, String> fullTagToReducedTag;
-    protected HashMap<Integer, Integer> modelToGoldTagMap;
+    protected HashMap<Integer, Integer> oneToOneTagMap;
+    protected HashMap<Integer, Integer> manyToOneTagMap;
     protected HashMap<Integer, Integer> goldToModelTagMap;
 
     /**
@@ -28,9 +29,11 @@ public abstract class TagMap extends HashMap<String, Integer> {
      * @param modelTagSize
      */
     public TagMap(int modelTagSize) {
-        modelToGoldTagMap = new HashMap<Integer, Integer>();
+        oneToOneTagMap = new HashMap<Integer, Integer>();
+        manyToOneTagMap = new HashMap<Integer, Integer>();
         for (int i = 0; i < modelTagSize; ++i) {
-            modelToGoldTagMap.put(i, -1);
+            oneToOneTagMap.put(i, -1);
+            manyToOneTagMap.put(i, -1);
         }
         goldToModelTagMap = new HashMap<Integer, Integer>();
         setTags();
@@ -219,7 +222,7 @@ public abstract class TagMap extends HashMap<String, Integer> {
     protected HashSet<String> reduceTag() {
         reducedTagSet = fullTagSet;
         fullTagToReducedTag = new HashMap<String, String>();
-        for(String tag : fullTagSet) {
+        for (String tag : fullTagSet) {
             fullTagToReducedTag.put(tag, tag);
         }
 
@@ -228,24 +231,41 @@ public abstract class TagMap extends HashMap<String, Integer> {
     }
 
     /**
-     * If the tag exists in the reduced dictionary
+     * If the tag exists
      * @param tag
      * @return
      */
-    public String getTag(String tag) {
+    public String getReducedTag(String tag) {
         String rtag = "";
-        if (reducedTagSet.contains(tag)) {
+        if (fullTagSet.contains(tag)) {
             rtag = fullTagToReducedTag.get(tag);
         }
 
         return rtag;
     }
 
-    public int getGoldTagSize() {
+    /**
+     * 
+     * @param tag
+     * @return
+     */
+    public String getFullTag(String tag) {
+        if (fullTagSet.contains(tag)) {
+            return tag;
+        } else {
+            return "";
+        }
+    }
+
+    public int getReducedGoldTagSize() {
         return reducedTagSet.size();
     }
 
+    public int getFullGoldTagSize() {
+        return fullTagSet.size();
+    }
+
     public int getModelTagSize() {
-        return modelToGoldTagMap.size();
+        return oneToOneTagMap.size();
     }
 }

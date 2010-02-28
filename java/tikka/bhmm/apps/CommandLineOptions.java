@@ -111,7 +111,11 @@ public class CommandLineOptions {
     /**
      * Option on how much the tagset should be reduced. Default is 0 (none).
      */
-    protected int reductionLevel = 0;
+    protected int reductionLevel = 1;
+    /**
+     * Name of file to generate evaluation scores to
+     */
+    protected String evaluationOutputFilename = null;
     /**
      * Name of file to generate tabulated output to
      */
@@ -124,6 +128,10 @@ public class CommandLineOptions {
      * Name of file to dump training data sample scores (bayes factor) to
      */
     protected String trainDataSampleScoreOutputFilename = null;
+    /**
+     * Output buffer to write evaluation scores to
+     */
+    protected BufferedWriter evaluationOutput;
     /**
      * Output buffer to write normalized, tabulated data to.
      */
@@ -273,6 +281,10 @@ public class CommandLineOptions {
                         trainDataSampleScoreOutputFilename = value;
                         trainDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
                               new FileOutputStream(trainDataSampleScoreOutputFilename)));
+                    } else if (opt.equals("ostr")) {
+                        evaluationOutputFilename = value;
+                        evaluationOutput = new BufferedWriter(new OutputStreamWriter(
+                              new FileOutputStream(getEvaluationOutputFilename())));
                     }
                     break;
                 case 'p':
@@ -455,5 +467,19 @@ public class CommandLineOptions {
 
     public int getTestSetBurninIterations() {
         return testSetBurninIterations;
+    }
+
+    /**
+     * @return the evaluationOutputFilename
+     */
+    public String getEvaluationOutputFilename() {
+        return evaluationOutputFilename;
+    }
+
+    /**
+     * @return the evaluationOutput
+     */
+    public BufferedWriter getEvaluationOutput() {
+        return evaluationOutput;
     }
 }

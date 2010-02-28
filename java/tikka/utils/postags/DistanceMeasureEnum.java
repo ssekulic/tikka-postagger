@@ -15,31 +15,18 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-
 package tikka.utils.postags;
 
-import java.util.HashSet;
-
 /**
- * TagMap for handling full Brown corpus tagset. Does not reduce any of the tags.
+ * Enum for deciding which distance measure to use
  * 
  * @author tsmoon
  */
-public class BrownTags extends TagMap {
+public class DistanceMeasureEnum {
 
-    public BrownTags(int modelTagSize) {
-        super(modelTagSize);
-    }
+    public static enum Measure {
 
-    @Override
-    protected HashSet<String> setTags() {
-        setBrownTags();
-        return fullTagSet;
-    }
-
-    @Override
-    public String getReducedTag(String tag) {
-        String[] tags = tag.split("[+\\-]");
-        return super.getReducedTag(tags[0]);
+        JACCARD,
+        JENSEN_SHANNON
     }
 }
