@@ -481,7 +481,7 @@ public abstract class BHMM {
                         wordNormalizer.normalize(line);
                         String word = wordNormalizer.getWord();
                         String tag = wordNormalizer.getTag();
-                        if (!word.isEmpty()) {
+                        if (!word.isEmpty() && tag != null) {
                             if (!wordIdx.containsKey(word)) {
                                 wordIdx.put(word, wordIdx.size());
                                 idxToWord.put(idxToWord.size(), word);
@@ -768,6 +768,10 @@ public abstract class BHMM {
 
             int wordid = wordVector[i];
 
+            if (cursent != prevsent) {
+                bufferedWriter.newLine();
+            }
+
             word = idxToWord.get(wordid);
             bufferedWriter.write(word);
             bufferedWriter.write("\t");
@@ -783,9 +787,6 @@ public abstract class BHMM {
             bufferedWriter.write(tag);
             bufferedWriter.newLine();
 
-            if (cursent != prevsent) {
-                bufferedWriter.newLine();
-            }
             prevsent = cursent;
         }
         bufferedWriter.close();

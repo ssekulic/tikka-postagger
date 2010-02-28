@@ -701,6 +701,10 @@ public abstract class HMM {
 
             int wordid = wordVector[i];
 
+            if (cursent != prevsent) {
+                bufferedWriter.newLine();
+            }
+
             word = idxToWord.get(wordid);
             bufferedWriter.write(word);
             bufferedWriter.write("\t");
@@ -716,9 +720,6 @@ public abstract class HMM {
             bufferedWriter.write(tag);
             bufferedWriter.newLine();
 
-            if (cursent != prevsent) {
-                bufferedWriter.newLine();
-            }
             prevsent = cursent;
         }
         bufferedWriter.close();
