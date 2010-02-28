@@ -88,7 +88,6 @@ public class MainBase {
               "number of content states in HMM (default=4)");
         options.addOption("sf", "function-states", true,
               "number of function states in HMM (default=7)");
-        options.addOption("t", "topics", true, "number of topics (default=50)");
         options.addOption("ut", "tagset", true, "tagset used in the data" +
               " [b=brown, p=penntreebank, t=tiger; default=b]");
         options.addOption("ur", "tag-reduction-level", true, "how much the tagset should " +

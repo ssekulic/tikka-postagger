@@ -37,10 +37,6 @@ import tikka.utils.postags.TagSetEnum;
 public class CommandLineOptions {
 
     /**
-     * Number of topics
-     */
-    protected int topics = 50;
-    /**
      * Number of types (either word or morpheme) to print per state or topic
      */
     protected int outputPerClass = 50;
@@ -284,7 +280,7 @@ public class CommandLineOptions {
                     } else if (opt.equals("oe")) {
                         evaluationOutputFilename = value;
                         evaluationOutput = new BufferedWriter(new OutputStreamWriter(
-                              new FileOutputStream(getEvaluationOutputFilename())));
+                              new FileOutputStream(evaluationOutputFilename)));
                     }
                     break;
                 case 'p':
@@ -310,9 +306,6 @@ public class CommandLineOptions {
                     } else if (opt.equals("sf")) {
                         contentstates = Integer.parseInt(value);
                     }
-                    break;
-                case 't':
-                    topics = Integer.parseInt(value);
                     break;
                 case 'u':
                     opt = option.getOpt();
@@ -401,10 +394,6 @@ public class CommandLineOptions {
 
     public double getTemperatureDecrement() {
         return temperatureDecrement;
-    }
-
-    public int getTopics() {
-        return topics;
     }
 
     public String getExperimentModel() {
