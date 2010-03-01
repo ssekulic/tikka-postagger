@@ -165,6 +165,10 @@ public class CommandLineOptions {
      */
     protected int functionstates = 7;
     /**
+     * Number of topics
+     */
+    protected int topics = 50;
+    /**
      * Number of samples to take
      */
     protected int samples = 100;
@@ -307,6 +311,9 @@ public class CommandLineOptions {
                         contentstates = Integer.parseInt(value);
                     }
                     break;
+                case 't':
+                    topics = Integer.parseInt(value);
+                    break;
                 case 'u':
                     opt = option.getOpt();
                     if (opt.equals("ut")) {
@@ -406,6 +413,10 @@ public class CommandLineOptions {
 
     public int getFunctionStates() {
         return functionstates;
+    }
+
+    public int getTopics() {
+        return topics;
     }
 
     public String getModelInputPath() {

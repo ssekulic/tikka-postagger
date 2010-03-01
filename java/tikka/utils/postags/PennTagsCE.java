@@ -11,7 +11,7 @@ import java.util.HashSet;
  *
  * @author tsmoon
  */
-public class PennTagsCE extends TagMap {
+public class PennTagsCE extends TagSetCE {
 
     public PennTagsCE(int modelTagSize) {
         super(modelTagSize);
@@ -68,7 +68,7 @@ public class PennTagsCE extends TagMap {
         fullTagToReducedTag.put("WP", "W");
         fullTagToReducedTag.put("WRB", "W");
         fullTagToReducedTag.put("VBN", "VBN");
-
+        
         setIdxMap(reducedTagSet);
         return reducedTagSet;
     }
