@@ -49,103 +49,35 @@ public class SerializableModel implements Serializable {
      * copied to the enclosing class (this).
      */
     protected SerializableModel loadBuffer = null;
-    /**
-     * Format of the input data
-     */
+
     protected DataFormatEnum.DataFormat dataFormat;
-    /**
-     * Seed for random number generator.
-     */
     protected int randomSeed;
-    /**
-     * Number of iterations
-     */
     protected int iterations;
-    /**
-     * Number of word types
-     */
     protected int wordW;
-    /**
-     * Number of word tokens
-     */
     protected int wordN;
-    /**
-     * Hyperparameter for content state distributions given sentences
-     */
     protected double alpha;
-    /**
-     * Hyperparameter for word emissions for content states
-     */
     protected double beta;
-    /**
-     * Hyperparameter for state emissions
-     */
     protected double gamma;
-    /**
-     * Hyperparameter for word emissions for function states
-     */
     protected double delta;
-    /**
-     * Hashtable from word to index.
-     */
     protected HashMap<String, Integer> wordIdx;
-    /**
-     * Array of word indexes. Of length {@link #wordN}.
-     */
     protected int[] wordVector;
-    /**
-     * Temperature at which to start annealing process
-     */
     protected double initialTemperature;
-    /**
-     * Decrement at which to reduce the temperature in annealing process
-     */
     protected double temperatureDecrement;
-    /**
-     * Stop changing temperature after the following temp has been reached.
-     */
     protected double targetTemperature;
-    /**
-     * TagMap for handling tagset reduction and mapping of model tags to gold
-     * tags
-     */
     protected TagMap tagMap;
-    /**
-     * Number of content states. It also includes the initial start state
-     * as an offset.
-     */
     protected int stateC;
-    /**
-     * Number of function states
-     */
     protected int stateF;
-    /**
-     * Token indexes for sentences
-     */
+    protected int topicK;
     protected int[] sentenceVector;
-    /**
-     * Array of full gold tags
-     */
     protected int[] goldTagVector;
-    /**
-     * Array of states over tokens
-     */
     protected int[] stateVector;
-    /**
-     * Path of training data.
-     */
     protected String trainDataDir;
-    /**
-     * Type of model that is being run.
-     */
     protected String modelName;
-    /**
-     * 
-     */
     protected int outputPerClass;
     protected int documentD;
     protected int sentenceS;
     protected int[] documentVector;
+    protected int[] topicVector;
 
     /**
      * Constructor to use when model is being saved.
@@ -175,6 +107,8 @@ public class SerializableModel implements Serializable {
         tagMap = m.tagMap;
         targetTemperature = m.targetTemperature;
         temperatureDecrement = m.temperatureDecrement;
+        topicK = m.topicK;
+        topicVector = m.topicVector;
         wordIdx = m.trainWordIdx;
         wordN = m.wordN;
         wordVector = m.wordVector;
@@ -253,6 +187,8 @@ public class SerializableModel implements Serializable {
         tagMap = sm.tagMap;
         targetTemperature = sm.targetTemperature;
         temperatureDecrement = sm.temperatureDecrement;
+        topicK = sm.topicK;
+        topicVector = sm.topicVector;
         wordIdx = sm.wordIdx;
         wordN = sm.wordN;
         wordVector = sm.wordVector;
@@ -282,6 +218,8 @@ public class SerializableModel implements Serializable {
         hmm.tagMap = tagMap;
         hmm.targetTemperature = targetTemperature;
         hmm.temperatureDecrement = temperatureDecrement;
+        hmm.topicK = topicK;
+        hmm.topicVector = topicVector;
         hmm.trainWordIdx = wordIdx;
         hmm.wordN = wordN;
         hmm.wordVector = wordVector;

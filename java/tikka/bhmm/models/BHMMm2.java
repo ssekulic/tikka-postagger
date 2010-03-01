@@ -17,6 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.models;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -223,5 +224,29 @@ public class BHMMm2 extends BHMM {
         modelParameterStringBuilder.append(line);
         line = String.format("testRootDir:%s", testDataDir) + newline;
         modelParameterStringBuilder.append(line);
+    }
+
+    @Override
+    public void initializeFromLoadedModel(CommandLineOptions options) throws
+          IOException {
+        super.initializeFromLoadedModel(options);
+
+        int current = 0;
+        int wordid = 0, stateid = 0;
+        int stateoff, wordstateoff;
+
+        for (int i = 0; i < wordN; ++i) {
+            wordid = wordVector[i];
+            stateid = stateVector[i];
+
+            stateoff = stateS * current;
+            wordstateoff = stateS * wordid;
+
+            stateByWord[wordstateoff + stateid]++;
+            stateCounts[stateid]++;
+            firstOrderTransitions[stateoff + stateid]++;
+            first[i] = current;
+            current = stateid;
+        }
     }
 }

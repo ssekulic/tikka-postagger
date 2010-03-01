@@ -47,7 +47,7 @@ public class WordNormalizerToLower extends WordNormalizer {
             reducedTag = null;
         }
 
-        if (reducedTag == null || !reducedTag.isEmpty()) {
+        if (!reducedTag.isEmpty()) {
             word = strings[0].toLowerCase();
         } else {
             word = "";

@@ -31,7 +31,7 @@ public class WordNormalizer {
     protected Pattern pattern;
     protected Matcher matcher;
     protected String[] strings;
-    protected String word, tag, reducedTag, fullTag;
+    protected String word, reducedTag, fullTag;
     protected TagMap tagMap;
 
     public WordNormalizer(TagMap tagMap) {
@@ -44,13 +44,13 @@ public class WordNormalizer {
     public String[] normalize(String[] strings) {
         this.strings = new String[strings.length];
         try {
-            tag = strings[1];
+            fullTag = strings[1];
 //            pattern = Pattern.compile("^\\w.*$");
 //            matcher = pattern.matcher(reducedTag);
 //            if (!matcher.find()) {
 //                reducedTag = "";
 //            }
-            this.strings[1] = tagMap.getReducedTag(reducedTag);
+            this.strings[1] = reducedTag = tagMap.getReducedTag(fullTag);
         } catch (ArrayIndexOutOfBoundsException e) {
             reducedTag = null;
         }

@@ -19,7 +19,6 @@ public abstract class TagMap extends HashMap<String, Integer> implements
       Serializable {
 
     static private final long serialVersionUID = 100L;
-    
     protected HashSet<String> fullTagSet;
     protected HashSet<String> reducedTagSet;
     protected HashMap<Integer, String> idxToTag;
@@ -166,15 +165,17 @@ public abstract class TagMap extends HashMap<String, Integer> implements
      */
     protected HashSet<String> setPennTags() {
         fullTagSet = new HashSet<String>(Arrays.asList(
-              "$", //dollar $ -$ --$ A$ C$ HK$ M$ NZ$ S$ U.S.$ US$
+//              "$", //dollar $ -$ --$ A$ C$ HK$ M$ NZ$ S$ U.S.$ US$
               "``", //opening quotation mark ` ``
               "''", //closing quotation mark ' ''
-              "(", //opening parenthesis ( [ {
-              ")", //closing parenthesis ) ] }
+//              "(", //opening parenthesis ( [ {
+//              ")", //closing parenthesis ) ] }
               ",", //comma ,
-              "-- ", //dash --
+//              "-- ", //dash --
               ".", //sentence terminator . ! ?
               ":", //colon or ellipsis : ; ...
+              "-RRB-", // Right braces/brackets
+              "-LRB-", // Left braces/brackets
               "CC", //Coordinating conjunction
               "CD", //Cardinal number
               "DT", //Determiner
@@ -188,12 +189,12 @@ public abstract class TagMap extends HashMap<String, Integer> implements
               "MD", //Modal
               "NN", //Noun, singular or mass
               "NNS", //Noun, plural
-              "NP", //Proper noun, singular
-              "NPS", //Proper noun, plural
+              "NNP", //Proper noun, singular
+              "NNPS", //Proper noun, plural
               "PDT", //Predeterminer
               "POS", //Possessive ending
-              "PP", //Personal pronoun
-              "PP$", //Possessive pronoun
+              "PRP", //Personal pronoun
+              "PRP$", //Possessive pronoun
               "RB", //Adverb
               "RBR", //Adverb, comparative
               "RBS", //Adverb, superlative
