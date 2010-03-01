@@ -17,17 +17,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.models;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import tikka.bhmm.apps.CommandLineOptions;
-import tikka.bhmm.models.BHMMm1;
+import tikka.bhmm.model.base.BHMM;
+
+import tikka.structures.*;
+
+import tikka.utils.annealer.Annealer;
 
 /**
- * The "barely hidden markov model" or "bicameral hidden markov model" (M2). This
- * is the same as BHMMm1 but with a different initialization setting. Here,
- * half the words are randomly assigned to the content state.
+ * Though this is derived from BHMM, it is just a vanilla HMM.
  *
  * @author tsmoon
  */
-public class BHMMm2 extends BHMMm1 {
+public class BHMMm2 extends BHMM {
 
     public BHMMm2(CommandLineOptions options) {
         super(options);
@@ -38,11 +43,11 @@ public class BHMMm2 extends BHMMm1 {
      */
     @Override
     public void initializeParametersRandom() {
-        int wordid, sentenceid, stateid;
+        int wordid, stateid;
         int current = 0;
         double max = 0, totalprob = 0;
         double r = 0;
-        int wordstateoff, sentenceoff, stateoff;
+        int wordstateoff, stateoff;
 
         /**
          * Initialize by assigning random topic indices to words
@@ -50,38 +55,82 @@ public class BHMMm2 extends BHMMm1 {
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
-            if (wordid == EOSi) {
-                firstOrderTransitions[current * stateS + 0]++;
-                first[i] = current;
-                current = 0;
-            } else {
-                sentenceid = sentenceVector[i];
-                stateoff = current * stateS;
-                wordstateoff = stateS * wordid;
-                sentenceoff = sentenceid * stateC;
+            wordstateoff = stateS * wordid;
 
-                totalprob = 0;
-                if (mtfRand.nextDouble() > 0.5) {
-                    for (int j = 1; j < stateC; j++) {
-                        totalprob += stateProbs[j] =
-                              ((stateByWord[wordstateoff + j] + beta)
-                              / (stateCounts[j] + wbeta))
-                              * ((contentStateBySentence[sentenceoff + j] + alpha)
-                              / (sentenceCounts[sentenceid] + calpha))
-                              * (firstOrderTransitions[stateoff + j] + gamma);
-                    }
-                    stateid = 1;
-                } else {
-                    for (int j = stateC; j < stateS; j++) {
-                        totalprob += stateProbs[j] =
-                              ((stateByWord[wordstateoff + j] + delta)
-                              / (stateCounts[j] + wdelta))
-                              * (firstOrderTransitions[stateoff + j] + gamma);
-                    }
-                    r = mtfRand.nextDouble() * totalprob;
-                    stateid = stateC;
+            totalprob = 0;
+            stateoff = current * stateS;
+            try {
+                for (int j = 0;; j++) {
+                    totalprob += stateProbs[j] =
+                          (stateByWord[wordstateoff + j] + delta)
+                          / (stateCounts[j] + wdelta)
+                          * (firstOrderTransitions[stateoff + j] + gamma);
                 }
+            } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            }
+
+            r = mtfRand.nextDouble() * totalprob;
+            stateid = 0;
+            max = stateProbs[stateid];
+            while (r > max) {
+                stateid++;
+                max += stateProbs[stateid];
+            }
+            stateVector[i] = stateid;
+            stateByWord[wordstateoff + stateid]++;
+            stateCounts[stateid]++;
+            firstOrderTransitions[stateoff + stateid]++;
+            first[i] = current;
+            current = stateid;
+        }
+    }
+
+    /**
+     * Training routine for the inner iterations
+     */
+    @Override
+    protected void trainInnerIter(int itermax, Annealer annealer) {
+        int wordid, stateid;
+        int current = 0, next = 0;
+        double max = 0, totalprob = 0;
+        double r = 0;
+        int wordstateoff, stateoff;
+
+        for (int iter = 0; iter < itermax; ++iter) {
+            System.err.println("iteration " + iter);
+            current = 0;
+            for (int i = 0; i < wordN; i++) {
+                if (i % 100000 == 0) {
+                    System.err.println("\tProcessing word " + i);
+                }
+                wordid = wordVector[i];
+
+                stateid = stateVector[i];
+                wordstateoff = wordid * stateS;
+
+                stateByWord[wordstateoff + stateid]--;
+                stateCounts[stateid]--;
+                firstOrderTransitions[first[i] * stateS + stateid]--;
+
+                stateoff = current * stateS;
+                try {
+                    next = stateVector[i + 1];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    next = 0;
+                }
+
+                try {
+                    for (int j = 0;; j++) {
+                        stateProbs[j] =
+                              ((stateByWord[wordstateoff + j] + delta) / (stateCounts[j] + wdelta))
+                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
+                              * (firstOrderTransitions[j * stateS + next] + gamma);
+                    }
+                } catch (ArrayIndexOutOfBoundsException e) {
+                }
+                totalprob = annealer.annealProbs(stateProbs);
                 r = mtfRand.nextDouble() * totalprob;
+                stateid = 0;
                 max = stateProbs[stateid];
                 while (r > max) {
                     stateid++;
@@ -89,15 +138,90 @@ public class BHMMm2 extends BHMMm1 {
                 }
                 stateVector[i] = stateid;
 
-                if (stateid < stateC) {
-                    contentStateBySentence[sentenceoff + stateid]++;
-                }
                 stateByWord[wordstateoff + stateid]++;
                 stateCounts[stateid]++;
                 firstOrderTransitions[stateoff + stateid]++;
                 first[i] = current;
                 current = stateid;
+//                }
             }
         }
+    }
+
+    /**
+     * Normalize the sample counts for words given state.
+     */
+    @Override
+    protected void normalizeStates() {
+        topWordsPerState = new StringDoublePair[stateS][];
+        for (int i = 0; i < stateS; ++i) {
+            topWordsPerState[i] = new StringDoublePair[outputPerClass];
+        }
+
+        double sum = 0.;
+        for (int i = 0; i < stateS; ++i) {
+            sum += stateProbs[i] = stateCounts[i] + wdelta;
+            ArrayList<DoubleStringPair> topWords =
+                  new ArrayList<DoubleStringPair>();
+            /**
+             * Start at one to leave out EOSi
+             */
+//            for (int j = EOSi + 1; j < wordW; ++j) {
+            for (int j = 0; j < wordW; ++j) {
+                topWords.add(new DoubleStringPair(
+                      stateByWord[j * stateS + i] + delta, trainIdxToWord.get(
+                      j)));
+            }
+            Collections.sort(topWords);
+            for (int j = 0; j < outputPerClass; ++j) {
+                topWordsPerState[i][j] =
+                      new StringDoublePair(
+                      topWords.get(j).stringValue,
+                      topWords.get(j).doubleValue / stateProbs[i]);
+            }
+        }
+
+        for (int i = 0; i < stateS; ++i) {
+            stateProbs[i] /= sum;
+        }
+    }
+
+    /**
+     * Creates a string stating the parameters used in the model. The
+     * string is used for pretty printing purposes and clarity in other
+     * output routines.
+     */
+    @Override
+    public void setModelParameterStringBuilder() {
+        modelParameterStringBuilder = new StringBuilder();
+        String line = null;
+        line = String.format("stateS:%d", stateS) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordW:%d", wordW) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("wordN:%d", wordN) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("gamma:%f", gamma) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("delta:%f", delta) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("initialTemperature:%f", initialTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("temperatureDecrement:%f", temperatureDecrement) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("targetTemperature:%f", targetTemperature) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("iterations:%d", iterations) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("tagSet:%s", tagMap.getTagSetName()) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("reduction-level:%d", tagMap.getReductionLevel()) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("randomSeed:%d", randomSeed) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("rootDir:%s", trainDataDir) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("testRootDir:%s", testDataDir) + newline;
+        modelParameterStringBuilder.append(line);
     }
 }
