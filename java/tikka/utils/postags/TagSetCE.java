@@ -5,6 +5,7 @@
 package tikka.utils.postags;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -25,7 +26,12 @@ public abstract class TagSetCE extends TagMap {
      */
     @Override
     protected HashSet<String> reduceTag() {
-        super.reduceTag();
+
+        fullTagToReducedTag = new HashMap<String, String>();
+        for (String tag : fullTagSet) {
+            fullTagToReducedTag.put(tag, tag);
+        }
+
         reducedTagSet = new HashSet<String>(Arrays.asList(
               "ADJ", //CD JJ JJR JJS PRP$
               "CONJ",//CC

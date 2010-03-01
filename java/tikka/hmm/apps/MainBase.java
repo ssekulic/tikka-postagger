@@ -89,6 +89,8 @@ public class MainBase {
         options.addOption("t", "topics", true, "number of topics (default=50)");
         options.addOption("ut", "tagset", true, "tagset used in the data"
               + " [b=brown, p=penntreebank, t=tiger; default=b]");
+        options.addOption("ur", "tag-reduction-level", true, "how much the tagset should "
+              + "be reduced [0=none, 1=CE; default=0]");
         options.addOption("w", "words-class", true,
               "number of words to print per class (default=50)");
     }

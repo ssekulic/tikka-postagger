@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.postags;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,8 +15,11 @@ import java.util.HashSet;
  * 
  * @author tsmoon
  */
-public abstract class TagMap extends HashMap<String, Integer> {
+public abstract class TagMap extends HashMap<String, Integer> implements
+      Serializable {
 
+    static private final long serialVersionUID = 100L;
+    
     protected HashSet<String> fullTagSet;
     protected HashSet<String> reducedTagSet;
     protected HashMap<Integer, String> idxToTag;
@@ -23,6 +27,8 @@ public abstract class TagMap extends HashMap<String, Integer> {
     protected HashMap<Integer, Integer> oneToOneTagMap;
     protected HashMap<Integer, Integer> manyToOneTagMap;
     protected HashMap<Integer, Integer> goldToModelTagMap;
+    protected TagSetEnum.TagSet tagSet;
+    protected int level;
 
     /**
      * 
@@ -255,6 +261,14 @@ public abstract class TagMap extends HashMap<String, Integer> {
         } else {
             return "";
         }
+    }
+
+    public String getTagSetName() {
+        return tagSet.toString();
+    }
+
+    public int getReductionLevel() {
+        return level;
     }
 
     public int getReducedGoldTagSize() {

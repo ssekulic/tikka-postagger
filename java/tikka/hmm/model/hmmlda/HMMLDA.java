@@ -109,14 +109,18 @@ public class HMMLDA extends HMM {
         documentD = 0;
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
               documentVectorT = new ArrayList<Integer>(),
+              goldFullTagVectorT = new ArrayList<Integer>(),
               sentenceVectorT = new ArrayList<Integer>();
         while ((dataReader = dirReader.nextDocumentReader()) != null) {
             try {
                 String[][] sentence;
                 while ((sentence = dataReader.nextSequence()) != null) {
                     for (String[] line : sentence) {
-                        String word = wordNormalizer.normalize(line)[0];
-                        if (!word.isEmpty()) {
+//                        String word = wordNormalizer.normalize(line)[0];
+                        wordNormalizer.normalize(line);
+                        String word = wordNormalizer.getWord();
+                        String tag = wordNormalizer.getTag();
+                        if (!word.isEmpty() && tag != null) {
                             if (!wordIdx.containsKey(word)) {
                                 wordIdx.put(word, wordIdx.size());
                                 idxToWord.put(idxToWord.size(), word);
@@ -125,11 +129,12 @@ public class HMMLDA extends HMM {
                             wordVectorT.add(wordIdx.get(word));
                             documentVectorT.add(documentD);
                             sentenceVectorT.add(sentenceS);
+                            goldFullTagVectorT.add(tagMap.get(tag));
                         }
                     }
-                    wordVectorT.add(EOSi);
-                    documentVectorT.add(documentD);
-                    sentenceVectorT.add(sentenceS);
+//                    wordVectorT.add(EOSi);
+//                    documentVectorT.add(documentD);
+//                    sentenceVectorT.add(sentenceS);
                     sentenceS++;
 
                 }
@@ -145,10 +150,12 @@ public class HMMLDA extends HMM {
         sgamma = gamma * stateS;
 
         wordVector = new int[wordN];
+        goldTagVector = new int[wordN];
         sentenceVector = new int[wordN];
         documentVector = new int[wordN];
 
         copyToArray(wordVector, wordVectorT);
+        copyToArray(goldTagVector, goldFullTagVectorT);
         copyToArray(sentenceVector, sentenceVectorT);
         copyToArray(documentVector, documentVectorT);
     }
@@ -220,7 +227,7 @@ public class HMMLDA extends HMM {
             /**
              * Start at one to leave out EOSi
              */
-            for (int j = EOSi + 1; j < wordW; ++j) {
+            for (int j = 0; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
                       TopicByWord[j * topicK + i] + beta, trainIdxToWord.get(
                       j)));
@@ -241,12 +248,12 @@ public class HMMLDA extends HMM {
     /**
      * Normalize the sample counts for words given state. Unlike the base class,
      * it marginalizes word probabilities over the topics for the topic state,
-     * i.e. state 1.
+     * i.e. state 0.
      */
     @Override
     protected void normalizeStates() {
         TopWordsPerState = new StringDoublePair[stateS][];
-        for (int i = 1; i < stateS; ++i) {
+        for (int i = 0; i < stateS; ++i) {
             TopWordsPerState[i] = new StringDoublePair[outputPerClass];
         }
 
@@ -259,7 +266,7 @@ public class HMMLDA extends HMM {
         } catch (ArrayIndexOutOfBoundsException e) {
         }
 
-        for (int j = EOSi + 1; j < wordW; ++j) {
+        for (int j = 0; j < wordW; ++j) {
             int wordoff = j * topicK;
             for (int i = 0; i < topicK; ++i) {
                 marginalwordprobs[j] += topicProbs[i]
@@ -269,31 +276,31 @@ public class HMMLDA extends HMM {
         }
 
         {
-            sum += stateProbs[1] = stateCounts[1] + wdelta;
+            sum += stateProbs[0] = stateCounts[0] + wdelta;
             ArrayList<DoubleStringPair> topWords =
                   new ArrayList<DoubleStringPair>();
-            for (int j = EOSi + 1; j < wordW; ++j) {
+            for (int j = 0; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
                       marginalwordprobs[j], trainIdxToWord.get(
                       j)));
             }
             Collections.sort(topWords);
             for (int j = 0; j < outputPerClass; ++j) {
-                TopWordsPerState[1][j] =
+                TopWordsPerState[0][j] =
                       new StringDoublePair(
                       topWords.get(j).stringValue,
                       topWords.get(j).doubleValue);
             }
         }
 
-        for (int i = 2; i < stateS; ++i) {
+        for (int i = 0; i < stateS; ++i) {
             sum += stateProbs[i] = stateCounts[i] + wdelta;
             ArrayList<DoubleStringPair> topWords =
                   new ArrayList<DoubleStringPair>();
             /**
              * Start at one to leave out EOSi
              */
-            for (int j = EOSi + 1; j < wordW; ++j) {
+            for (int j = 0; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
                       StateByWord[j * stateS + i] + delta, trainIdxToWord.get(
                       j)));
@@ -307,7 +314,7 @@ public class HMMLDA extends HMM {
             }
         }
 
-        for (int i = 1; i < stateS; ++i) {
+        for (int i = 0; i < stateS; ++i) {
             stateProbs[i] /= sum;
         }
     }
@@ -379,85 +386,85 @@ public class HMMLDA extends HMM {
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
-            if (wordid == EOSi) {
-                firstOrderTransitions[current * S1 + 0]++;
-                first[i] = current;
-                current = 0;
+//            if (wordid == EOSi) {
+//                firstOrderTransitions[current * S1 + 0]++;
+//                first[i] = current;
+//                current = 0;
+//            } else {
+            docid = documentVector[i];
+            wordtopicoff = topicK * wordid;
+            wordstateoff = stateS * wordid;
+            docoff = topicK * docid;
+
+            if (mtfRand.nextDouble() > 0.5) {
+                stateVector[i] = 1;
             } else {
-                docid = documentVector[i];
-                wordtopicoff = topicK * wordid;
-                wordstateoff = stateS * wordid;
-                docoff = topicK * docid;
+                stateVector[i] = 0;
+            }
 
-                if (mtfRand.nextDouble() > 0.5) {
-                    stateVector[i] = 1;
-                } else {
-                    stateVector[i] = 0;
+            totalprob = 0;
+            try {
+                for (int j = 0;; ++j) {
+                    topicProbs[j] = DocumentByTopic[docoff + j] + alpha;
+                    if (stateVector[i] == 1) {
+                        topicProbs[j] *= (TopicByWord[wordtopicoff + j] + beta)
+                              / (topicCounts[j] + wbeta);
+                    }
+                    totalprob += topicProbs[j];
                 }
+            } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            }
 
-                totalprob = 0;
+            max = topicProbs[0];
+            topicid = 0;
+            r = mtfRand.nextDouble() * totalprob;
+            while (r > max) {
+                topicid++;
+                max += topicProbs[topicid];
+            }
+            topicVector[i] = topicid;
+            max = 0;
+
+            totalprob = 0;
+            if (stateVector[i] == 0) {
+                totalprob = stateProbs[0] =
+                      (TopicByWord[wordtopicoff + topicid] + delta)
+                      / (topicCounts[topicid] + wdelta)
+                      * (firstOrderTransitions[current * S1 + 0] + gamma);
                 try {
-                    for (int j = 0;; ++j) {
-                        topicProbs[j] = DocumentByTopic[docoff + j] + alpha;
-                        if (stateVector[i] == 1) {
-                            topicProbs[j] *= (TopicByWord[wordtopicoff + j] + beta)
-                                  / (topicCounts[j] + wbeta);
-                        }
-                        totalprob += topicProbs[j];
+                    for (int j = 1;; j++) {
+                        totalprob += stateProbs[j] =
+                              (StateByWord[wordstateoff + j] + beta)
+                              / (stateCounts[j] + wbeta)
+                              * (firstOrderTransitions[current * S1 + j]
+                              + gamma);
                     }
                 } catch (java.lang.ArrayIndexOutOfBoundsException e) {
                 }
-
-                max = topicProbs[0];
-                topicid = 0;
-                r = mtfRand.nextDouble() * totalprob;
-                while (r > max) {
-                    topicid++;
-                    max += topicProbs[topicid];
-                }
-                topicVector[i] = topicid;
-                max = 0;
-
-                totalprob = 0;
-                if (stateVector[i] == 0) {
-                    totalprob = stateProbs[1] =
-                          (TopicByWord[wordtopicoff + topicid] + delta)
-                          / (topicCounts[topicid] + wdelta)
-                          * (firstOrderTransitions[current * S1 + 1] + gamma);
-                    try {
-                        for (int j = 2;; j++) {
-                            totalprob += stateProbs[j] =
-                                  (StateByWord[wordstateoff + j] + beta)
-                                  / (stateCounts[j] + wbeta)
-                                  * (firstOrderTransitions[current * S1 + j]
-                                  + gamma);
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    }
-                }
-
-                r = mtfRand.nextDouble() * totalprob;
-                max = stateProbs[1];
-                stateid = 1;
-                while (r > max) {
-                    stateid++;
-                    max += stateProbs[stateid];
-                }
-                stateVector[i] = stateid;
-
-                if (stateVector[i] == 1) {
-                    TopicByWord[wordtopicoff + topicid]++;
-                    DocumentByTopic[docoff + topicid]++;
-                    topicCounts[topicid]++;
-                } else {
-                    StateByWord[wordstateoff + stateid]++;
-                }
-
-                stateCounts[stateid]++;
-                firstOrderTransitions[current * S1 + stateid]++;
-                first[i] = current;
-                current = stateid;
             }
+
+            r = mtfRand.nextDouble() * totalprob;
+            stateid = 0;
+            max = stateProbs[stateid];
+            while (r > max) {
+                stateid++;
+                max += stateProbs[stateid];
+            }
+            stateVector[i] = stateid;
+
+            if (stateid == 0) {
+                TopicByWord[wordtopicoff + topicid]++;
+                DocumentByTopic[docoff + topicid]++;
+                topicCounts[topicid]++;
+            } else {
+                StateByWord[wordstateoff + stateid]++;
+            }
+
+            stateCounts[stateid]++;
+            firstOrderTransitions[current * S1 + stateid]++;
+            first[i] = current;
+            current = stateid;
+//            }
         }
     }
 
@@ -472,95 +479,100 @@ public class HMMLDA extends HMM {
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
             current = 0;
-            for (int i = 0; i < wordN - 3; i++) {
+            for (int i = 0; i < wordN; i++) {
                 if (i % 100000 == 0) {
                     System.err.println("\tProcessing word " + i);
                 }
                 wordid = wordVector[i];
 
-                if (wordid == EOSi) // sentence marker
-                {
-                    firstOrderTransitions[first[i] * S1 + 0]--;
-                    firstOrderTransitions[current * S1 + 0]++;
-                    first[i] = current;
-                    current = 0;
+//                if (wordid == EOSi) // sentence marker
+//                {
+//                    firstOrderTransitions[first[i] * S1 + 0]--;
+//                    firstOrderTransitions[current * S1 + 0]++;
+//                    first[i] = current;
+//                    current = 0;
+//                } else {
+                docid = documentVector[i];
+                stateid = stateVector[i];
+                topicid = topicVector[i];
+                wordstateoff = wordid * stateS;
+                wordtopicoff = wordid * topicK;
+                docoff = docid * topicK;
+
+                if (stateid == 0) {
+                    TopicByWord[wordtopicoff + topicid]--;
+                    DocumentByTopic[docoff + topicid]--;
+                    topicCounts[topicid]--;
                 } else {
-                    docid = documentVector[i];
-                    stateid = stateVector[i];
-                    topicid = topicVector[i];
-                    wordstateoff = wordid * stateS;
-                    wordtopicoff = wordid * topicK;
-                    docoff = docid * topicK;
+                    StateByWord[wordstateoff + stateid]--;
 
-                    if (stateVector[i] == 1) {
-                        TopicByWord[wordtopicoff + topicid]--;
-                        DocumentByTopic[docoff + topicid]--;
-                        topicCounts[topicid]--;
-                    } else {
-                        StateByWord[wordstateoff + stateid]--;
-
-                    }
-                    stateCounts[stateid]--;
-                    firstOrderTransitions[first[i] * S1 + stateid]--;
-
-                    try {
-                        for (int j = 0;; j++) {
-                            topicProbs[j] = DocumentByTopic[docoff + j] + alpha;
-                            if (stateid == 1) {
-                                topicProbs[j] *= (TopicByWord[wordtopicoff + j] + beta)
-                                      / (topicCounts[j] + wbeta);
-                            }
-                        }
-                    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    }
-                    totalprob = annealer.annealProbs(topicProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = topicProbs[0];
-
-                    topicid = 0;
-                    while (r > max) {
-                        topicid++;
-                        max += topicProbs[topicid];
-                    }
-                    topicVector[i] = topicid;
-
-                    stateoff = current * stateS;
-                    next = stateVector[i + 1];
-                    stateProbs[1] =
-                          ((TopicByWord[wordtopicoff + topicid] + beta) / (topicCounts[topicid] + wbeta))
-                          * (firstOrderTransitions[stateoff + 1] + gamma)
-                          * ((firstOrderTransitions[S1 + next] + gamma)
-                          / (stateCounts[1] + sgamma));
-                    for (int j = 2; j < stateS; j++) {
-                        stateProbs[j] =
-                              ((StateByWord[wordstateoff + j] + delta) / (stateCounts[j] + wdelta))
-                              * (firstOrderTransitions[stateoff + j] + gamma)
-                              * ((firstOrderTransitions[j * stateS + next] + gamma)
-                              / (stateCounts[j] + sgamma));
-                    }
-                    totalprob = annealer.annealProbs(1, stateProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    max = stateProbs[1];
-                    stateid = 1;
-                    while (r > max) {
-                        stateid++;
-                        max += stateProbs[stateid];
-                    }
-                    stateVector[i] = stateid;
-
-                    if (stateVector[i] == 1) {
-                        TopicByWord[wordtopicoff + topicid]++;
-                        DocumentByTopic[docoff + topicid]++;
-                        topicCounts[topicid]++;
-                    } else {
-                        StateByWord[wordstateoff + stateid]++;
-                    }
-
-                    stateCounts[stateid]++;
-                    firstOrderTransitions[current * S1 + stateid]++;
-                    first[i] = current;
-                    current = stateid;
                 }
+                stateCounts[stateid]--;
+                firstOrderTransitions[first[i] * S1 + stateid]--;
+
+                try {
+                    for (int j = 0;; j++) {
+                        topicProbs[j] = DocumentByTopic[docoff + j] + alpha;
+                        if (stateid == 1) {
+                            topicProbs[j] *= (TopicByWord[wordtopicoff + j] + beta)
+                                  / (topicCounts[j] + wbeta);
+                        }
+                    }
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                }
+                totalprob = annealer.annealProbs(topicProbs);
+                r = mtfRand.nextDouble() * totalprob;
+                max = topicProbs[0];
+
+                topicid = 0;
+                while (r > max) {
+                    topicid++;
+                    max += topicProbs[topicid];
+                }
+                topicVector[i] = topicid;
+
+                stateoff = current * stateS;
+                try {
+                    next = stateVector[i + 1];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    next = 0;
+                }
+
+                stateProbs[0] =
+                      ((TopicByWord[wordtopicoff + topicid] + beta) / (topicCounts[topicid] + wbeta))
+                      * (firstOrderTransitions[stateoff + 0] + gamma)
+                      * ((firstOrderTransitions[S1 + next] + gamma)
+                      / (stateCounts[0] + sgamma));
+                for (int j = 1; j < stateS; j++) {
+                    stateProbs[j] =
+                          ((StateByWord[wordstateoff + j] + delta) / (stateCounts[j] + wdelta))
+                          * (firstOrderTransitions[stateoff + j] + gamma)
+                          * ((firstOrderTransitions[j * stateS + next] + gamma)
+                          / (stateCounts[j] + sgamma));
+                }
+                totalprob = annealer.annealProbs(stateProbs);
+                r = mtfRand.nextDouble() * totalprob;
+                stateid = 0;
+                max = stateProbs[stateid];
+                while (r > max) {
+                    stateid++;
+                    max += stateProbs[stateid];
+                }
+                stateVector[i] = stateid;
+
+                if (stateid == 0) {
+                    TopicByWord[wordtopicoff + topicid]++;
+                    DocumentByTopic[docoff + topicid]++;
+                    topicCounts[topicid]++;
+                } else {
+                    StateByWord[wordstateoff + stateid]++;
+                }
+
+                stateCounts[stateid]++;
+                firstOrderTransitions[current * S1 + stateid]++;
+                first[i] = current;
+                current = stateid;
+//                }
             }
         }
     }

@@ -201,14 +201,14 @@ public abstract class BHMM {
 //     * Hashtable from index to gold tag
 //     */
 //    HashMap<Integer, String> idxToGoldTag;
-    /**
-     * Array of counts for words given content states.
-     */
-    protected int[] contentStateByWord;
-    /**
-     * Array of counts for words given function states.
-     */
-    protected int[] functionStateByWord;
+//    /**
+//     * Array of counts for words given content states.
+//     */
+//    protected int[] contentStateByWord;
+//    /**
+//     * Array of counts for words given function states.
+//     */
+//    protected int[] functionStateByWord;
     /**
      * Array of counts for words given all states
      */
@@ -433,9 +433,10 @@ public abstract class BHMM {
          */
         randomSeed = options.getRandomSeed();
         if (randomSeed == -1) {
-            randomSeed = 0;
+            mtfRand = new MersenneTwisterFast();
+        } else {
+            mtfRand = new MersenneTwisterFast(randomSeed);
         }
-        mtfRand = new MersenneTwisterFast(randomSeed);
 
         tagMap = TagMapGenerator.generate(options.getTagSet(), options.getReductionLevel(), stateS);
         wordNormalizer = new WordNormalizerToLower(tagMap);
@@ -470,7 +471,7 @@ public abstract class BHMM {
         documentD = sentenceS = 0;
         ArrayList<Integer> wordVectorT = new ArrayList<Integer>(),
               goldFullTagVectorT = new ArrayList<Integer>(),
-//              goldReducedTagVectorT = new ArrayList<Integer>(),
+              //              goldReducedTagVectorT = new ArrayList<Integer>(),
               sentenceVectorT = new ArrayList<Integer>(),
               documentVectorT = new ArrayList<Integer>();
         while ((dataReader = dirReader.nextDocumentReader()) != null) {
@@ -489,11 +490,7 @@ public abstract class BHMM {
                             wordVectorT.add(wordIdx.get(word));
                             sentenceVectorT.add(sentenceS);
                             documentVectorT.add(documentD);
-                            if (tag != null) {
-                                goldFullTagVectorT.add(tagMap.get(tag));
-                            } else {
-                                goldFullTagVectorT.add(-1);
-                            }
+                            goldFullTagVectorT.add(tagMap.get(tag));
                         }
                     }
 //                    wordVectorT.add(EOSi);
@@ -666,12 +663,12 @@ public abstract class BHMM {
      */
     protected void normalizeStates() {
         topWordsPerState = new StringDoublePair[stateS][];
-        for (int i = 1; i < stateS; ++i) {
+        for (int i = 0; i < stateS; ++i) {
             topWordsPerState[i] = new StringDoublePair[outputPerClass];
         }
 
         double sum = 0.;
-        int i = 1;
+        int i = 0;
         /**
          * Normalize content states
          */
@@ -720,7 +717,7 @@ public abstract class BHMM {
             }
         }
 
-        for (i = 1; i < stateS; ++i) {
+        for (i = 0; i < stateS; ++i) {
             stateProbs[i] /= sum;
         }
     }
@@ -831,12 +828,16 @@ public abstract class BHMM {
      * @throws IOException
      */
     protected void printStates(BufferedWriter out) throws IOException {
-        int startt = 1, M = 4, endt = Math.min(M + 1, stateProbs.length);
+        int startt = 0, M = 4, endt = Math.min(M + startt, stateProbs.length);
         out.write("***** Word Probabilities by State *****\n\n");
         while (startt < stateS) {
             for (int i = startt; i < endt; ++i) {
-                String header = "State_" + i;
-                header = String.format("%25s\t%6.5f\t", header, stateProbs[i]);
+                String header = "S_" + i;
+                header = String.format("%25s\t%6.5f\t",
+                      String.format("%s:%s:%s", header,
+                      tagMap.getOneToOneTagString(i),
+                      tagMap.getManyToOneTagString(i)),
+                      stateProbs[i]);
                 out.write(header);
             }
 
@@ -868,13 +869,23 @@ public abstract class BHMM {
     public void setModelParameterStringBuilder() {
         modelParameterStringBuilder = new StringBuilder();
         String line = null;
+        line = String.format("alpha:%f", alpha) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("beta:%f", beta) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("gamma:%f", gamma) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("delta:%f", delta) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("stateC:%d", stateC) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("stateF:%d", stateF) + newline;
+        modelParameterStringBuilder.append(line);
         line = String.format("stateS:%d", stateS) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("wordW:%d", wordW) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("wordN:%d", wordN) + newline;
-        modelParameterStringBuilder.append(line);
-        line = String.format("gamma:%f", gamma) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("initialTemperature:%f", initialTemperature) + newline;
         modelParameterStringBuilder.append(line);
@@ -883,6 +894,10 @@ public abstract class BHMM {
         line = String.format("targetTemperature:%f", targetTemperature) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("iterations:%d", iterations) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("tagSet:%s", tagMap.getTagSetName()) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("reduction-level:%d", tagMap.getReductionLevel()) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("randomSeed:%d", randomSeed) + newline;
         modelParameterStringBuilder.append(line);
@@ -903,5 +918,46 @@ public abstract class BHMM {
         for (int i = 0; i < ta.size(); ++i) {
             ia[i] = ta.get(i).intValue();
         }
+    }
+
+    public void initializeFromLoadedModel(CommandLineOptions options)
+          throws IOException {
+        if (randomSeed == -1) {
+            mtfRand = new MersenneTwisterFast();
+        } else {
+            mtfRand = new MersenneTwisterFast(randomSeed);
+        }
+
+        if (trainDataDir != null) {
+            trainDirReader = new DirReader(trainDataDir, dataFormat);
+        } else {
+            trainDataDir = "";
+        }
+
+        /**
+         * Revive some constants that will be used often
+         */
+        wbeta = beta * wordW;
+        wdelta = delta * wordW;
+
+        stateS = stateF + stateC;
+        S3 = stateS * stateS * stateS;
+        S2 = stateS * stateS;
+        S1 = stateS;
+
+        /**
+         * Revive the annealing regime
+         */
+        temperature = targetTemperature;
+
+        first = new int[wordN];
+        second = new int[wordN];
+        third = new int[wordN];
+
+        for (String word : trainWordIdx.keySet()) {
+            trainIdxToWord.put(trainWordIdx.get(word), word);
+        }
+
+        initializeCountArrays();
     }
 }

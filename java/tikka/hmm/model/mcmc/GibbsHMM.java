@@ -54,33 +54,33 @@ public class GibbsHMM extends HMM {
 //                first[i] = current;
 //                current = 0;
 //            } else {
-                wordstateoff = stateS * wordid;
+            wordstateoff = stateS * wordid;
 
-                totalprob = 0;
-                stateoff = current * stateS;
-                try {
-                    for (int j = 0;; j++) {
-                        totalprob += stateProbs[j] =
-                              (StateByWord[wordstateoff + j] + delta)
-                              / (stateCounts[j] + wdelta)
-                              * (firstOrderTransitions[stateoff + j] + gamma);
-                    }
-                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            totalprob = 0;
+            stateoff = current * stateS;
+            try {
+                for (int j = 0;; j++) {
+                    totalprob += stateProbs[j] =
+                          (StateByWord[wordstateoff + j] + delta)
+                          / (stateCounts[j] + wdelta)
+                          * (firstOrderTransitions[stateoff + j] + gamma);
                 }
+            } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            }
 
-                r = mtfRand.nextDouble() * totalprob;
-                stateid = 0;
-                max = stateProbs[stateid];
-                while (r > max) {
-                    stateid++;
-                    max += stateProbs[stateid];
-                }
-                stateVector[i] = stateid;
-                StateByWord[wordstateoff + stateid]++;
-                stateCounts[stateid]++;
-                firstOrderTransitions[stateoff + stateid]++;
-                first[i] = current;
-                current = stateid;
+            r = mtfRand.nextDouble() * totalprob;
+            stateid = 0;
+            max = stateProbs[stateid];
+            while (r > max) {
+                stateid++;
+                max += stateProbs[stateid];
+            }
+            stateVector[i] = stateid;
+            StateByWord[wordstateoff + stateid]++;
+            stateCounts[stateid]++;
+            firstOrderTransitions[stateoff + stateid]++;
+            first[i] = current;
+            current = stateid;
 //            }
         }
     }
@@ -99,7 +99,7 @@ public class GibbsHMM extends HMM {
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
             current = 0;
-            for (int i = 0; i < wordN - 1; i++) {
+            for (int i = 0; i < wordN; i++) {
                 if (i % 100000 == 0) {
                     System.err.println("\tProcessing word " + i);
                 }
@@ -112,39 +112,44 @@ public class GibbsHMM extends HMM {
 //                    first[i] = current;
 //                    current = 0;
 //                } else {
-                    stateid = stateVector[i];
-                    wordstateoff = wordid * stateS;
+                stateid = stateVector[i];
+                wordstateoff = wordid * stateS;
 
-                    StateByWord[wordstateoff + stateid]--;
-                    stateCounts[stateid]--;
-                    firstOrderTransitions[first[i] * stateS + stateid]--;
+                StateByWord[wordstateoff + stateid]--;
+                stateCounts[stateid]--;
+                firstOrderTransitions[first[i] * stateS + stateid]--;
 
-                    stateoff = current * stateS;
+                stateoff = current * stateS;
+                try {
                     next = stateVector[i + 1];
-                    try {
-                        for (int j = 0;; j++) {
-                            stateProbs[j] =
-                                  ((StateByWord[wordstateoff + j] + delta) / (stateCounts[j] + wdelta))
-                                  * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
-                                  * (firstOrderTransitions[j * stateS + next] + gamma);
-                        }
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                    }
-                    totalprob = annealer.annealProbs(stateProbs);
-                    r = mtfRand.nextDouble() * totalprob;
-                    stateid = 0;
-                    max = stateProbs[stateid];
-                    while (r > max) {
-                        stateid++;
-                        max += stateProbs[stateid];
-                    }
-                    stateVector[i] = stateid;
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    next = 0;
+                }
 
-                    StateByWord[wordstateoff + stateid]++;
-                    stateCounts[stateid]++;
-                    firstOrderTransitions[stateoff + stateid]++;
-                    first[i] = current;
-                    current = stateid;
+                try {
+                    for (int j = 0;; j++) {
+                        stateProbs[j] =
+                              ((StateByWord[wordstateoff + j] + delta) / (stateCounts[j] + wdelta))
+                              * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
+                              * (firstOrderTransitions[j * stateS + next] + gamma);
+                    }
+                } catch (ArrayIndexOutOfBoundsException e) {
+                }
+                totalprob = annealer.annealProbs(stateProbs);
+                r = mtfRand.nextDouble() * totalprob;
+                stateid = 0;
+                max = stateProbs[stateid];
+                while (r > max) {
+                    stateid++;
+                    max += stateProbs[stateid];
+                }
+                stateVector[i] = stateid;
+
+                StateByWord[wordstateoff + stateid]++;
+                stateCounts[stateid]++;
+                firstOrderTransitions[stateoff + stateid]++;
+                first[i] = current;
+                current = stateid;
 //                }
             }
         }

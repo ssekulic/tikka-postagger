@@ -17,6 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.models;
 
+import java.io.IOException;
 import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
 import tikka.utils.annealer.Annealer;
@@ -185,6 +186,36 @@ public class BHMMm4 extends BHMM {
             first[i] = current;
             current = stateid;
 
+        }
+    }
+
+    @Override
+    public void initializeFromLoadedModel(CommandLineOptions options) throws
+          IOException {
+        super.initializeFromLoadedModel(options);
+
+        int current = 0;
+        int wordid = 0, stateid = 0, sentenceid;
+        int stateoff, wordstateoff, sentenceoff;
+
+        for (int i = 0; i < wordN; ++i) {
+            wordid = wordVector[i];
+            sentenceid = sentenceVector[i];
+            stateid = stateVector[i];
+
+            stateoff = current * stateS;
+            wordstateoff = stateS * wordid;
+            sentenceoff = stateC * sentenceid;
+
+            if (stateid < stateC) {
+                contentStateBySentence[sentenceoff + stateid]++;
+                sentenceCounts[sentenceid]++;
+            }
+            stateByWord[wordstateoff + stateid]++;
+            stateCounts[stateid]++;
+            firstOrderTransitions[stateoff + stateid]++;
+            first[i] = current;
+            current = stateid;
         }
     }
 }
