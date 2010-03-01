@@ -43,7 +43,7 @@ public class CommandLineOptions {
     /**
      * Number of types (either word or morpheme) to print per state or topic
      */
-    protected int outputPerClass = 50;
+    protected int outputPerClass = 10;
     /**
      * Hyperparameter of topic prior
      */

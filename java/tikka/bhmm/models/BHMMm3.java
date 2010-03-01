@@ -73,11 +73,11 @@ public class BHMMm3 extends BHMM {
                 }
                 wordid = wordVector[i];
 
-                if (wordid == EOSi) {
-                    firstOrderTransitions[current * stateS + 0]++;
-                    first[i] = current;
-                    current = 0;
-                } else {
+//                if (wordid == EOSi) {
+//                    firstOrderTransitions[current * stateS + 0]++;
+//                    first[i] = current;
+//                    current = 0;
+//                } else {
                     stateid = stateVector[i];
                     stateoff = current * stateS;
                     wordstateoff = stateS * wordid;
@@ -92,7 +92,7 @@ public class BHMMm3 extends BHMM {
                         next = 0;
                     }
 
-                    int j = 1;
+                    int j = 0;
                     for (; j < stateC; j++) {
                         stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + beta)
@@ -107,10 +107,10 @@ public class BHMMm3 extends BHMM {
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
-                    totalprob = annealer.annealProbs(1, stateProbs);
+                    totalprob = annealer.annealProbs(stateProbs);
                     r = mtfRand.nextDouble() * totalprob;
-                    max = stateProbs[1];
-                    stateid = 1;
+                    stateid = 0;
+                    max = stateProbs[stateid];
                     while (r > max) {
                         stateid++;
                         max += stateProbs[stateid];
@@ -122,7 +122,7 @@ public class BHMMm3 extends BHMM {
                     firstOrderTransitions[stateoff + stateid]++;
                     first[i] = current;
                     current = stateid;
-                }
+//                }
             }
         }
     }
@@ -146,23 +146,23 @@ public class BHMMm3 extends BHMM {
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
 
-            if (wordid == EOSi) {
-                firstOrderTransitions[current * stateS + 0]++;
-                first[i] = current;
-                current = 0;
-            } else {
+//            if (wordid == EOSi) {
+//                firstOrderTransitions[current * stateS + 0]++;
+//                first[i] = current;
+//                current = 0;
+//            } else {
                 stateoff = current * stateS;
                 wordstateoff = stateS * wordid;
 
                 totalprob = 0;
                 if (mtfRand.nextDouble() > 0.5) {
-                    for (int j = 1; j < stateC; j++) {
+                    for (int j = 0; j < stateC; j++) {
                         totalprob += stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + beta)
                               / (stateCounts[j] + statenorm))
                               * (firstOrderTransitions[stateoff + j] + gamma);
                     }
-                    stateid = 1;
+                    stateid = 0;
                 } else {
                     for (int j = stateC; j < stateS; j++) {
                         totalprob += stateProbs[j] =
@@ -186,7 +186,7 @@ public class BHMMm3 extends BHMM {
                 firstOrderTransitions[stateoff + stateid]++;
                 first[i] = current;
                 current = stateid;
-            }
+//            }
         }
     }
 }

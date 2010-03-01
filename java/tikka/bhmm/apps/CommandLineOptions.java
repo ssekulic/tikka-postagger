@@ -39,7 +39,7 @@ public class CommandLineOptions {
     /**
      * Number of types (either word or morpheme) to print per state or topic
      */
-    protected int outputPerClass = 50;
+    protected int outputPerClass = 10;
     /**
      * Hyperparameter of topic prior
      */
@@ -94,7 +94,7 @@ public class CommandLineOptions {
      * calling function, it means the randomSeed must be set to 0. Otherwise,
      * use whatever value has been passed to it from the command line.
      */
-    protected int randomSeed = -1;
+    protected int randomSeed = 0;
     /**
      * Specifier of training data format.
      */

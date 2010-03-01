@@ -38,6 +38,8 @@ public class TagMapGenerator {
                 throw new UnsupportedOperationException("Implement this fool!");
 //                break;
         }
+        tagMap.tagSet = tagSet;
+        tagMap.level = level;
         return tagMap;
     }
 }

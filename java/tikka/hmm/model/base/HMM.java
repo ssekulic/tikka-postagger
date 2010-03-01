@@ -346,7 +346,7 @@ public abstract class HMM {
         /**
          * Setting dimensions
          */
-        stateS = options.getStates() + 1;
+        stateS = options.getStates();
         outputPerClass = options.getOutputPerClass();
         S3 = stateS * stateS * stateS;
         S2 = stateS * stateS;
@@ -428,7 +428,7 @@ public abstract class HMM {
                         wordNormalizer.normalize(line);
                         String word = wordNormalizer.getWord();
                         String tag = wordNormalizer.getTag();
-                        if (!word.isEmpty()) {
+                        if (!word.isEmpty() && tag != null) {
                             if (!wordIdx.containsKey(word)) {
                                 wordIdx.put(word, wordIdx.size());
                                 idxToWord.put(idxToWord.size(), word);
@@ -436,11 +436,7 @@ public abstract class HMM {
                             wordVectorT.add(wordIdx.get(word));
                             sentenceVectorT.add(sentenceS);
                             documentVectorT.add(documentD);
-                            if (tag != null) {
-                                goldFullTagVectorT.add(tagMap.get(tag));
-                            } else {
-                                goldFullTagVectorT.add(-1);
-                            }
+                            goldFullTagVectorT.add(tagMap.get(tag));
                         }
                     }
                     sentenceS++;
@@ -614,19 +610,20 @@ public abstract class HMM {
      */
     protected void normalizeStates() {
         TopWordsPerState = new StringDoublePair[stateS][];
-        for (int i = 1; i < stateS; ++i) {
+        for (int i = 0; i < stateS; ++i) {
             TopWordsPerState[i] = new StringDoublePair[outputPerClass];
         }
 
         double sum = 0.;
-        for (int i = 1; i < stateS; ++i) {
+        for (int i = 0; i < stateS; ++i) {
             sum += stateProbs[i] = stateCounts[i] + wdelta;
             ArrayList<DoubleStringPair> topWords =
                   new ArrayList<DoubleStringPair>();
             /**
              * Start at one to leave out EOSi
              */
-            for (int j = EOSi + 1; j < wordW; ++j) {
+//            for (int j = EOSi + 1; j < wordW; ++j) {
+            for (int j = 0; j < wordW; ++j) {
                 topWords.add(new DoubleStringPair(
                       StateByWord[j * stateS + i] + delta, trainIdxToWord.get(
                       j)));
@@ -640,7 +637,7 @@ public abstract class HMM {
             }
         }
 
-        for (int i = 1; i < stateS; ++i) {
+        for (int i = 0; i < stateS; ++i) {
             stateProbs[i] /= sum;
         }
     }
@@ -752,12 +749,16 @@ public abstract class HMM {
      * @throws IOException
      */
     protected void printStates(BufferedWriter out) throws IOException {
-        int startt = 1, M = 4, endt = Math.min(M + 1, stateProbs.length);
+        int startt = 0, M = 4, endt = Math.min(M + startt, stateProbs.length);
         out.write("***** Word Probabilities by State *****\n\n");
         while (startt < stateS) {
             for (int i = startt; i < endt; ++i) {
-                String header = "State_" + i;
-                header = String.format("%25s\t%6.5f\t", header, stateProbs[i]);
+                String header = "S_" + i;
+                header = String.format("%25s\t%6.5f\t",
+                      String.format("%s:%s:%s", header,
+                      tagMap.getOneToOneTagString(i),
+                      tagMap.getManyToOneTagString(i)),
+                      stateProbs[i]);
                 out.write(header);
             }
 
@@ -797,6 +798,8 @@ public abstract class HMM {
         modelParameterStringBuilder.append(line);
         line = String.format("gamma:%f", gamma) + newline;
         modelParameterStringBuilder.append(line);
+        line = String.format("delta:%f", delta) + newline;
+        modelParameterStringBuilder.append(line);
         line = String.format("initialTemperature:%f", initialTemperature) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("temperatureDecrement:%f", temperatureDecrement) + newline;
@@ -804,6 +807,10 @@ public abstract class HMM {
         line = String.format("targetTemperature:%f", targetTemperature) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("iterations:%d", iterations) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("tagSet:%s", tagMap.getTagSetName()) + newline;
+        modelParameterStringBuilder.append(line);
+        line = String.format("reduction-level:%d", tagMap.getReductionLevel()) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("randomSeed:%d", randomSeed) + newline;
         modelParameterStringBuilder.append(line);

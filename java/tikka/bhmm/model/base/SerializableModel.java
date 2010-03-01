@@ -21,13 +21,7 @@ import tikka.opennlp.io.DataFormatEnum;
 
 import tikka.bhmm.apps.CommandLineOptions;
 
-import tikka.bhmm.models.BHMMm1;
-import tikka.bhmm.models.BHMMm2;
-import tikka.bhmm.models.BHMMm3;
-import tikka.bhmm.models.BHMMm4;
-import tikka.bhmm.models.BHMMm5;
-import tikka.bhmm.models.BHMMm5s2;
-import tikka.bhmm.models.BHMMm6;
+import tikka.bhmm.models.*;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -40,6 +34,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import tikka.utils.postags.TagMap;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters
@@ -112,13 +107,27 @@ public class SerializableModel implements Serializable {
      */
     protected double targetTemperature;
     /**
-     * Number of states including topic states and sentence boundary state
+     * TagMap for handling tagset reduction and mapping of model tags to gold
+     * tags
      */
-    protected int stateS;
+    protected TagMap tagMap;
+    /**
+     * Number of content states. It also includes the initial start state
+     * as an offset.
+     */
+    protected int stateC;
+    /**
+     * Number of function states
+     */
+    protected int stateF;
     /**
      * Token indexes for sentences
      */
     protected int[] sentenceVector;
+    /**
+     * Array of full gold tags
+     */
+    protected int[] goldTagVector;
     /**
      * Array of states over tokens
      */
@@ -131,6 +140,13 @@ public class SerializableModel implements Serializable {
      * Type of model that is being run.
      */
     protected String modelName;
+    /**
+     * 
+     */
+    protected int outputPerClass;
+    protected int documentD;
+    protected int sentenceS;
+    protected int[] documentVector;
 
     /**
      * Constructor to use when model is being saved.
@@ -142,15 +158,22 @@ public class SerializableModel implements Serializable {
         beta = m.beta;
         dataFormat = m.dataFormat;
         delta = m.delta;
+        documentD = m.documentD;
+        documentVector = m.documentVector;
         gamma = m.gamma;
+        goldTagVector = m.goldTagVector;
         initialTemperature = m.initialTemperature;
         iterations = m.iterations;
         modelName = m.modelName;
+        outputPerClass = m.outputPerClass;
         randomSeed = m.randomSeed;
         trainDataDir = m.trainDataDir;
+        sentenceS = m.sentenceS;
         sentenceVector = m.sentenceVector;
         stateVector = m.stateVector;
-        stateS = m.stateS;
+        stateC = m.stateC;
+        stateF = m.stateF;
+        tagMap = m.tagMap;
         targetTemperature = m.targetTemperature;
         temperatureDecrement = m.temperatureDecrement;
         wordIdx = m.trainWordIdx;
@@ -204,6 +227,8 @@ public class SerializableModel implements Serializable {
             hmm = new BHMMm5s2(options);
         } else if (modelName.equals("m6")) {
             hmm = new BHMMm6(options);
+        } else if (modelName.equals("m7")) {
+            hmm = new BHMMm7(options);
         }
 
         return copy(hmm);
@@ -227,15 +252,23 @@ public class SerializableModel implements Serializable {
         alpha = sm.alpha;
         beta = sm.beta;
         dataFormat = sm.dataFormat;
+        delta = sm.delta;
+        documentD = sm.documentD;
+        documentVector = sm.documentVector;
         gamma = sm.gamma;
+        goldTagVector = sm.goldTagVector;
         initialTemperature = sm.initialTemperature;
         iterations = sm.iterations;
         modelName = sm.modelName;
+        outputPerClass = sm.outputPerClass;
         randomSeed = sm.randomSeed;
         trainDataDir = sm.trainDataDir;
+        sentenceS = sm.sentenceS;
         sentenceVector = sm.sentenceVector;
         stateVector = sm.stateVector;
-        stateS = sm.stateS;
+        stateC = sm.stateC;
+        stateF = sm.stateF;
+        tagMap = sm.tagMap;
         targetTemperature = sm.targetTemperature;
         temperatureDecrement = sm.temperatureDecrement;
         wordIdx = sm.wordIdx;
@@ -248,15 +281,23 @@ public class SerializableModel implements Serializable {
         hmm.alpha = alpha;
         hmm.beta = beta;
         hmm.dataFormat = dataFormat;
+        hmm.delta = delta;
+        hmm.documentD = documentD;
+        hmm.documentVector = documentVector;
         hmm.gamma = gamma;
+        hmm.goldTagVector = goldTagVector;
         hmm.initialTemperature = initialTemperature;
         hmm.iterations = iterations;
         hmm.modelName = modelName;
+        hmm.outputPerClass = outputPerClass;
         hmm.randomSeed = randomSeed;
         hmm.trainDataDir = trainDataDir;
+        hmm.sentenceS = sentenceS;
         hmm.sentenceVector = sentenceVector;
         hmm.stateVector = stateVector;
-        hmm.stateS = stateS;
+        hmm.stateC = stateC;
+        hmm.stateF = stateF;
+        hmm.tagMap = tagMap;
         hmm.targetTemperature = targetTemperature;
         hmm.temperatureDecrement = temperatureDecrement;
         hmm.trainWordIdx = wordIdx;
