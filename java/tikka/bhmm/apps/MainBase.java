@@ -37,7 +37,8 @@ public class MainBase {
      *
      * @param options Command line option handler
      */
-    public static void setOptions(Options options) {
+    public static Options setOptions() {
+        Options options = new Options();
         options.addOption("a", "alpha", true, "alpha value (default=50/topics)");
         options.addOption("b", "beta", true, "beta value (default=0.1)");
         options.addOption("c", "data-format", true,
@@ -94,5 +95,6 @@ public class MainBase {
               "be reduced [0=none, 1=CE; default=0]");
         options.addOption("w", "words-class", true,
               "number of words to print per class (default=50)");
+        return options;
     }
 }

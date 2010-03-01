@@ -21,7 +21,7 @@ import tikka.opennlp.io.DataFormatEnum;
 
 import tikka.bhmm.apps.CommandLineOptions;
 
-import tikka.bhmm.models.*;
+import tikka.utils.postags.TagMap;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -34,7 +34,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import tikka.utils.postags.TagMap;
 
 /**
  * Object where model parameters are saved. Includes both constant parameters
@@ -151,7 +150,7 @@ public class SerializableModel implements Serializable {
     /**
      * Constructor to use when model is being saved.
      * 
-     * @param hmm Model to be saved
+     * @param bhmm Model to be saved
      */
     public SerializableModel(BHMM m) {
         alpha = m.alpha;
@@ -212,26 +211,9 @@ public class SerializableModel implements Serializable {
         loadBuffer = null;
         modelIn.close();
 
-        BHMM hmm = null;
-        if (modelName.equals("m1")) {
-            hmm = new BHMMm1(options);
-        } else if (modelName.equals("m2")) {
-            hmm = new BHMMm2(options);
-        } else if (modelName.equals("m3")) {
-            hmm = new BHMMm3(options);
-        } else if (modelName.equals("m4")) {
-            hmm = new BHMMm4(options);
-        } else if (modelName.equals("m5")) {
-            hmm = new BHMMm5(options);
-        } else if (modelName.equals("m5s2")) {
-            hmm = new BHMMm5s2(options);
-        } else if (modelName.equals("m6")) {
-            hmm = new BHMMm6(options);
-        } else if (modelName.equals("m7")) {
-            hmm = new BHMMm7(options);
-        }
+        BHMM bhmm = ModelGenerator.generator(modelName, options);
 
-        return copy(hmm);
+        return copy(bhmm);
     }
 
     /**

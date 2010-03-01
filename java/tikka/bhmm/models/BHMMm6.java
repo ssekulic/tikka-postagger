@@ -20,7 +20,7 @@ package tikka.bhmm.models;
 import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
 import tikka.utils.annealer.Annealer;
-import tikka.bhmm.models.BHMMm5;
+import tikka.bhmm.models.xBHMMm5;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model" (M6).
@@ -28,7 +28,7 @@ import tikka.bhmm.models.BHMMm5;
  *
  * @author tsmoon
  */
-public class BHMMm6 extends BHMMm5 {
+public class BHMMm6 extends xBHMMm5 {
 
     public BHMMm6(CommandLineOptions options) {
         super(options);

@@ -21,8 +21,7 @@ public class Tagger extends MainBase {
 
         CommandLineParser optparse = new PosixParser();
 
-        Options options = new Options();
-        setOptions(options);
+        Options options = setOptions();
 
         try {
             CommandLine cline = optparse.parse(options, args);
@@ -35,7 +34,7 @@ public class Tagger extends MainBase {
 
             CommandLineOptions modelOptions = new CommandLineOptions(cline);
 
-            BHMM hmm = null;
+            BHMM bhmm = null;
 
             String experimentModel = modelOptions.getExperimentModel();
             String modelInputPath = modelOptions.getModelInputPath();
@@ -46,39 +45,14 @@ public class Tagger extends MainBase {
             if (modelInputPath != null) {
                 System.err.println("Loading from model:" + modelInputPath);
                 SerializableModel serializableModel = new SerializableModel();
-                hmm = serializableModel.loadModel(modelOptions, modelInputPath);
-                hmm.initializeFromLoadedModel(modelOptions);
+                bhmm = serializableModel.loadModel(modelOptions, modelInputPath);
+                bhmm.initializeFromLoadedModel(modelOptions);
             } else {
-                if (experimentModel.equals("m1")) {
-                    System.err.println("Using BHMM M1!");
-                    hmm = new BHMMm1(modelOptions);
-                } else if (experimentModel.equals("m2")) {
-                    System.err.println("Using BHMM M2!");
-                    hmm = new BHMMm2(modelOptions);
-                } else if (experimentModel.equals("m3")) {
-                    System.err.println("Using BHMM M3!");
-                    hmm = new BHMMm3(modelOptions);
-                } else if (experimentModel.equals("m4")) {
-                    System.err.println("Using BHMM M4!");
-                    hmm = new BHMMm4(modelOptions);
-                } else if (experimentModel.equals("m5")) {
-                    System.err.println("Using BHMM M5!");
-                    hmm = new BHMMm5(modelOptions);
-                } else if (experimentModel.equals("m5s2")) {
-                    System.err.println("Using BHMM M5 S2!");
-                    hmm = new BHMMm5s2(modelOptions);
-                } else if (experimentModel.equals("m6")) {
-                    System.err.println("Using BHMM M6!");
-                    hmm = new BHMMm6(modelOptions);
-                } else if (experimentModel.equals("m7")) {
-                    System.err.println("Using BHMM M7!");
-                    hmm = new BHMMm7(modelOptions);
-                }
-
+                bhmm = ModelGenerator.generator(modelOptions);
                 System.err.println("Randomly initializing values!");
-                hmm.initializeFromTrainingData();
+                bhmm.initializeFromTrainingData();
                 System.err.println("Beginning training!");
-                hmm.train();
+                bhmm.train();
             }
 
             /**
@@ -90,24 +64,24 @@ public class Tagger extends MainBase {
                       + modelOutputPath);
                 SerializableModel serializableModel = null;
 
-                serializableModel = new SerializableModel(hmm);
+                serializableModel = new SerializableModel(bhmm);
                 serializableModel.saveModel(modelOutputPath);
             }
 
             System.err.println("Maximum posterior decoding");
-            hmm.decode();
+            bhmm.decode();
 
             /**
              * Set the string of parameters.
              */
-            hmm.setModelParameterStringBuilder();
+            bhmm.setModelParameterStringBuilder();
 
             String evaluationOutputFilename = modelOptions.getEvaluationOutputFilename();
             if (evaluationOutputFilename != null) {
                 System.err.println("Performing evaluation");
-                hmm.evaluate();
+                bhmm.evaluate();
                 System.err.println("Also printing evaluation results to " + evaluationOutputFilename);
-                hmm.printEvaluationScore(modelOptions.getEvaluationOutput());
+                bhmm.printEvaluationScore(modelOptions.getEvaluationOutput());
                 modelOptions.getEvaluationOutput().close();
             }
 
@@ -118,7 +92,7 @@ public class Tagger extends MainBase {
             if (annotatedTextDir != null) {
                 System.err.println("Printing annotated text to :"
                       + annotatedTextDir);
-                hmm.printAnnotatedTrainText(annotatedTextDir);
+                bhmm.printAnnotatedTrainText(annotatedTextDir);
             }
 
             /**
@@ -126,10 +100,10 @@ public class Tagger extends MainBase {
              */
             if (modelOptions.getTabularOutputFilename() != null) {
                 System.err.println("Normalizing parameters!");
-                hmm.normalize();
+                bhmm.normalize();
                 System.err.println("Printing tabulated output to :"
                       + modelOptions.getTabularOutputFilename());
-                hmm.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
+                bhmm.printTabulatedProbabilities(modelOptions.getTabulatedOutput());
                 modelOptions.getTabulatedOutput().close();
             }
 
