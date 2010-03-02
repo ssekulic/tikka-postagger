@@ -17,8 +17,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.models;
 
-import java.io.IOException;
-import tikka.bhmm.model.base.BHMM;
 import tikka.bhmm.apps.CommandLineOptions;
 import tikka.utils.annealer.Annealer;
 
@@ -28,9 +26,9 @@ import tikka.utils.annealer.Annealer;
  *
  * @author tsmoon
  */
-public class BHMMm6 extends BHMM {
+public class BHMMm6t1 extends BHMMm6 {
 
-    public BHMMm6(CommandLineOptions options) {
+    public BHMMm6t1(CommandLineOptions options) {
         super(options);
     }
 
@@ -44,6 +42,8 @@ public class BHMMm6 extends BHMM {
         double max = 0, totalprob = 0;
         double r = 0;
         int wordstateoff, stateoff, docoff;
+
+        double prevprior;
 
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
@@ -59,6 +59,12 @@ public class BHMMm6 extends BHMM {
                 stateoff = current * stateS;
                 wordstateoff = wordid * stateS;
                 docoff = docid * stateC;
+
+                if (current < stateC) {
+                    prevprior = psi;
+                } else {
+                    prevprior = gamma;
+                }
 
                 if (stateid < stateC) {
                     contentStateByDocument[docoff + stateid]--;
@@ -81,14 +87,14 @@ public class BHMMm6 extends BHMM {
                           / (stateCounts[j] + wbeta))
                           * ((contentStateByDocument[docoff + j] + alpha)
                           / (documentCounts[docid] + calpha))
-                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
-                          * (firstOrderTransitions[j * stateS + next] + gamma);
+                          * (firstOrderTransitions[stateoff + j] + prevprior) / (stateCounts[j] + spsi)
+                          * (firstOrderTransitions[j * stateS + next] + psi);
                 }
                 for (; j < stateS; j++) {
                     stateProbs[j] =
                           ((stateByWord[wordstateoff + j] + delta)
                           / (stateCounts[j] + wdelta))
-                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
+                          * (firstOrderTransitions[stateoff + j] + prevprior) / (stateCounts[j] + sgamma)
                           * (firstOrderTransitions[j * stateS + next] + gamma);
                 }
                 totalprob = annealer.annealProbs(stateProbs);
@@ -114,11 +120,11 @@ public class BHMMm6 extends BHMM {
         }
     }
 
-//    @Override
-//    public void initializeCountArrays() {
-//        super.initializeCountArrays();
-//        contentStateByDocument = new int[stateC * documentD];
-//    }
+    @Override
+    public void initializeCountArrays() {
+        super.initializeCountArrays();
+        spsi = psi * stateS;
+    }
 
     /**
      * Randomly initialize learning parameters
@@ -167,36 +173,6 @@ public class BHMMm6 extends BHMM {
                 max += stateProbs[stateid];
             }
             stateVector[i] = stateid;
-
-            if (stateid < stateC) {
-                contentStateByDocument[docoff + stateid]++;
-                documentCounts[docid]++;
-            }
-            stateByWord[wordstateoff + stateid]++;
-            stateCounts[stateid]++;
-            firstOrderTransitions[stateoff + stateid]++;
-            first[i] = current;
-            current = stateid;
-        }
-    }
-
-    @Override
-    public void initializeFromLoadedModel(CommandLineOptions options) throws
-          IOException {
-        super.initializeFromLoadedModel(options);
-
-        int current = 0;
-        int wordid = 0, stateid = 0, docid;
-        int stateoff, wordstateoff, docoff;
-
-        for (int i = 0; i < wordN; ++i) {
-            wordid = wordVector[i];
-            docid = documentVector[i];
-            stateid = stateVector[i];
-
-            stateoff = current * stateS;
-            wordstateoff = wordid * stateS;
-            docoff = docid * stateC;
 
             if (stateid < stateC) {
                 contentStateByDocument[docoff + stateid]++;

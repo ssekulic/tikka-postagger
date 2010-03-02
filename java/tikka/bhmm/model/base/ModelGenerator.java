@@ -22,6 +22,8 @@ public class ModelGenerator {
         BHMM bhmm = null;
         if (modelName.equals("m1")) {
             bhmm = new BHMMm1(options);
+        } else if (modelName.equals("m1t1")) {
+            bhmm = new BHMMm1t1(options);
         } else if (modelName.equals("m2")) {
             bhmm = new BHMMm2(options);
         } else if (modelName.equals("m3")) {
@@ -34,6 +36,8 @@ public class ModelGenerator {
             bhmm = new xBHMMm5s2(options);
         } else if (modelName.equals("m6")) {
             bhmm = new BHMMm6(options);
+        } else if (modelName.equals("m6t1")) {
+            bhmm = new BHMMm6t1(options);
         } else if (modelName.equals("m7")) {
             bhmm = new BHMMm7(options);
         }

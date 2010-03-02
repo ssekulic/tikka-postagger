@@ -66,6 +66,11 @@ public abstract class BHMMFields {
      */
     protected double sgamma;
     /**
+     * Hyperparameter for transition out of content states
+     */
+    protected double psi = 10;
+    protected double spsi;
+    /**
      * Number of sentences
      */
     protected int sentenceS;
@@ -195,6 +200,10 @@ public abstract class BHMMFields {
      * Array of counts for content states given sentence
      */
     protected int[] contentStateBySentence;
+    /**
+     *
+     */
+    protected int[] contentStateByDocument;
     /**
      * Array of function states over documents
      */
