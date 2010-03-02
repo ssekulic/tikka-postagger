@@ -36,6 +36,12 @@ public class WordNormalizerToLower extends WordNormalizer {
 
         try {
             reducedTag = tagMap.getReducedTag(strings[1]);
+
+//            if (!reducedTag.isEmpty()) {
+            word = strings[0].toLowerCase();
+//            } else {
+//                word = "";
+//            }
 //            pattern = Pattern.compile("^\\w.*$");
 //            matcher = pattern.matcher(reducedTag);
 //            if (!matcher.find()) {
@@ -45,14 +51,13 @@ public class WordNormalizerToLower extends WordNormalizer {
 //            this.strings[1] = reducedTag;
         } catch (ArrayIndexOutOfBoundsException e) {
             reducedTag = null;
-        }
-
-        if (!reducedTag.isEmpty()) {
-            word = strings[0].toLowerCase();
-        } else {
             word = "";
         }
 
+//        if (!reducedTag.isEmpty()) {
+//        } else {
+//        }
+//
 //        if (reducedTag == null || !reducedTag.isEmpty()) {
 //            word = strings[0].toLowerCase();
 //            pattern = Pattern.compile("^\\W*$");

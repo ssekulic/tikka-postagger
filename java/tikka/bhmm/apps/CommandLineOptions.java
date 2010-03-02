@@ -107,7 +107,7 @@ public class CommandLineOptions {
     /**
      * Option on how much the tagset should be reduced. Default is 0 (none).
      */
-    protected int reductionLevel = 1;
+    protected int reductionLevel = 0;
     /**
      * Name of file to generate evaluation scores to
      */
@@ -306,9 +306,9 @@ public class CommandLineOptions {
                 case 's':
                     opt = option.getOpt();
                     if (opt.equals("sc")) {
-                        functionstates = Integer.parseInt(value);
-                    } else if (opt.equals("sf")) {
                         contentstates = Integer.parseInt(value);
+                    } else if (opt.equals("sf")) {
+                        functionstates = Integer.parseInt(value);
                     }
                     break;
                 case 't':

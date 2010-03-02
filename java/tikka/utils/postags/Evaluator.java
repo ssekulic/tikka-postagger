@@ -29,39 +29,84 @@ import java.util.HashSet;
  */
 public class Evaluator {
 
-    protected int M, N;
-    protected int[] modelTags, goldTags, cooccurrenceMatrix, modelTagCounts, goldTagCounts;
-    protected double[] costMatrix;
-    protected double oneToOneAccuracy, manyToOneAccuracy;
-    protected TagMap tagMap;
-    protected HashSet<Integer> rows, cols;
-    protected HashMap<Integer, Integer> oneToOneTagMap;
-    protected HashMap<Integer, Integer> manyToOneTagMap;
+//    protected int M, N;
+    protected int[] modelTags;//, modelTagCounts;
+    //protected int[] cooccurrenceMatrix;
+    protected int[] fullGoldTags;//, goldTagCounts;
+    protected int[] reducedGoldTags;//, reducedGoldTagCounts;
+//    protected double[] costMatrix;
+    protected double fullOneToOneAccuracy, fullManyToOneAccuracy;
+    protected double reducedOneToOneAccuracy, reducedManyToOneAccuracy;
+    protected TagMap fullTagMap;
+    protected TagMap reducedTagMap;
+//    protected HashSet<Integer> rows, cols;
+    protected HashMap<Integer, Integer> fullOneToOneTagMap;
+    protected HashMap<Integer, Integer> fullManyToOneTagMap;
+    protected HashMap<Integer, Integer> reducedOneToOneTagMap;
+    protected HashMap<Integer, Integer> reducedManyToOneTagMap;
     protected HashMap<Integer, Integer> goldToModelTagMap;
     protected DistanceMeasureEnum.Measure measure;
     protected DistanceMeasure distanceMeasure;
 
+    /**
+     * 
+     * @param tagMap
+     * @param measure
+     */
     public Evaluator(TagMap tagMap, DistanceMeasureEnum.Measure measure) {
-        this.tagMap = tagMap;
-        this.oneToOneTagMap = tagMap.oneToOneTagMap;
-        this.manyToOneTagMap = tagMap.manyToOneTagMap;
+        fullTagMap = tagMap;
+        reducedTagMap = TagMapGenerator.generate(fullTagMap.tagSet, 1, fullTagMap.oneToOneTagMap.size());
+
+        fullOneToOneTagMap = fullTagMap.oneToOneTagMap;
+        fullManyToOneTagMap = fullTagMap.manyToOneTagMap;
+
+        reducedOneToOneTagMap = reducedTagMap.oneToOneTagMap;
+        reducedManyToOneTagMap = reducedTagMap.manyToOneTagMap;
+
         this.measure = measure;
     }
 
+    /**
+     * 
+     * @param modelTags
+     * @param goldTags
+     */
     public void evaluateTags(int[] modelTags, int[] goldTags) {
         this.modelTags = modelTags;
-        this.goldTags = goldTags;
-        matchTags();
-        measureAccuracy();
+        fullGoldTags = goldTags;
+
+        reducedGoldTags = new int[fullGoldTags.length];
+        for (int i = 0; i < fullGoldTags.length; ++i) {
+            int fullid = fullGoldTags[i];
+            String fulltag = fullTagMap.idxToTag.get(fullid);
+            reducedGoldTags[i] = reducedTagMap.get(reducedTagMap.getReducedTag(fulltag));
+        }
+
+        matchTags(modelTags, fullGoldTags, fullTagMap, fullOneToOneTagMap, fullManyToOneTagMap);
+        fullOneToOneAccuracy = measureAccuracy(modelTags, fullGoldTags, fullOneToOneTagMap);
+        fullManyToOneAccuracy = measureAccuracy(modelTags, fullGoldTags, fullManyToOneTagMap);
+        matchTags(modelTags, reducedGoldTags, reducedTagMap, reducedOneToOneTagMap, reducedManyToOneTagMap);
+        reducedOneToOneAccuracy = measureAccuracy(modelTags, reducedGoldTags, reducedOneToOneTagMap);
+        reducedManyToOneAccuracy = measureAccuracy(modelTags, reducedGoldTags, reducedManyToOneTagMap);
     }
 
-    public void matchTags() {
-        M = tagMap.oneToOneTagMap.size();
-        N = tagMap.reducedTagSet.size();
-        cooccurrenceMatrix = new int[M * N];
-        costMatrix = new double[M * N];
-        modelTagCounts = new int[M];
-        goldTagCounts = new int[N];
+    /**
+     * 
+     * @param modelTags
+     * @param goldTags
+     * @param tagMap
+     * @param oneToOneTagMap
+     * @param manyToOneTagMap
+     */
+    public void matchTags(int[] modelTags, int[] goldTags, TagMap tagMap,
+          HashMap<Integer, Integer> oneToOneTagMap,
+          HashMap<Integer, Integer> manyToOneTagMap) {
+        int M = tagMap.oneToOneTagMap.size();
+        int N = tagMap.reducedTagSet.size();
+        int[] cooccurrenceMatrix = new int[M * N];
+        double[] costMatrix = new double[M * N];
+        int[] modelTagCounts = new int[M];
+        int[] goldTagCounts = new int[N];
 
         for (int i = 0; i < M * N; ++i) {
             cooccurrenceMatrix[i] = 0;
@@ -84,10 +129,10 @@ public class Evaluator {
 
         switch (measure) {
             case JACCARD:
-                distanceMeasure = new JaccardMeasure(this);
+                distanceMeasure = new JaccardMeasure(cooccurrenceMatrix, modelTagCounts, goldTagCounts, N);
                 break;
             case JENSEN_SHANNON:
-                distanceMeasure = new JensenShannonMeasure(this);
+                distanceMeasure = new JensenShannonMeasure(cooccurrenceMatrix, modelTagCounts, goldTagCounts, N);
                 break;
         }
 
@@ -97,18 +142,26 @@ public class Evaluator {
             }
         }
 
-        rows = new HashSet<Integer>();
-        cols = new HashSet<Integer>();
-        setTickers();
+        HashSet<Integer> rows = new HashSet<Integer>();
+        HashSet<Integer> cols = new HashSet<Integer>();
+        setTickers(rows, cols, M, N);
 
         double[] tmpCostMatrix = costMatrix.clone();
-        buildOneToOneMap(tmpCostMatrix);
+        buildOneToOneMap(tmpCostMatrix, rows, cols, N, oneToOneTagMap);
 
-        setTickers();
-        buildManyToOneMap(costMatrix);
+        setTickers(rows, cols, M, N);
+        buildManyToOneMap(costMatrix, rows, cols, N, manyToOneTagMap);
     }
 
-    protected void setTickers() {
+    /**
+     * 
+     * @param rows
+     * @param cols
+     * @param M
+     * @param N
+     */
+    protected void setTickers(HashSet<Integer> rows,
+          HashSet<Integer> cols, int M, int N) {
         for (int i = 0; i < M; ++i) {
             rows.add(i);
         }
@@ -117,7 +170,16 @@ public class Evaluator {
         }
     }
 
-    protected void buildOneToOneMap(double[] costMatrix) {
+    /**
+     * 
+     * @param costMatrix
+     * @param rows
+     * @param cols
+     * @param N
+     * @param oneToOneTagMap
+     */
+    protected void buildOneToOneMap(double[] costMatrix, HashSet<Integer> rows,
+          HashSet<Integer> cols, int N, HashMap<Integer, Integer> oneToOneTagMap) {
         double min = 1;
         int imin = 0, jmin = 0;
         for (int i : rows) {
@@ -146,11 +208,21 @@ public class Evaluator {
         oneToOneTagMap.put(imin, jmin);
 
         if (!rows.isEmpty() && !cols.isEmpty()) {
-            buildOneToOneMap(costMatrix);
+            buildOneToOneMap(costMatrix, rows, cols, N, oneToOneTagMap);
         }
     }
 
-    protected void buildManyToOneMap(double[] costMatrix) {
+    /**
+     * 
+     * @param costMatrix
+     * @param rows
+     * @param cols
+     * @param N
+     * @param manyToOneTagMap
+     */
+    protected void buildManyToOneMap(double[] costMatrix,
+          HashSet<Integer> rows, HashSet<Integer> cols, int N,
+          HashMap<Integer, Integer> manyToOneTagMap) {
         for (int i : rows) {
             double min = 1;
             int jmin = 0;
@@ -164,38 +236,72 @@ public class Evaluator {
         }
     }
 
-    protected void measureAccuracy() {
+//    protected void measureAccuracy() {
+//        int total = modelTags.length;
+//        int correct = 0;
+//        for (int i = 0; i < total; ++i) {
+//            int j = modelTags[i];
+//            if (fullOneToOneTagMap.get(j) == fullGoldTags[i]) {
+//                correct++;
+//            }
+//        }
+//        fullOneToOneAccuracy = correct / (double) total;
+//
+//        correct = 0;
+//        for (int i = 0; i < total; ++i) {
+//            int j = modelTags[i];
+//            if (fullManyToOneTagMap.get(j) == fullGoldTags[i]) {
+//                correct++;
+//            }
+//        }
+//        fullManyToOneAccuracy = correct / (double) total;
+//    }
+
+    /**
+     * 
+     * @param modelTags
+     * @param goldTags
+     * @param tagMap
+     * @return
+     */
+    protected double measureAccuracy(int[] modelTags, int[] goldTags,
+          HashMap<Integer, Integer> tagMap) {
         int total = modelTags.length;
         int correct = 0;
         for (int i = 0; i < total; ++i) {
             int j = modelTags[i];
-            if (oneToOneTagMap.get(j) == goldTags[i]) {
+            if (tagMap.get(j) == goldTags[i]) {
                 correct++;
             }
         }
-        oneToOneAccuracy = correct / (double) total;
-
-        correct = 0;
-        for (int i = 0; i < total; ++i) {
-            int j = modelTags[i];
-            if (manyToOneTagMap.get(j) == goldTags[i]) {
-                correct++;
-            }
-        }
-        manyToOneAccuracy = correct / (double) total;
+        return correct / (double) total;
     }
 
     /**
-     * @return the oneToOneAccuracy
+     * @return the fullOneToOneAccuracy
      */
-    public double getOneToOneAccuracy() {
-        return oneToOneAccuracy;
+    public double getFullOneToOneAccuracy() {
+        return fullOneToOneAccuracy;
     }
 
     /**
-     * @return the manyToOneAccuracy
+     * @return the fullManyToOneAccuracy
      */
-    public double getManyToOneAccuracy() {
-        return manyToOneAccuracy;
+    public double getFullManyToOneAccuracy() {
+        return fullManyToOneAccuracy;
+    }
+
+    /**
+     * @return the fullOneToOneAccuracy
+     */
+    public double getReducedOneToOneAccuracy() {
+        return reducedOneToOneAccuracy;
+    }
+
+    /**
+     * @return the fullManyToOneAccuracy
+     */
+    public double getReducedManyToOneAccuracy() {
+        return reducedManyToOneAccuracy;
     }
 }

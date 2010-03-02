@@ -24,22 +24,34 @@ package tikka.utils.postags;
  */
 public abstract class DistanceMeasure {
 
-    protected int[] modelTags, goldTags, cooccurrenceMatrix, modelTagCounts, goldTagCounts;
-    protected int M, N;
+    protected int[] cooccurrenceMatrix, modelTagCounts, goldTagCounts;
+    protected int N;
 
+//    /**
+//     * Default constructor. Requires full access to the Evaluator that it is called from
+//     *
+//     * @param evaluator Calling Evaluator class object.
+//     */
+//    public DistanceMeasure(Evaluator evaluator) {
+//        this.modelTags = evaluator.modelTags;
+//        this.goldTags = evaluator.fullGoldTags;
+//        this.cooccurrenceMatrix = evaluator.cooccurrenceMatrix;
+//        this.modelTagCounts = evaluator.modelTagCounts;
+//        this.goldTagCounts = evaluator.fullGoldTagCounts;
+//        this.M = evaluator.M;
+//        this.N = evaluator.N;
+//    }
     /**
      * Default constructor. Requires full access to the Evaluator that it is called from
-     * 
+     *
      * @param evaluator Calling Evaluator class object.
      */
-    public DistanceMeasure(Evaluator evaluator) {
-        this.modelTags = evaluator.modelTags;
-        this.goldTags = evaluator.goldTags;
-        this.cooccurrenceMatrix = evaluator.cooccurrenceMatrix;
-        this.modelTagCounts = evaluator.modelTagCounts;
-        this.goldTagCounts = evaluator.goldTagCounts;
-        this.M = evaluator.M;
-        this.N = evaluator.N;
+    public DistanceMeasure(int[] cooccurrenceMatrix, int[] modelTagCounts,
+          int[] goldTagCounts, int N) {
+        this.cooccurrenceMatrix = cooccurrenceMatrix;
+        this.modelTagCounts = modelTagCounts;
+        this.goldTagCounts = goldTagCounts;
+        this.N = N;
     }
 
     /**
