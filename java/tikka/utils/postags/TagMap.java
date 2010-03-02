@@ -243,7 +243,7 @@ public abstract class TagMap extends HashMap<String, Integer> implements
      * @return
      */
     public String getReducedTag(String tag) {
-        String rtag = "";
+        String rtag = null;
         if (fullTagSet.contains(tag)) {
             rtag = fullTagToReducedTag.get(tag);
         }

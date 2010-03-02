@@ -587,15 +587,15 @@ public abstract class HMM {
     public void evaluate() {
         evaluator = new Evaluator(tagMap, DistanceMeasureEnum.Measure.JACCARD);
         evaluator.evaluateTags(stateVector, goldTagVector);
-        System.err.println("One to one accuracy is " + evaluator.getOneToOneAccuracy());
-        System.err.println("Many to one accuracy is " + evaluator.getManyToOneAccuracy());
+        System.err.println("One to one accuracy is " + evaluator.getFullOneToOneAccuracy());
+        System.err.println("Many to one accuracy is " + evaluator.getFullManyToOneAccuracy());
     }
 
     public void printEvaluationScore(BufferedWriter out) throws IOException {
         out.write(modelParameterStringBuilder.toString());
         printNewlines(out, 2);
-        out.write("One to one accuracy: " + evaluator.getOneToOneAccuracy());
-        out.write("Many to one accuracy: " + evaluator.getManyToOneAccuracy());
+        out.write("One to one accuracy: " + evaluator.getFullOneToOneAccuracy());
+        out.write("Many to one accuracy: " + evaluator.getFullManyToOneAccuracy());
     }
 
     /**
