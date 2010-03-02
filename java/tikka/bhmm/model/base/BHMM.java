@@ -257,6 +257,11 @@ public abstract class BHMM extends BHMMFields {
             documentCounts[i] = 0;
         }
 
+        contentStateByDocument = new int[stateC * documentD];
+        for (int i = 0; i < stateC * documentD; ++i) {
+            contentStateByDocument[i] = 0;
+        }
+
         functionStateByDocument = new int[stateS * documentD];
         for (int i = 0; i < stateS * documentD; ++i) {
             functionStateByDocument[i] = 0;
@@ -331,19 +336,29 @@ public abstract class BHMM extends BHMMFields {
     public void evaluate() {
         evaluator = new Evaluator(tagMap, DistanceMeasureEnum.Measure.JACCARD);
         evaluator.evaluateTags(stateVector, goldTagVector);
-        System.err.println("One to one accuracy on full set is " + evaluator.getFullOneToOneAccuracy());
-        System.err.println("Many to one accuracy on full set is " + evaluator.getFullManyToOneAccuracy());
-        System.err.println("One to one accuracy on reduced set is " + evaluator.getReducedOneToOneAccuracy());
-        System.err.println("Many to one accuracy on reduced set is " + evaluator.getReducedManyToOneAccuracy());
+        System.err.println(
+              String.format("%f\t%f\t%f\t%f", evaluator.getFullOneToOneAccuracy(),
+              evaluator.getFullManyToOneAccuracy(),
+              evaluator.getReducedOneToOneAccuracy(),
+              evaluator.getReducedManyToOneAccuracy()));
+//        System.err.println("One to one accuracy on full set is " + evaluator.getFullOneToOneAccuracy());
+//        System.err.println("Many to one accuracy on full set is " + evaluator.getFullManyToOneAccuracy());
+//        System.err.println("One to one accuracy on reduced set is " + evaluator.getReducedOneToOneAccuracy());
+//        System.err.println("Many to one accuracy on reduced set is " + evaluator.getReducedManyToOneAccuracy());
     }
 
     public void printEvaluationScore(BufferedWriter out) throws IOException {
         out.write(modelParameterStringBuilder.toString());
         printNewlines(out, 2);
-        out.write("Full one to one accuracy: " + evaluator.getFullOneToOneAccuracy());
-        out.write("Full many to one accuracy: " + evaluator.getFullManyToOneAccuracy());
-        out.write("Reduced one to one accuracy: " + evaluator.getReducedOneToOneAccuracy());
-        out.write("Reduced many to one accuracy: " + evaluator.getReducedManyToOneAccuracy());
+        out.write(
+              String.format("%f\t%f\t%f\t%f", evaluator.getFullOneToOneAccuracy(),
+              evaluator.getFullManyToOneAccuracy(),
+              evaluator.getReducedOneToOneAccuracy(),
+              evaluator.getReducedManyToOneAccuracy()));
+//        out.write("Full one to one accuracy: " + evaluator.getFullOneToOneAccuracy());
+//        out.write("Full many to one accuracy: " + evaluator.getFullManyToOneAccuracy());
+//        out.write("Reduced one to one accuracy: " + evaluator.getReducedOneToOneAccuracy());
+//        out.write("Reduced many to one accuracy: " + evaluator.getReducedManyToOneAccuracy());
     }
 
     /**
