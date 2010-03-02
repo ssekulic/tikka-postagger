@@ -28,6 +28,8 @@ import tikka.structures.*;
 import tikka.utils.annealer.Annealer;
 
 /**
+ * * The "barely hidden markov model" or "bicameral hidden markov model".
+ * This is the lda-hmm implementation
  *
  * @author tsmoon
  */
@@ -489,5 +491,41 @@ public class BHMMm4 extends BHMMm2 {
         modelParameterStringBuilder.append(line);
         line = String.format("wbeta:%f", wbeta) + newline;
         modelParameterStringBuilder.append(line);
+    }
+
+    @Override
+    public void initializeFromLoadedModel(CommandLineOptions options) throws
+          IOException {
+        super.initializeFromLoadedModel(options);
+
+        int current = 0;
+        int wordid = 0, stateid = 0, docid, topicid;
+        int stateoff, wordstateoff, wordtopicoff, docoff;
+
+        for (int i = 0; i < wordN; ++i) {
+            wordid = wordVector[i];
+            docid = documentVector[i];
+            stateid = stateVector[i];
+            topicid = topicVector[i];
+
+            stateoff = current * stateS;
+            wordstateoff = wordid * stateS;
+            wordtopicoff = wordid * topicK;
+            docoff = docid * topicK;
+
+            if (stateid == 0) {
+                TopicByWord[wordtopicoff + topicid]++;
+                DocumentByTopic[docoff + topicid]++;
+                topicCounts[topicid]++;
+            } else {
+                stateByWord[wordstateoff + stateid]++;
+            }
+
+            stateByWord[wordstateoff + stateid]++;
+            stateCounts[stateid]++;
+            firstOrderTransitions[stateoff + stateid]++;
+            first[i] = current;
+            current = stateid;
+        }
     }
 }
