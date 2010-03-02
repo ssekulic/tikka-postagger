@@ -148,7 +148,7 @@ public class BHMMm1 extends BHMM {
 
             sentenceid = sentenceVector[i];
             stateoff = current * stateS;
-            wordstateoff = stateS * wordid;
+            wordstateoff = wordid * stateS;
             sentenceoff = sentenceid * stateC;
 
             totalprob = 0;

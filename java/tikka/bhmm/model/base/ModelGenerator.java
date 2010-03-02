@@ -29,7 +29,7 @@ public class ModelGenerator {
         } else if (modelName.equals("m4")) {
             bhmm = new BHMMm4(options);
         } else if (modelName.equals("m5")) {
-            bhmm = new xBHMMm5(options);
+            bhmm = new BHMMm5(options);
         } else if (modelName.equals("m5s2")) {
             bhmm = new xBHMMm5s2(options);
         } else if (modelName.equals("m6")) {
