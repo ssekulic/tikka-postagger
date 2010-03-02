@@ -36,7 +36,6 @@ public class Tagger extends MainBase {
 
             BHMM bhmm = null;
 
-            String experimentModel = modelOptions.getExperimentModel();
             String modelInputPath = modelOptions.getModelInputPath();
 
             /**
