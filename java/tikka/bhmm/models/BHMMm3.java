@@ -28,7 +28,7 @@ import tikka.bhmm.model.base.BHMM;
  *
  * @author tsmoon
  */
-public class BHMMm3 extends BHMM {
+public class BHMMm3 extends BHMMm2 {
 
     /**
      * Hyperparameter normalization constant for statecounts. Is a sum of
