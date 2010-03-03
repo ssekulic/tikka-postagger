@@ -301,10 +301,11 @@ public class CommandLineOptions {
                     delta = Double.parseDouble(value);
                     break;
                 case 'r':
-                    if(value.startsWith("`")) {
-                        value = value.replace("`", "");
+                    if (value.equals("0")) {
+                        randomSeed = -1;
+                    } else {
+                        randomSeed = Integer.valueOf(value);
                     }
-                    randomSeed = Integer.valueOf(value);
                     break;
                 case 's':
                     opt = option.getOpt();
