@@ -301,6 +301,9 @@ public class CommandLineOptions {
                     delta = Double.parseDouble(value);
                     break;
                 case 'r':
+                    if(value.startsWith("`")) {
+                        value = value.replace("`", "");
+                    }
                     randomSeed = Integer.valueOf(value);
                     break;
                 case 's':
