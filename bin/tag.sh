@@ -17,7 +17,7 @@ while (( "$#" )); do
 done
 
 date
-cdhmm-tagger.sh -l $TIKKA_DIR/models/cdhmm.$D.$L.$M.model -ot $TIKKA_DIR/out/cdhmm.$D.$L.$M.out \
-    -oe $TIKKA_DIR/out/cdhmm.eval.$D.$L.$M.out -n $TIKKA_DIR/out/cdhmm.$D.$L.$M.anno.out \
+cdhmm-tag.sh -l $TIKKA_DIR/models/$D.$M.$L.model -ot $TIKKA_DIR/tab/$D.$M.$L.tab \
+    -oe $TIKKA_DIR/eval/$D.$M.$L.eval -n $TIKKA_DIR/out/$D.$M.$L \
     -d $P/train/$L $R
 date

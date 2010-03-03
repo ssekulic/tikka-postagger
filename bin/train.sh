@@ -17,6 +17,6 @@ while (( "$#" )); do
 done
 
 date
-cdhmm-train.sh -e $M -m $TIKKA_DIR/models/cdhmm.$D.$L.$M.model \
+cdhmm-train.sh -e $M -m $TIKKA_DIR/models/$D.$M.$L.model \
     -d $P/train/$L $R
 date
