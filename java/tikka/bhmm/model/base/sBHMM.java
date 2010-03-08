@@ -35,7 +35,7 @@ import tikka.utils.postags.*;
  */
 public abstract class sBHMM extends BHMM {
 
-    protected final int TESTITER = 10;
+//    protected final int TESTITER = 10;
     protected double accuracy = 0;
 
     public sBHMM(CommandLineOptions options) {
@@ -44,8 +44,7 @@ public abstract class sBHMM extends BHMM {
 //        tagMap = TagMapGenerator.generate(options.getTagSet(), 0, stateS);
         stateC = tagMap.getContentTagSize();
         stateF = tagMap.getFunctionTagSize();
-        stateS = tagMap.getFullGoldTagSize();
-//        wordNormalizer = new WordNormalizerToLower(tagMap);
+        stateS = tagMap.getFullGoldTagSize();        
     }
 
     /**
@@ -95,6 +94,8 @@ public abstract class sBHMM extends BHMM {
 
     @Override
     public void initializeFromLoadedModel(CommandLineOptions options) {
+        stateS = stateF + stateC;
+        wordNormalizer = new WordNormalizerToLower(tagMap);
         testWordIdx = trainWordIdx;
         trainIdxToWord = new HashMap<Integer, String>();
         for (String word : trainWordIdx.keySet()) {
@@ -122,6 +123,8 @@ public abstract class sBHMM extends BHMM {
     @Override
     public void evaluate() {
         tagTest();
+        Annealer annealer = new MaximumPosteriorDecoder();
+        testBurnInIter(1, annealer);
 
         int total = wordN;
         int correct = 0;
@@ -140,4 +143,6 @@ public abstract class sBHMM extends BHMM {
     }
 
     public abstract void tagTest();
+
+    protected abstract void testBurnInIter(int itermax, Annealer annealer);
 }

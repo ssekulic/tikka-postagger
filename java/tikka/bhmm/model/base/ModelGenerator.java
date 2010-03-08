@@ -44,6 +44,8 @@ public class ModelGenerator {
             bhmm = new sBHMMm1(options);
         } else if (modelName.equals("sm2")) {
             bhmm = new sBHMMm2(options);
+        } else if (modelName.equals("sm3")) {
+            bhmm = new sBHMMm3(options);
         } else if (modelName.equals("sm6")) {
             bhmm = new sBHMMm6(options);
         }

@@ -17,69 +17,73 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.bhmm.models;
 
-import tikka.bhmm.model.base.*;
 import tikka.bhmm.apps.CommandLineOptions;
-import tikka.utils.annealer.*;
+import tikka.utils.annealer.Annealer;
+import tikka.bhmm.model.base.*;
+import tikka.utils.annealer.SimulatedAnnealer;
 
 /**
- * The "barely hidden markov model" or "bicameral hidden markov model" (M1). This
- * is a correction of the m1. I think that the conditioning sentence count should
- * be only on those states which are content states, and not just all states.
+ * The "barely hidden markov model" or "bicameral hidden markov model" (M3).
+ * There is no conditioning on sentences here. Only the hyperparameters are
+ * different from the content states and the function states
  *
  * @author tsmoon
  */
-public class sBHMMm1 extends sBHMM {
+public class sBHMMm3 extends sBHMM {
 
-    public sBHMMm1(CommandLineOptions options) {
+    /**
+     * Hyperparameter normalization constant for statecounts. Is a sum of
+     * wbeta+wdelta.
+     */
+    protected double statenorm;
+
+    public sBHMMm3(CommandLineOptions options) {
         super(options);
     }
 
     @Override
     public void tagTest() {
-        int wordid, sentenceid, stateid;
+        statenorm = wbeta + wdelta;
+
+        int wordid, stateid;
         int current = 0, next;
         double max = 0, totalprob = 0;
         double r = 0;
-        int wordstateoff, stateoff, sentenceoff;
+        int wordstateoff, stateoff;
 
         /**
          * Initialize by assigning random topic indices to words
          */
         for (int i = 0; i < wordN; ++i) {
             wordid = wordVector[i];
-            sentenceid = sentenceVector[i];
             stateoff = current * stateS;
             wordstateoff = wordid * stateS;
-            sentenceoff = stateC * sentenceid;
 
             totalprob = 0;
+
             int j = 0;
             for (; j < stateC; j++) {
                 try {
                     totalprob += stateProbs[j] =
                           ((stateByWord[wordstateoff + j] + beta)
-                          / (stateCounts[j] + wbeta))
-                          * ((contentStateBySentence[sentenceoff + j] + alpha)
-                          / (sentenceCounts[sentenceid] + calpha))
-                          * (firstOrderTransitions[stateoff + j] + gamma);
+                          / (stateCounts[j] + statenorm))
+                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     totalprob += stateProbs[j] =
-                          (beta / (stateCounts[j] + wbeta))
-                          * ((contentStateBySentence[sentenceoff + j] + alpha)
-                          / (sentenceCounts[sentenceid] + calpha))
-                          * (firstOrderTransitions[stateoff + j] + gamma);
+                          (beta / (stateCounts[j] + statenorm))
+                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma);
                 }
             }
             for (; j < stateS; j++) {
                 try {
                     totalprob += stateProbs[j] =
                           ((stateByWord[wordstateoff + j] + delta)
-                          / (stateCounts[j] + wdelta))
-                          * (firstOrderTransitions[stateoff + j] + gamma);
+                          / (stateCounts[j] + statenorm))
+                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     totalprob += stateProbs[j] =
-                          (delta / (stateCounts[j] + wdelta))
-                          * (firstOrderTransitions[stateoff + j] + gamma);
+                          (delta / (stateCounts[j] + statenorm))
+                          * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma);
                 }
             }
             r = mtfRand.nextDouble() * totalprob;
@@ -90,11 +94,6 @@ public class sBHMMm1 extends sBHMM {
                 max += stateProbs[stateid];
             }
             stateVector[i] = stateid;
-
-            if (stateid < stateC) {
-                contentStateBySentence[sentenceoff + stateid]++;
-                sentenceCounts[sentenceid]++;
-            }
             first[i] = current;
             current = stateid;
         }
@@ -107,11 +106,11 @@ public class sBHMMm1 extends sBHMM {
 
     @Override
     protected void testBurnInIter(int itermax, Annealer annealer) {
-        int wordid, sentenceid, stateid;
+        int wordid, stateid;
         int current = 0, next;
         double max = 0, totalprob = 0;
         double r = 0;
-        int wordstateoff, stateoff, sentenceoff;
+        int wordstateoff, stateoff;
 
         for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
@@ -121,16 +120,9 @@ public class sBHMMm1 extends sBHMM {
                     System.err.println("\tProcessing word " + i);
                 }
                 wordid = wordVector[i];
-                sentenceid = sentenceVector[i];
                 stateid = stateVector[i];
                 stateoff = current * stateS;
                 wordstateoff = wordid * stateS;
-                sentenceoff = stateC * sentenceid;
-
-                if (stateid < stateC) {
-                    contentStateBySentence[sentenceoff + stateid]--;
-                    sentenceCounts[sentenceid]--;
-                }
 
                 try {
                     next = stateVector[i + 1];
@@ -143,16 +135,12 @@ public class sBHMMm1 extends sBHMM {
                     try {
                         stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + beta)
-                              / (stateCounts[j] + wbeta))
-                              * ((contentStateBySentence[sentenceoff + j] + alpha)
-                              / (sentenceCounts[sentenceid] + calpha))
+                              / (stateCounts[j] + statenorm))
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         stateProbs[j] =
-                              (beta / (stateCounts[j] + wbeta))
-                              * ((contentStateBySentence[sentenceoff + j] + alpha)
-                              / (sentenceCounts[sentenceid] + calpha))
+                              (beta / (stateCounts[j] + statenorm))
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
@@ -161,16 +149,17 @@ public class sBHMMm1 extends sBHMM {
                     try {
                         stateProbs[j] =
                               ((stateByWord[wordstateoff + j] + delta)
-                              / (stateCounts[j] + wdelta))
+                              / (stateCounts[j] + statenorm))
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         stateProbs[j] =
-                              (delta / (stateCounts[j] + wdelta))
+                              (delta / (stateCounts[j] + statenorm))
                               * (firstOrderTransitions[stateoff + j] + gamma) / (stateCounts[j] + sgamma)
                               * (firstOrderTransitions[j * stateS + next] + gamma);
                     }
                 }
+
                 totalprob = annealer.annealProbs(stateProbs);
                 r = mtfRand.nextDouble() * totalprob;
                 max = stateProbs[0];
@@ -180,11 +169,6 @@ public class sBHMMm1 extends sBHMM {
                     max += stateProbs[stateid];
                 }
                 stateVector[i] = stateid;
-
-                if (stateid < stateC) {
-                    contentStateBySentence[sentenceoff + stateid]++;
-                    sentenceCounts[sentenceid]++;
-                }
                 first[i] = current;
                 current = stateid;
             }
