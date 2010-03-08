@@ -106,6 +106,23 @@ public class Tagger extends MainBase {
                 modelOptions.getTabulatedOutput().close();
             }
 
+            /**
+             * Tag and segment test files if specified
+             */
+            String testDataDir = modelOptions.getTestDataDir();
+            if (testDataDir != null) {
+                /**
+                 * Output scores for the test samples
+                 */
+                if (modelOptions.getTestEvaluationOutputFilename() != null) {
+                    System.err.println("Beginning test evaluation");
+                    bhmm.evaluate();
+                    System.err.println("Also printing test evaluation results to "
+                          + modelOptions.getTestEvaluationOutputFilename());
+                    bhmm.printEvaluationScore(modelOptions.getTestEvaluationOutput());
+                }
+            }
+
         } catch (ParseException exp) {
             System.out.println("Unexpected exception parsing command line options:" + exp.getMessage());
         } catch (IOException exp) {

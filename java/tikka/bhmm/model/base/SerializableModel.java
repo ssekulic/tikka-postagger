@@ -49,7 +49,6 @@ public class SerializableModel implements Serializable {
      * copied to the enclosing class (this).
      */
     protected SerializableModel loadBuffer = null;
-
     protected DataFormatEnum.DataFormat dataFormat;
     protected int randomSeed;
     protected int iterations;
@@ -78,6 +77,12 @@ public class SerializableModel implements Serializable {
     protected int sentenceS;
     protected int[] documentVector;
     protected int[] topicVector;
+    /**
+     * The following are needed for the supervised experiments
+     */
+    protected int[] stateByWord;
+    protected int[] stateCounts;
+    protected int[] firstOrderTransitions;
 
     /**
      * Constructor to use when model is being saved.
@@ -91,6 +96,7 @@ public class SerializableModel implements Serializable {
         delta = m.delta;
         documentD = m.documentD;
         documentVector = m.documentVector;
+        firstOrderTransitions = m.firstOrderTransitions;
         gamma = m.gamma;
         goldTagVector = m.goldTagVector;
         initialTemperature = m.initialTemperature;
@@ -101,6 +107,8 @@ public class SerializableModel implements Serializable {
         trainDataDir = m.trainDataDir;
         sentenceS = m.sentenceS;
         sentenceVector = m.sentenceVector;
+        stateByWord = m.stateByWord;
+        stateCounts = m.stateCounts;
         stateVector = m.stateVector;
         stateC = m.stateC;
         stateF = m.stateF;
@@ -171,6 +179,7 @@ public class SerializableModel implements Serializable {
         delta = sm.delta;
         documentD = sm.documentD;
         documentVector = sm.documentVector;
+        firstOrderTransitions = sm.firstOrderTransitions;
         gamma = sm.gamma;
         goldTagVector = sm.goldTagVector;
         initialTemperature = sm.initialTemperature;
@@ -181,6 +190,8 @@ public class SerializableModel implements Serializable {
         trainDataDir = sm.trainDataDir;
         sentenceS = sm.sentenceS;
         sentenceVector = sm.sentenceVector;
+        stateByWord = sm.stateByWord;
+        stateCounts = sm.stateCounts;
         stateVector = sm.stateVector;
         stateC = sm.stateC;
         stateF = sm.stateF;
@@ -202,6 +213,7 @@ public class SerializableModel implements Serializable {
         hmm.delta = delta;
         hmm.documentD = documentD;
         hmm.documentVector = documentVector;
+        hmm.firstOrderTransitions = firstOrderTransitions;
         hmm.gamma = gamma;
         hmm.goldTagVector = goldTagVector;
         hmm.initialTemperature = initialTemperature;
@@ -212,6 +224,8 @@ public class SerializableModel implements Serializable {
         hmm.trainDataDir = trainDataDir;
         hmm.sentenceS = sentenceS;
         hmm.sentenceVector = sentenceVector;
+        hmm.stateByWord = stateByWord;
+        hmm.stateCounts = stateCounts;
         hmm.stateVector = stateVector;
         hmm.stateC = stateC;
         hmm.stateF = stateF;
