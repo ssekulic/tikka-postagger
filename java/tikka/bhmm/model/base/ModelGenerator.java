@@ -40,6 +40,12 @@ public class ModelGenerator {
             bhmm = new BHMMm6t1(options);
         } else if (modelName.equals("m7")) {
             bhmm = new BHMMm7(options);
+        } else if (modelName.equals("sm1")) {
+            bhmm = new sBHMMm1(options);
+        } else if (modelName.equals("sm2")) {
+            bhmm = new sBHMMm2(options);
+        } else if (modelName.equals("sm6")) {
+            bhmm = new sBHMMm6(options);
         }
         return bhmm;
     }

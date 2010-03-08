@@ -78,7 +78,7 @@ public class Evaluator {
         reducedGoldTags = new int[fullGoldTags.length];
         for (int i = 0; i < fullGoldTags.length; ++i) {
             int fullid = fullGoldTags[i];
-            String fulltag = fullTagMap.idxToTag.get(fullid);
+            String fulltag = fullTagMap.idxToFullTag.get(fullid);
             reducedGoldTags[i] = reducedTagMap.get(reducedTagMap.getReducedTag(fulltag));
         }
 

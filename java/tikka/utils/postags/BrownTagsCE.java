@@ -5,6 +5,7 @@
 package tikka.utils.postags;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -111,7 +112,8 @@ public class BrownTagsCE extends TagSetCE {
          * The reduced tag set for brown does not use the POS label
          */
         reducedTagSet.remove("POS");
-        setIdxMap(reducedTagSet);
+        idxToReducedTag = new HashMap<Integer, String>();
+        setIdxMap(reducedTagSet, idxToReducedTag);
         return reducedTagSet;
     }
 

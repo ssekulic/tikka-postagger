@@ -119,7 +119,7 @@ public class CommandLineOptions {
     /**
      * Name of file to dump test data sample scores (perplexity) to
      */
-    protected String testDataSampleScoreOutputFilename = null;
+    protected String testEvaluationOutputFilename = null;
     /**
      * Name of file to dump training data sample scores (bayes factor) to
      */
@@ -135,7 +135,7 @@ public class CommandLineOptions {
     /**
      * Output buffer to dump test data sample scores (perplexity) to
      */
-    protected BufferedWriter testDataSampleScoreOutput;
+    protected BufferedWriter testEvaluationOutput;
     /**
      * Output buffer to dump training data sample scores (perplexity) to
      */
@@ -274,9 +274,9 @@ public class CommandLineOptions {
                         tabulatedOutput = new BufferedWriter(new OutputStreamWriter(
                               new FileOutputStream(tabularOutputFilename)));
                     } else if (opt.equals("oste")) {
-                        testDataSampleScoreOutputFilename = value;
-                        testDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
-                              new FileOutputStream(testDataSampleScoreOutputFilename)));
+                        testEvaluationOutputFilename = value;
+                        testEvaluationOutput = new BufferedWriter(new OutputStreamWriter(
+                              new FileOutputStream(testEvaluationOutputFilename)));
                     } else if (opt.equals("ostr")) {
                         trainDataSampleScoreOutputFilename = value;
                         trainDataSampleScoreOutput = new BufferedWriter(new OutputStreamWriter(
@@ -453,12 +453,12 @@ public class CommandLineOptions {
         return lag;
     }
 
-    public BufferedWriter getTestDataSampleScoreOutput() {
-        return testDataSampleScoreOutput;
+    public BufferedWriter getTestEvaluationOutput() {
+        return testEvaluationOutput;
     }
 
-    public String getTestDataSampleScoreOutputFilename() {
-        return testDataSampleScoreOutputFilename;
+    public String getTestEvaluationOutputFilename() {
+        return testEvaluationOutputFilename;
     }
 
     public BufferedWriter getTrainDataSampleScoreOutput() {

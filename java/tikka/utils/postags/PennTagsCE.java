@@ -5,6 +5,7 @@
 package tikka.utils.postags;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -69,7 +70,8 @@ public class PennTagsCE extends TagSetCE {
         fullTagToReducedTag.put("WRB", "W");
         fullTagToReducedTag.put("VBN", "VBN");
         
-        setIdxMap(reducedTagSet);
+        idxToReducedTag = new HashMap<Integer, String>();
+        setIdxMap(reducedTagSet, idxToReducedTag);
         return reducedTagSet;
     }
 }
