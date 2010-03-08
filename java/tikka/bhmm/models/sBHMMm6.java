@@ -103,7 +103,18 @@ public class sBHMMm6 extends sBHMM {
         Annealer annealer = new SimulatedAnnealer();
         annealer.setTemperatureReciprocal(1);
 
-        for (int iter = 0; iter < TESTITER; ++iter) {
+        testBurnInIter(testSetBurninIterations, annealer);
+    }
+
+    @Override
+    protected void testBurnInIter(int itermax, Annealer annealer) {
+        int wordid, stateid, docid;
+        int current = 0, next;
+        double max = 0, totalprob = 0;
+        double r = 0;
+        int wordstateoff, stateoff, docoff;
+
+        for (int iter = 0; iter < itermax; ++iter) {
             System.err.println("iteration " + iter);
             current = 0;
             for (int i = 0; i < wordN; ++i) {
