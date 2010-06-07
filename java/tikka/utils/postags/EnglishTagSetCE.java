@@ -9,14 +9,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * TagMap for handling reduced tag set used in Noah Smith's Contrastive
+ * EnglishTagMap for handling reduced tag set used in Noah Smith's Contrastive
  * Estimation (2005) paper
  *
  * @author tsmoon
  */
-public abstract class TagSetCE extends TagMap {
+public abstract class EnglishTagSetCE extends EnglishTagMap {
 
-    public TagSetCE(int modelTagSize) {
+    public EnglishTagSetCE(int modelTagSize) {
         super(modelTagSize);
     }
 

@@ -27,6 +27,8 @@ import tikka.utils.annealer.Annealer;
  * is a correction of the m1. I think that the conditioning sentence count should
  * be only on those states which are content states, and not just all states.
  *
+ * The CDHMM-s of the paper
+ *
  * @author tsmoon
  */
 public class BHMMm1 extends BHMM {

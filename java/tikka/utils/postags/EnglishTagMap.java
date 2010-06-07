@@ -15,7 +15,7 @@ import java.util.HashSet;
  * 
  * @author tsmoon
  */
-public abstract class TagMap extends HashMap<String, Integer> implements
+public abstract class EnglishTagMap extends HashMap<String, Integer> implements
       Serializable {
 
     static private final long serialVersionUID = 100L;
@@ -33,7 +33,7 @@ public abstract class TagMap extends HashMap<String, Integer> implements
      * 
      * @param modelTagSize
      */
-    public TagMap(int modelTagSize) {
+    public EnglishTagMap(int modelTagSize) {
         oneToOneTagMap = new HashMap<Integer, Integer>();
         manyToOneTagMap = new HashMap<Integer, Integer>();
         for (int i = 0; i < modelTagSize; ++i) {

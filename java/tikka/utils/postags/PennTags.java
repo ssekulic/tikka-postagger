@@ -11,7 +11,7 @@ import java.util.HashSet;
  *
  * @author tsmoon
  */
-public class PennTags extends TagMap {
+public class PennTags extends EnglishTagMap {
 
     public PennTags(int modelTagSize) {
         super(modelTagSize);

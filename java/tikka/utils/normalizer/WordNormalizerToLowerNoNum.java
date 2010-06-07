@@ -18,7 +18,7 @@
 package tikka.utils.normalizer;
 
 import java.util.regex.Pattern;
-import tikka.utils.postags.TagMap;
+import tikka.utils.postags.EnglishTagMap;
 
 /**
  *

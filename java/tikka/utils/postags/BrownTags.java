@@ -21,11 +21,11 @@ package tikka.utils.postags;
 import java.util.HashSet;
 
 /**
- * TagMap for handling full Brown corpus tagset. Does not reduce any of the tags.
+ * EnglishTagMap for handling full Brown corpus tagset. Does not reduce any of the tags.
  * 
  * @author tsmoon
  */
-public class BrownTags extends TagMap {
+public class BrownTags extends EnglishTagMap {
 
     public BrownTags(int modelTagSize) {
         super(modelTagSize);

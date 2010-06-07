@@ -26,6 +26,8 @@ import tikka.utils.annealer.Annealer;
  * The "barely hidden markov model" or "bicameral hidden markov model" (M6).
  * This model conditions content words over documents
  *
+ * The CDHMM-d model in the paper
+ *
  * @author tsmoon
  */
 public class BHMMm6 extends BHMM {

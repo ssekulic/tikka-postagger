@@ -37,8 +37,8 @@ public class Evaluator {
 //    protected double[] costMatrix;
     protected double fullOneToOneAccuracy, fullManyToOneAccuracy;
     protected double reducedOneToOneAccuracy, reducedManyToOneAccuracy;
-    protected TagMap fullTagMap;
-    protected TagMap reducedTagMap;
+    protected EnglishTagMap fullTagMap;
+    protected EnglishTagMap reducedTagMap;
 //    protected HashSet<Integer> rows, cols;
     protected HashMap<Integer, Integer> fullOneToOneTagMap;
     protected HashMap<Integer, Integer> fullManyToOneTagMap;
@@ -53,7 +53,7 @@ public class Evaluator {
      * @param tagMap
      * @param measure
      */
-    public Evaluator(TagMap tagMap, DistanceMeasureEnum.Measure measure) {
+    public Evaluator(EnglishTagMap tagMap, DistanceMeasureEnum.Measure measure) {
         fullTagMap = tagMap;
         reducedTagMap = TagMapGenerator.generate(fullTagMap.tagSet, 1, fullTagMap.oneToOneTagMap.size());
 
@@ -98,7 +98,7 @@ public class Evaluator {
      * @param oneToOneTagMap
      * @param manyToOneTagMap
      */
-    public void matchTags(int[] modelTags, int[] goldTags, TagMap tagMap,
+    public void matchTags(int[] modelTags, int[] goldTags, EnglishTagMap tagMap,
           HashMap<Integer, Integer> oneToOneTagMap,
           HashMap<Integer, Integer> manyToOneTagMap) {
         int M = tagMap.oneToOneTagMap.size();
