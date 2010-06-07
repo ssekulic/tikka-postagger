@@ -481,7 +481,10 @@ public abstract class BHMM extends BHMMFields {
             tag = String.format("R:%s", tagMap.getManyToOneTagString(stateid));
             bufferedWriter.write(tag);
             bufferedWriter.write("\t");
-            tag = String.format("G:%s", tagMap.getGoldReducedTagString(goldid));
+            tag = String.format("GF:%s", tagMap.getGoldTagString(goldid));
+            bufferedWriter.write(tag);
+            bufferedWriter.write("\t");
+            tag = String.format("GR:%s", tagMap.getGoldReducedTagString(goldid));
             bufferedWriter.write(tag);
             bufferedWriter.newLine();
 
