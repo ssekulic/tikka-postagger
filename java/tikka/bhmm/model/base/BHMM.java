@@ -340,10 +340,6 @@ public abstract class BHMM extends BHMMFields {
               evaluator.getFullManyToOneAccuracy(),
               evaluator.getReducedOneToOneAccuracy(),
               evaluator.getReducedManyToOneAccuracy()));
-//        System.err.println("One to one accuracy on full set is " + evaluator.getFullOneToOneAccuracy());
-//        System.err.println("Many to one accuracy on full set is " + evaluator.getFullManyToOneAccuracy());
-//        System.err.println("One to one accuracy on reduced set is " + evaluator.getReducedOneToOneAccuracy());
-//        System.err.println("Many to one accuracy on reduced set is " + evaluator.getReducedManyToOneAccuracy());
     }
 
     public void printEvaluationScore(BufferedWriter out) throws IOException {
@@ -354,10 +350,6 @@ public abstract class BHMM extends BHMMFields {
               evaluator.getFullManyToOneAccuracy(),
               evaluator.getReducedOneToOneAccuracy(),
               evaluator.getReducedManyToOneAccuracy()));
-//        out.write("Full one to one accuracy: " + evaluator.getFullOneToOneAccuracy());
-//        out.write("Full many to one accuracy: " + evaluator.getFullManyToOneAccuracy());
-//        out.write("Reduced one to one accuracy: " + evaluator.getReducedOneToOneAccuracy());
-//        out.write("Reduced many to one accuracy: " + evaluator.getReducedManyToOneAccuracy());
     }
 
     /**

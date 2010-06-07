@@ -1,6 +1,18 @@
 ///////////////////////////////////////////////////////////////////////////////
-// To change this template, choose Tools | Templates
-// and open the template in the editor.
+//  Copyright (C) 2010 Taesun Moon <tsunmoon@gmail.com>
+//
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ///////////////////////////////////////////////////////////////////////////////
 
 package tikka.utils.postags;
@@ -11,25 +23,25 @@ package tikka.utils.postags;
  */
 public class TagMapGenerator {
 
-    public static EnglishTagMap generate(TagSetEnum.TagSet tagSet, int level, int modelTagSize) {
+    public static EnglishTagMap generate(TagSetEnum.TagSet tagSet, TagSetEnum.ReductionLevel level, int modelTagSize) {
         EnglishTagMap tagMap = null;
         switch(tagSet) {
             case BROWN:
                 switch(level) {
-                    case 0:
+                    case FULL:
                         tagMap = new BrownTags(modelTagSize);
                         break;
-                    case 1:
+                    case REDUCED:
                         tagMap = new BrownTagsCE(modelTagSize);
                         break;
                 }
                 break;
             case PTB:
                 switch(level) {
-                    case 0:
+                    case FULL:
                         tagMap = new PennTags(modelTagSize);
                         break;
-                    case 1:
+                    case REDUCED:
                         tagMap = new PennTagsCE(modelTagSize);
                         break;
                 }

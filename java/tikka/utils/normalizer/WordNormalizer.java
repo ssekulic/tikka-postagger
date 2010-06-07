@@ -45,11 +45,6 @@ public class WordNormalizer {
         this.strings = new String[strings.length];
         try {
             fullTag = strings[1];
-//            pattern = Pattern.compile("^\\w.*$");
-//            matcher = pattern.matcher(reducedTag);
-//            if (!matcher.find()) {
-//                reducedTag = "";
-//            }
             this.strings[1] = reducedTag = tagMap.getReducedTag(fullTag);
         } catch (ArrayIndexOutOfBoundsException e) {
             reducedTag = null;

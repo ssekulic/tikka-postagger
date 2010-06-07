@@ -37,4 +37,15 @@ public class TagSetEnum {
          */
         TIGER
     }
+
+    public static enum ReductionLevel {
+        /**
+         * Use full tagset
+         */
+        FULL,
+        /**
+         * Use reduced tagset
+         */
+        REDUCED
+    }
 }

@@ -1,10 +1,21 @@
 ///////////////////////////////////////////////////////////////////////////////
-// To change this template, choose Tools | Templates
-// and open the template in the editor.
+//  Copyright (C) 2010 Taesun Moon <tsunmoon@gmail.com>
+//
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.postags;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,28 +26,17 @@ import java.util.HashSet;
  * 
  * @author tsmoon
  */
-public abstract class EnglishTagMap extends HashMap<String, Integer> implements
-      Serializable {
-
-    static private final long serialVersionUID = 100L;
-    protected HashSet<String> contentTagSet, functionTagSet, fullTagSet;
-    protected HashSet<String> reducedTagSet;
-    protected HashMap<Integer, String> idxToContentTag, idxToFunctionTag, idxToFullTag, idxToReducedTag;
-    protected HashMap<String, String> fullTagToReducedTag;
-    protected HashMap<Integer, Integer> oneToOneTagMap;
-    protected HashMap<Integer, Integer> manyToOneTagMap;
-    protected HashMap<Integer, Integer> goldToModelTagMap;
-    protected TagSetEnum.TagSet tagSet;
-    protected int level;
+public abstract class EnglishTagMap extends TagMap {
 
     /**
      * 
-     * @param modelTagSize
+     * @param _modelTagSize
      */
-    public EnglishTagMap(int modelTagSize) {
+    public EnglishTagMap(int _modelTagSize) {
+        super(_modelTagSize);
         oneToOneTagMap = new HashMap<Integer, Integer>();
         manyToOneTagMap = new HashMap<Integer, Integer>();
-        for (int i = 0; i < modelTagSize; ++i) {
+        for (int i = 0; i < _modelTagSize; ++i) {
             oneToOneTagMap.put(i, -1);
             manyToOneTagMap.put(i, -1);
         }
@@ -47,13 +47,13 @@ public abstract class EnglishTagMap extends HashMap<String, Integer> implements
 
     /**
      * 
-     * @param tagSet
+     * @param _tagSet
      */
-    protected void setIdxMap(HashSet<String> tagSet,
-          HashMap<Integer, String> idxToTag) {
+    protected void setIdxMap(HashSet<String> _tagSet,
+          HashMap<Integer, String> _idxToTag) {
         int idx = 0;
-        for (String tag : tagSet) {
-            idxToTag.put(idx, tag);
+        for (String tag : _tagSet) {
+            _idxToTag.put(idx, tag);
             put(tag, idx++);
         }
     }
@@ -382,13 +382,13 @@ public abstract class EnglishTagMap extends HashMap<String, Integer> implements
         idxToContentTag = new HashMap<Integer, String>();
         idxToFunctionTag = new HashMap<Integer, String>();
         int idx = 0;
-        for(String tag: contentTagSet) {
+        for (String tag : contentTagSet) {
             idxToContentTag.put(idx, tag);
             idxToFullTag.put(idx, tag);
             idx += 1;
         }
 
-        for(String tag: functionTagSet) {
+        for (String tag : functionTagSet) {
             idxToFunctionTag.put(idx, tag);
             idxToFullTag.put(idx, tag);
             idx += 1;
@@ -409,74 +409,5 @@ public abstract class EnglishTagMap extends HashMap<String, Integer> implements
         }
 
         return rtag;
-    }
-
-    /**
-     * 
-     * @param tag
-     * @return
-     */
-    public String getFullTag(String tag) {
-        if (fullTagSet.contains(tag)) {
-            return tag;
-        } else {
-            return "";
-        }
-    }
-
-    public String getTagSetName() {
-        return tagSet.toString();
-    }
-
-    public int getReductionLevel() {
-        return level;
-    }
-
-    public int getReducedGoldTagSize() {
-        return reducedTagSet.size();
-    }
-
-    public int getFullGoldTagSize() {
-        return fullTagSet.size();
-    }
-
-    public int getModelTagSize() {
-        return oneToOneTagMap.size();
-    }
-
-    public String getOneToOneTagString(int stateid) {
-        return idxToFullTag.get(oneToOneTagMap.get(stateid));
-    }
-
-    public String getManyToOneTagString(int stateid) {
-        return idxToFullTag.get(manyToOneTagMap.get(stateid));
-    }
-
-    public String getGoldReducedTagString(int goldid) {
-        return idxToFullTag.get(goldid);
-    }
-
-    public int getContentTagSize() {
-        return contentTagSet.size();
-    }
-
-    public int getFunctionTagSize() {
-        return functionTagSet.size();
-    }
-
-    public boolean isContentTag(String tag) {
-        return contentTagSet.contains(tag);
-    }
-
-    public boolean isFunctionTag(String tag) {
-        return functionTagSet.contains(tag);
-    }
-
-    public boolean isContentTag(int tagid) {
-        return idxToContentTag.containsKey(tagid);
-    }
-
-    public boolean isFunctionTag(int tagid) {
-        return idxToFunctionTag.containsKey(tagid);
     }
 }
