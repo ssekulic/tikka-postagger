@@ -327,7 +327,7 @@ public abstract class BHMMFields {
      * Object that handles the both model and gold tag sets. It also finds
      * the best mapping from one to the other.
      */
-    protected TagMap tagMap;
+    protected EnglishTagMap tagMap;
     /**
      * Class for dealing with evaluation
      */

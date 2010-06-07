@@ -18,7 +18,7 @@
 package tikka.utils.normalizer;
 
 import java.util.regex.Pattern;
-import tikka.utils.postags.TagMap;
+import tikka.utils.postags.EnglishTagMap;
 
 /**
  *
@@ -26,7 +26,7 @@ import tikka.utils.postags.TagMap;
  */
 public class WordNormalizerToLower extends WordNormalizer {
 
-    public WordNormalizerToLower(TagMap tagMap) {
+    public WordNormalizerToLower(EnglishTagMap tagMap) {
         super(tagMap);
     }
 

@@ -26,6 +26,8 @@ import tikka.bhmm.model.base.BHMM;
  * There is no conditioning on sentences here. Only the hyperparameters are
  * different from the content states and the function states
  *
+ * The HMM+ model in the papers
+ *
  * @author tsmoon
  */
 public class BHMMm3 extends BHMMm2 {

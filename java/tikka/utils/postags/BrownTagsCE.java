@@ -12,7 +12,7 @@ import java.util.HashSet;
  *
  * @author tsmoon
  */
-public class BrownTagsCE extends TagSetCE {
+public class BrownTagsCE extends EnglishTagSetCE {
 
     public BrownTagsCE(int modelTagSize) {
         super(modelTagSize);

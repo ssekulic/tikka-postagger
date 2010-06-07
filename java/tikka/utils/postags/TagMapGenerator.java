@@ -11,8 +11,8 @@ package tikka.utils.postags;
  */
 public class TagMapGenerator {
 
-    public static TagMap generate(TagSetEnum.TagSet tagSet, int level, int modelTagSize) {
-        TagMap tagMap = null;
+    public static EnglishTagMap generate(TagSetEnum.TagSet tagSet, int level, int modelTagSize) {
+        EnglishTagMap tagMap = null;
         switch(tagSet) {
             case BROWN:
                 switch(level) {
