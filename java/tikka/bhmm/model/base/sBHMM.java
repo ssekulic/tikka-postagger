@@ -25,7 +25,6 @@ import tikka.bhmm.apps.CommandLineOptions;
 import tikka.opennlp.io.*;
 import tikka.utils.annealer.*;
 import tikka.utils.normalizer.*;
-import tikka.utils.postags.*;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model" (M6).

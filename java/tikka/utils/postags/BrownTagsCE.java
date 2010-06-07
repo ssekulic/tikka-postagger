@@ -16,7 +16,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.postags;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -24,21 +23,15 @@ import java.util.HashSet;
  *
  * @author tsmoon
  */
-public class BrownTagsCE extends EnglishTagSetCE {
+public class BrownTagsCE extends BrownTags {
 
-    public BrownTagsCE(int modelTagSize) {
-        super(modelTagSize);
-    }
-
-    @Override
-    protected HashSet<String> setTags() {
-        return setBrownTags();
+    public BrownTagsCE(int _modelTagSize) {
+        super(_modelTagSize);
+        reduceTag();
     }
 
     @Override
     protected HashSet<String> reduceTag() {
-        super.reduceTag();
-
         fullTagToReducedTag.put(".", "ENDPUNC"); //sentence closer (. ; ? *)
         fullTagToReducedTag.put("(", "LPUNC"); //left paren
         fullTagToReducedTag.put(")", "RPUNC"); //right paren
@@ -127,11 +120,5 @@ public class BrownTagsCE extends EnglishTagSetCE {
         idxToReducedTag = new HashMap<Integer, String>();
         setIdxMap(reducedTagSet, idxToReducedTag);
         return reducedTagSet;
-    }
-
-    @Override
-    public String getReducedTag(String tag) {
-        String[] tags = tag.split("[+\\-]");
-        return super.getReducedTag(tags[0]);
     }
 }

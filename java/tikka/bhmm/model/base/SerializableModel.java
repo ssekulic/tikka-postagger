@@ -21,7 +21,7 @@ import tikka.opennlp.io.DataFormatEnum;
 
 import tikka.bhmm.apps.CommandLineOptions;
 
-import tikka.utils.postags.EnglishTagMap;
+import tikka.utils.postags.TagMap;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -63,7 +63,7 @@ public class SerializableModel implements Serializable {
     protected double initialTemperature;
     protected double temperatureDecrement;
     protected double targetTemperature;
-    protected EnglishTagMap tagMap;
+    protected TagMap tagMap;
     protected int stateC;
     protected int stateF;
     protected int topicK;

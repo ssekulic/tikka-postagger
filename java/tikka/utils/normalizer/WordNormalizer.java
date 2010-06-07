@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.normalizer;
 
-import tikka.utils.postags.EnglishTagMap;
+import tikka.utils.postags.TagMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,9 +32,9 @@ public class WordNormalizer {
     protected Matcher matcher;
     protected String[] strings;
     protected String word, reducedTag, fullTag;
-    protected EnglishTagMap tagMap;
+    protected TagMap tagMap;
 
-    public WordNormalizer(EnglishTagMap tagMap) {
+    public WordNormalizer(TagMap tagMap) {
         this.tagMap = tagMap;
     }
 

@@ -27,39 +27,25 @@ public abstract class DistanceMeasure {
     protected int[] cooccurrenceMatrix, modelTagCounts, goldTagCounts;
     protected int N;
 
-//    /**
-//     * Default constructor. Requires full access to the Evaluator that it is called from
-//     *
-//     * @param evaluator Calling Evaluator class object.
-//     */
-//    public DistanceMeasure(Evaluator evaluator) {
-//        this.modelTags = evaluator.modelTags;
-//        this.goldTags = evaluator.fullGoldTags;
-//        this.cooccurrenceMatrix = evaluator.cooccurrenceMatrix;
-//        this.modelTagCounts = evaluator.modelTagCounts;
-//        this.goldTagCounts = evaluator.fullGoldTagCounts;
-//        this.M = evaluator.M;
-//        this.N = evaluator.N;
-//    }
     /**
      * Default constructor. Requires full access to the Evaluator that it is called from
      *
      * @param evaluator Calling Evaluator class object.
      */
-    public DistanceMeasure(int[] cooccurrenceMatrix, int[] modelTagCounts,
-          int[] goldTagCounts, int N) {
-        this.cooccurrenceMatrix = cooccurrenceMatrix;
-        this.modelTagCounts = modelTagCounts;
-        this.goldTagCounts = goldTagCounts;
-        this.N = N;
+    public DistanceMeasure(int[] _cooccurrenceMatrix, int[] _modelTagCounts,
+          int[] _goldTagCounts, int _N) {
+        cooccurrenceMatrix = _cooccurrenceMatrix;
+        modelTagCounts = _modelTagCounts;
+        goldTagCounts = _goldTagCounts;
+        N = _N;
     }
 
     /**
-     * Calculate distance between two tags i and j.
+     * Calculate distance between two tags _i and _j.
      * 
-     * @param i tag in model
-     * @param j tag in gold
+     * @param _i tag in model
+     * @param _j tag in gold
      * @return distance between two tags
      */
-    public abstract double cost(int i, int j);
+    public abstract double cost(int _i, int _j);
 }

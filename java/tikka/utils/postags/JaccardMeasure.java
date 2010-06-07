@@ -19,22 +19,19 @@ package tikka.utils.postags;
 
 /**
  * Jaccard measure for populating cost matrix in Evaluator
+ * 
  * @author tsmoon
  */
 public class JaccardMeasure extends DistanceMeasure {
 
-//    public JaccardMeasure(Evaluator evaluator) {
-//        super(evaluator);
-//    }
-//
-    public JaccardMeasure(int[] cooccurrenceMatrix, int[] modelTagCounts,
-          int[] goldTagCounts, int N) {
-        super(cooccurrenceMatrix, modelTagCounts, goldTagCounts, N);
+    public JaccardMeasure(int[] _cooccurrenceMatrix, int[] _modelTagCounts,
+          int[] _goldTagCounts, int _N) {
+        super(_cooccurrenceMatrix, _modelTagCounts, _goldTagCounts, _N);
     }
 
     @Override
-    public double cost(int i, int j) {
-        return 1 - cooccurrenceMatrix[i * N + j]
-              / (0. + modelTagCounts[i] + goldTagCounts[j] - cooccurrenceMatrix[i * N + j]);
+    public double cost(int _i, int _j) {
+        return 1 - cooccurrenceMatrix[_i * N + _j]
+              / (0. + modelTagCounts[_i] + goldTagCounts[_j] - cooccurrenceMatrix[_i * N + _j]);
     }
 }
