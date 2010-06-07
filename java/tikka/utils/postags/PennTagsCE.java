@@ -16,7 +16,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.postags;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -24,20 +23,15 @@ import java.util.HashSet;
  *
  * @author tsmoon
  */
-public class PennTagsCE extends EnglishTagSetCE {
+public class PennTagsCE extends PennTags {
 
-    public PennTagsCE(int modelTagSize) {
-        super(modelTagSize);
+    public PennTagsCE(int _modelTagSize) {
+        super(_modelTagSize);
+        reduceTag();
     }
     
     @Override
-    protected HashSet<String> setTags() {
-        return setPennTags();
-    }
-
-    @Override
     protected HashSet<String> reduceTag() {
-        super.reduceTag();
         fullTagToReducedTag.put("CD", "ADJ");
         fullTagToReducedTag.put("JJ", "ADJ");
         fullTagToReducedTag.put("JJR", "ADJ");

@@ -598,7 +598,7 @@ public abstract class BHMM extends BHMMFields {
         modelParameterStringBuilder.append(line);
         line = String.format("tagSet:%s", tagMap.getTagSetName()) + newline;
         modelParameterStringBuilder.append(line);
-        line = String.format("reduction-level:%d", tagMap.getReductionLevel()) + newline;
+        line = String.format("reduction-level:%s", tagMap.getReductionLevel().toString()) + newline;
         modelParameterStringBuilder.append(line);
         line = String.format("randomSeed:%d", randomSeed) + newline;
         modelParameterStringBuilder.append(line);

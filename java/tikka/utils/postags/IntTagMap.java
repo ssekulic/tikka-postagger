@@ -16,24 +16,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.postags;
 
-import java.util.HashSet;
+import java.util.HashMap;
 
 /**
  *
  * @author Taesun Moon <tsunmoon@gmail.com>
  */
-public class TigerTagMap extends TagMap {
-
-    /**
-     *
-     * @param _modelTagSize
-     */
-    public TigerTagMap(int _modelTagSize) {
-        super(_modelTagSize);
-    }
-
-    @Override
-    protected HashSet<String> reduceTag() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+public class IntTagMap extends HashMap<Integer, Integer> {
 }

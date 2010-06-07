@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.normalizer;
 
-import tikka.utils.postags.EnglishTagMap;
+import tikka.utils.postags.TagMap;
 
 /**
  *
@@ -25,7 +25,7 @@ import tikka.utils.postags.EnglishTagMap;
  */
 public class WordNormalizerToLower extends WordNormalizer {
 
-    public WordNormalizerToLower(EnglishTagMap tagMap) {
+    public WordNormalizerToLower(TagMap tagMap) {
         super(tagMap);
     }
 

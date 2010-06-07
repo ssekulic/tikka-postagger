@@ -23,8 +23,8 @@ package tikka.utils.postags;
  */
 public class TagMapGenerator {
 
-    public static EnglishTagMap generate(TagSetEnum.TagSet tagSet, TagSetEnum.ReductionLevel level, int modelTagSize) {
-        EnglishTagMap tagMap = null;
+    public static TagMap generate(TagSetEnum.TagSet tagSet, TagSetEnum.ReductionLevel level, int modelTagSize) {
+        TagMap tagMap = null;
         switch(tagSet) {
             case BROWN:
                 switch(level) {
