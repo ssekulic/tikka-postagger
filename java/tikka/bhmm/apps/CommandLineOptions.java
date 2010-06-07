@@ -107,7 +107,7 @@ public class CommandLineOptions {
     /**
      * Option on how much the tagset should be reduced. Default is 0 (none).
      */
-    protected int reductionLevel = 0;
+    protected TagSetEnum.ReductionLevel reductionLevel = TagSetEnum.ReductionLevel.FULL;
     /**
      * Name of file to generate evaluation scores to
      */
@@ -329,7 +329,12 @@ public class CommandLineOptions {
                             tagSet = TagSetEnum.TagSet.TIGER;
                         }
                     } else if (opt.equals("ur")) {
-                        reductionLevel = Integer.parseInt(value);
+                        int val = Integer.parseInt(value);
+                        if (val == 0) {
+                            reductionLevel = TagSetEnum.ReductionLevel.FULL;
+                        } else {
+                            reductionLevel = TagSetEnum.ReductionLevel.REDUCED;
+                        }
                     }
                     break;
                 case 'w':
@@ -395,7 +400,7 @@ public class CommandLineOptions {
         return tagSet;
     }
 
-    public int getReductionLevel() {
+    public TagSetEnum.ReductionLevel getReductionLevel() {
         return reductionLevel;
     }
 

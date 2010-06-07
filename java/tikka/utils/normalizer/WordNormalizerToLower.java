@@ -17,7 +17,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.normalizer;
 
-import java.util.regex.Pattern;
 import tikka.utils.postags.EnglishTagMap;
 
 /**
@@ -37,43 +36,11 @@ public class WordNormalizerToLower extends WordNormalizer {
         try {
             reducedTag = tagMap.getReducedTag(strings[1]);
 
-//            if (!reducedTag.isEmpty()) {
             word = strings[0].toLowerCase();
-//            } else {
-//                word = "";
-//            }
-//            pattern = Pattern.compile("^\\w.*$");
-//            matcher = pattern.matcher(reducedTag);
-//            if (!matcher.find()) {
-//                reducedTag = "";
-//            }
-//            this.strings[1] = reducedTag;
-//            this.strings[1] = reducedTag;
         } catch (ArrayIndexOutOfBoundsException e) {
             reducedTag = null;
             word = "";
         }
-
-//        if (!reducedTag.isEmpty()) {
-//        } else {
-//        }
-//
-//        if (reducedTag == null || !reducedTag.isEmpty()) {
-//            word = strings[0].toLowerCase();
-//            pattern = Pattern.compile("^\\W*$");
-//            matcher = pattern.matcher(word);
-//            if (!matcher.find()) {
-//                pattern = Pattern.compile("(^\\W*(\\w.*\\w)\\W*$|(^\\w+$)|.*)");
-//                matcher = pattern.matcher(word);
-//                word = matcher.replaceAll("$2$3");
-//            } else {
-//                word = "";
-//            }
-//        } else {
-//            word = "";
-//        }
-//        this.strings[0] = word;
-
         return this.strings;
     }
 }

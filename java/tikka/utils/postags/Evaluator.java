@@ -29,17 +29,13 @@ import java.util.HashSet;
  */
 public class Evaluator {
 
-//    protected int M, N;
     protected int[] modelTags;//, modelTagCounts;
-    //protected int[] cooccurrenceMatrix;
     protected int[] fullGoldTags;//, goldTagCounts;
     protected int[] reducedGoldTags;//, reducedGoldTagCounts;
-//    protected double[] costMatrix;
     protected double fullOneToOneAccuracy, fullManyToOneAccuracy;
     protected double reducedOneToOneAccuracy, reducedManyToOneAccuracy;
     protected EnglishTagMap fullTagMap;
     protected EnglishTagMap reducedTagMap;
-//    protected HashSet<Integer> rows, cols;
     protected HashMap<Integer, Integer> fullOneToOneTagMap;
     protected HashMap<Integer, Integer> fullManyToOneTagMap;
     protected HashMap<Integer, Integer> reducedOneToOneTagMap;
@@ -55,7 +51,7 @@ public class Evaluator {
      */
     public Evaluator(EnglishTagMap tagMap, DistanceMeasureEnum.Measure measure) {
         fullTagMap = tagMap;
-        reducedTagMap = TagMapGenerator.generate(fullTagMap.tagSet, 1, fullTagMap.oneToOneTagMap.size());
+        reducedTagMap = TagMapGenerator.generate(fullTagMap.tagSet, TagSetEnum.ReductionLevel.REDUCED, fullTagMap.oneToOneTagMap.size());
 
         fullOneToOneTagMap = fullTagMap.oneToOneTagMap;
         fullManyToOneTagMap = fullTagMap.manyToOneTagMap;
@@ -235,27 +231,6 @@ public class Evaluator {
             manyToOneTagMap.put(i, jmin);
         }
     }
-
-//    protected void measureAccuracy() {
-//        int total = modelTags.length;
-//        int correct = 0;
-//        for (int i = 0; i < total; ++i) {
-//            int j = modelTags[i];
-//            if (fullOneToOneTagMap.get(j) == fullGoldTags[i]) {
-//                correct++;
-//            }
-//        }
-//        fullOneToOneAccuracy = correct / (double) total;
-//
-//        correct = 0;
-//        for (int i = 0; i < total; ++i) {
-//            int j = modelTags[i];
-//            if (fullManyToOneTagMap.get(j) == fullGoldTags[i]) {
-//                correct++;
-//            }
-//        }
-//        fullManyToOneAccuracy = correct / (double) total;
-//    }
 
     /**
      * 
