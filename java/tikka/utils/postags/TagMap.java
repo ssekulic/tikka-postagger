@@ -77,7 +77,7 @@ public abstract class TagMap extends HashMap<String, Integer> implements
             fullTagToReducedTag.put(tag, tag);
         }
 
-        idxToReducedTag = idxToFullTag = new HashMap<Integer, String>();
+        idxToFullTag = new HashMap<Integer, String>();
         setIdxMap(fullTagSet, idxToFullTag);
         idxToContentTag = new HashMap<Integer, String>();
         idxToFunctionTag = new HashMap<Integer, String>();
@@ -110,36 +110,27 @@ public abstract class TagMap extends HashMap<String, Integer> implements
 
     /**
      *
-     */
-    protected void reset() {
-        clear();
-        idxToFullTag = new HashMap<Integer, String>();
-        idxToReducedTag = new HashMap<Integer, String>();
-    }
-
-    /**
-     *
      * @return
      */
     protected abstract HashSet<String> reduceTag();
 
     /**
-     * If the tag exists
-     * @param tag
+     * If the _tag exists
+     * @param _tag
      * @return
      */
-    public String getReducedTag(String tag) {
-        String rtag = null;
-        if (fullTagSet.contains(tag)) {
-            rtag = fullTagToReducedTag.get(tag);
+    public String getReducedTag(String _tag) {
+        String tag = null;
+        if (fullTagSet.contains(_tag)) {
+            tag = fullTagToReducedTag.get(_tag);
         }
 
-        return rtag;
+        return tag;
     }
 
     /**
      *
-     * @param tag
+     * @param _tag
      * @return
      */
     public String getFullTag(String tag) {
@@ -176,6 +167,10 @@ public abstract class TagMap extends HashMap<String, Integer> implements
 
     public String getManyToOneTagString(int stateid) {
         return idxToFullTag.get(manyToOneTagMap.get(stateid));
+    }
+
+    public String getGoldTagString(int goldid) {
+        return idxToFullTag.get(goldid);
     }
 
     public String getGoldReducedTagString(int goldid) {
