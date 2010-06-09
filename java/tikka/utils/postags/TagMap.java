@@ -29,7 +29,7 @@ public abstract class TagMap extends HashMap<String, Integer> implements
       Serializable {
 
     static private final long serialVersionUID = 100L;
-    protected HashSet<String> contentTagSet, functionTagSet, fullTagSet;
+    protected HashSet<String> contentTagSet, functionTagSet, fullTagSet, ignoreSet;
     protected final HashSet<String> reducedTagSet = new HashSet<String>(Arrays.asList(
           "ADJ", //CD JJ JJR JJS PRP$
           "CONJ",//CC
