@@ -18,6 +18,7 @@
 package tikka.utils.normalizer;
 
 import java.util.regex.Pattern;
+import tikka.exceptions.IgnoreTagException;
 
 /**
  *
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
 public class WordNormalizerToLowerNoNum extends WordNormalizer {
 
     @Override
-    public String[] normalize(String[] strings) {
+    public String[] normalize(String[] strings) throws IgnoreTagException {
         this.strings = new String[strings.length];
 //        String reducedTag = "", word = "";
         try {
@@ -59,6 +60,10 @@ public class WordNormalizerToLowerNoNum extends WordNormalizer {
             word = "";
         }
         this.strings[0] = word;
+
+        if (tagMap.isIgnoreTag(reducedTag)) {
+            throw new IgnoreTagException(word, reducedTag);
+        }
 
         return this.strings;
     }

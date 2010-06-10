@@ -14,7 +14,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ///////////////////////////////////////////////////////////////////////////////
-
 package tikka.utils.postags;
 
 /**
@@ -23,11 +22,12 @@ package tikka.utils.postags;
  */
 public class TagMapGenerator {
 
-    public static TagMap generate(TagSetEnum.TagSet tagSet, TagSetEnum.ReductionLevel level, int modelTagSize) {
+    public static TagMap generate(TagSetEnum.TagSet tagSet,
+          TagSetEnum.ReductionLevel level, int modelTagSize) {
         TagMap tagMap = null;
-        switch(tagSet) {
+        switch (tagSet) {
             case BROWN:
-                switch(level) {
+                switch (level) {
                     case FULL:
                         tagMap = new BrownTags(modelTagSize);
                         break;
@@ -37,7 +37,7 @@ public class TagMapGenerator {
                 }
                 break;
             case PTB:
-                switch(level) {
+                switch (level) {
                     case FULL:
                         tagMap = new PennTags(modelTagSize);
                         break;
@@ -47,8 +47,8 @@ public class TagMapGenerator {
                 }
                 break;
             case TIGER:
-                throw new UnsupportedOperationException("Implement this fool!");
-//                break;
+                tagMap = new TigerTagMap(modelTagSize);
+                break;
         }
         tagMap.tagSet = tagSet;
         tagMap.level = level;

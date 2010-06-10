@@ -34,6 +34,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import tikka.exceptions.IgnoreTagException;
 
 /**
  * The "barely hidden markov model" or "bicameral hidden markov model"
@@ -174,18 +175,21 @@ public abstract class BHMM extends BHMMFields {
                 String[][] sentence;
                 while ((sentence = dataReader.nextSequence()) != null) {
                     for (String[] line : sentence) {
-                        wordNormalizer.normalize(line);
-                        String word = wordNormalizer.getWord();
-                        String tag = wordNormalizer.getTag();
-                        if (!word.isEmpty() && tag != null) {
-                            if (!wordIdx.containsKey(word)) {
-                                wordIdx.put(word, wordIdx.size());
-                                idxToWord.put(idxToWord.size(), word);
+                        try {
+                            wordNormalizer.normalize(line);
+                            String word = wordNormalizer.getWord();
+                            String tag = wordNormalizer.getTag();
+                            if (!word.isEmpty() && tag != null) {
+                                if (!wordIdx.containsKey(word)) {
+                                    wordIdx.put(word, wordIdx.size());
+                                    idxToWord.put(idxToWord.size(), word);
+                                }
+                                wordVectorT.add(wordIdx.get(word));
+                                sentenceVectorT.add(sentenceS);
+                                documentVectorT.add(documentD);
+                                goldTagVectorT.add(tagMap.get(tag));
                             }
-                            wordVectorT.add(wordIdx.get(word));
-                            sentenceVectorT.add(sentenceS);
-                            documentVectorT.add(documentD);
-                            goldTagVectorT.add(tagMap.get(tag));
+                        } catch (IgnoreTagException e) {
                         }
                     }
                     sentenceS++;

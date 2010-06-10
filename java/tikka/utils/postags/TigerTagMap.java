@@ -65,6 +65,7 @@ public class TigerTagMap extends TagMap {
           "PRELAT", // attributive relative pronoun
           "PRELS", // substituting relative pronoun
           "PRF", // reflexive personal pronoun
+          "PROAV",       // pronominal adverb, quite possibly a bug, doesn't seem to exist in the tiger manual
           "PTKA", // particle with adjective or adverb
           "PTKANT", // answer particle
           "PTKNEG", // negative particle
@@ -117,6 +118,7 @@ public class TigerTagMap extends TagMap {
           "PRELAT", // attributive relative pronoun
           "PRELS", // substituting relative pronoun
           "PRF", // reflexive personal pronoun
+          "PROAV",       // pronominal adverb, quite possibly a bug, doesn't seem to exist in the tiger manual
           "PTKA", // particle with adjective or adverb
           "PTKANT", // answer particle
           "PTKNEG", // negative particle
@@ -143,10 +145,11 @@ public class TigerTagMap extends TagMap {
           "XY" // non-word containing non-letter
           ));
     protected final HashSet<String> tigerIgnoreSet = new HashSet<String>(Arrays.asList(
-          "PAV",       // pronominal adverb
-          "PIDAT",     // attributive indefinite pronoun with determiner
-          "SGML",      // "SGML",      // markup
-          "SPELL"     // letter sequence
+          "$(", // other sentence-internal punctuation mark
+          "PAV", // pronominal adverb
+          "PIDAT", // attributive indefinite pronoun with determiner
+          "SGML", // "SGML",      // markup
+          "SPELL" // letter sequence
           ));
 
     /**
@@ -158,70 +161,72 @@ public class TigerTagMap extends TagMap {
         contentTagSet = tigerContentTagSet;
         functionTagSet = tigerFunctionTagSet;
         fullTagSet = tigerFullTagSet;
+        ignoreSet = tigerIgnoreSet;
         initialize(_modelTagSize);
         reduceTag();
     }
 
     @Override
     protected HashSet<String> reduceTag() {
-        fullTagToReducedTag.put("$(", "");
         fullTagToReducedTag.put("$,", "INPUNC");
         fullTagToReducedTag.put("$.", "ENDPUNC");
         fullTagToReducedTag.put("ADJA", "ADJ");
         fullTagToReducedTag.put("ADJD", "ADJ");
         fullTagToReducedTag.put("ADV", "ADV");
-        fullTagToReducedTag.put("APPO", "PREP");
+        fullTagToReducedTag.put("APPO", "PRT");
         fullTagToReducedTag.put("APPR", "PREP");
         fullTagToReducedTag.put("APPRART", "PREP");
-        fullTagToReducedTag.put("APZR", "PREP");
+        fullTagToReducedTag.put("APZR", "PRT");
         fullTagToReducedTag.put("ART", "DET");
         fullTagToReducedTag.put("CARD", "ADJ");
         fullTagToReducedTag.put("FM", "N");
         fullTagToReducedTag.put("ITJ", "INPUNC");
-        fullTagToReducedTag.put("KOKOM", "CONJ");
+        fullTagToReducedTag.put("KOKOM", "PREP");
         fullTagToReducedTag.put("KON", "CONJ");
         fullTagToReducedTag.put("KOUI", "PREP");
         fullTagToReducedTag.put("KOUS", "PREP");
         fullTagToReducedTag.put("NE", "N");
         fullTagToReducedTag.put("NN", "N");
         fullTagToReducedTag.put("NNE", "N");
-        fullTagToReducedTag.put("PDAT", "N");
-        fullTagToReducedTag.put("PDS", "N");
-        fullTagToReducedTag.put("PIAT", "N");
+        fullTagToReducedTag.put("PDAT", "DET");
+        fullTagToReducedTag.put("PDS", "DET");
+        fullTagToReducedTag.put("PIAT", "DET");
         fullTagToReducedTag.put("PIS", "N");
         fullTagToReducedTag.put("PPER", "N");
         fullTagToReducedTag.put("PPOSAT", "ADJ");
-        fullTagToReducedTag.put("PPOSS", "ADJ");
-        fullTagToReducedTag.put("PRELAT", "IN");
-        fullTagToReducedTag.put("PRELS", "N");
+        fullTagToReducedTag.put("PPOSS", "N");
+        fullTagToReducedTag.put("PRELAT", "W");
+        fullTagToReducedTag.put("PRELS", "W");
         fullTagToReducedTag.put("PRF", "N");
-        fullTagToReducedTag.put("PTKA", "PREP");
+        fullTagToReducedTag.put("PROAV","PRT");
+        fullTagToReducedTag.put("PTKA", "PRT");
         fullTagToReducedTag.put("PTKANT", "INPUNC");
         fullTagToReducedTag.put("PTKNEG", "ADV");
-        fullTagToReducedTag.put("PTKVZ", "");
+        fullTagToReducedTag.put("PTKVZ", "PRT");
         fullTagToReducedTag.put("PTKZU", "TO");
         fullTagToReducedTag.put("PWAT", "W");
         fullTagToReducedTag.put("PWAV", "W");
         fullTagToReducedTag.put("PWS", "W");
-        fullTagToReducedTag.put("TRUNC", "");
+        fullTagToReducedTag.put("TRUNC", "PRT");
         fullTagToReducedTag.put("VAFIN", "V");
         fullTagToReducedTag.put("VAIMP", "V");
         fullTagToReducedTag.put("VAINF", "V");
-        fullTagToReducedTag.put("VAPP", "V");
+        fullTagToReducedTag.put("VAPP", "VBN");
         fullTagToReducedTag.put("VMFIN", "V");
         fullTagToReducedTag.put("VMINF", "V");
-        fullTagToReducedTag.put("VMPP", "V");
+        fullTagToReducedTag.put("VMPP", "VBN");
         fullTagToReducedTag.put("VVFIN", "V");
         fullTagToReducedTag.put("VVIMP", "V");
         fullTagToReducedTag.put("VVINF", "V");
         fullTagToReducedTag.put("VVIZU", "V");
-        fullTagToReducedTag.put("VVPP", "V");
-        fullTagToReducedTag.put("XY", "");
+        fullTagToReducedTag.put("VVPP", "VBN");
+        fullTagToReducedTag.put("XY", "N");
 
         reducedTagSet.remove("POS");
         reducedTagSet.remove("LPUNC");
         reducedTagSet.remove("RPUNC");
-        
+        reducedTagSet.remove("VBG");
+
         idxToReducedTag = new HashMap<Integer, String>();
         setIdxMap(reducedTagSet, idxToReducedTag);
         return reducedTagSet;
