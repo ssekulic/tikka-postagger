@@ -97,7 +97,6 @@ public abstract class TagMap extends HashMap<String, Integer> implements
 
     protected void initializeReduced(int _modelTagSize) {
         initialize(_modelTagSize);
-
     }
 
     /**

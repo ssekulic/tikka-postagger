@@ -35,7 +35,11 @@ public class TagSetEnum {
         /**
          * German Tiger corpus tagset
          */
-        TIGER
+        TIGER,
+        /**
+         * Uspanteko
+         */
+        USP
     }
 
     public static enum ReductionLevel {
