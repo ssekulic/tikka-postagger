@@ -69,14 +69,14 @@ for mod in models:
 mapper = {}
 mapper["brown"] = {}
 mapper["wsj"] = {}
-mapper["brown"]["f1to1"] = 0
-mapper["brown"]["fmto1"] = 1
-mapper["brown"]["r1to1"] = 2
-mapper["brown"]["rmto1"] = 3
-mapper["wsj"]["f1to1"] = 4
-mapper["wsj"]["fmto1"] = 5
-mapper["wsj"]["r1to1"] = 6
-mapper["wsj"]["rmto1"] = 7
+mapper["wsj"]["f1to1"] = 0
+mapper["wsj"]["fmto1"] = 1
+mapper["wsj"]["r1to1"] = 2
+mapper["wsj"]["rmto1"] = 3
+mapper["brown"]["f1to1"] = 4
+mapper["brown"]["fmto1"] = 5
+mapper["brown"]["r1to1"] = 6
+mapper["brown"]["rmto1"] = 7
 
 for corpus, subt in table.iteritems():
     for mid, subsubt in subt.iteritems():
