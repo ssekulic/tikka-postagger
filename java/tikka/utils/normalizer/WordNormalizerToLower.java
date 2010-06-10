@@ -40,8 +40,8 @@ public class WordNormalizerToLower extends WordNormalizer {
 
             word = strings[0].toLowerCase();
 
-            if (tagMap.isIgnoreTag(reducedTag)) {
-                throw new IgnoreTagException(word, reducedTag);
+            if (tagMap.isIgnoreTag(fullTag)) {
+                throw new IgnoreTagException(word, fullTag);
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             reducedTag = null;

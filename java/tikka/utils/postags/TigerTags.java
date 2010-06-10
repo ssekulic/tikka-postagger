@@ -161,8 +161,8 @@ public class TigerTags extends TagMap {
         contentTagSet = tigerContentTagSet;
         functionTagSet = tigerFunctionTagSet;
         fullTagSet = tigerFullTagSet;
-        ignoreSet = tigerIgnoreSet;
         initializeFull(_modelTagSize);
+        ignoreSet = tigerIgnoreSet;
     }
 
     protected TigerTags() {

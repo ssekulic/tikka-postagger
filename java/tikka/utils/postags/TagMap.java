@@ -64,6 +64,8 @@ public abstract class TagMap extends HashMap<String, Integer> implements
     }
 
     protected void initialize(int _modelTagSize) {
+        ignoreSet = new HashSet<String>();
+
         oneToOneTagMap = new IntTagMap();
         manyToOneTagMap = new IntTagMap();
         for (int i = 0; i < _modelTagSize; ++i) {

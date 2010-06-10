@@ -16,6 +16,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 package tikka.utils.postags;
 
+import java.util.HashMap;
+import java.util.HashSet;
+
 /**
  * Class is needed to facilitate evaluation in Evaluator class
  * 
@@ -24,11 +27,24 @@ package tikka.utils.postags;
 public class BrownTagsCE extends BrownTags {
 
     public BrownTagsCE(int _modelTagSize) {
-        super(_modelTagSize);
+        contentTagSet = brownContentTagSet;
+        functionTagSet = brownFunctionTagSet;
+        fullTagSet = brownFullTagSet;
+
+        initializeReduced(_modelTagSize);
+        reduceTag();
     }
 
     @Override
     public int getTagSetSize() {
         return reducedTagSet.size();
+    }
+
+    @Override
+    protected HashSet<String> reduceTag() {
+        super.reduceTag();
+        idxToReducedTag = new HashMap<Integer, String>();
+        setIdxMap(reducedTagSet, idxToReducedTag);
+        return reducedTagSet;
     }
 }

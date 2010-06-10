@@ -207,6 +207,9 @@ public class BrownTags extends TagMap {
         initializeFull(_modelTagSize);
     }
 
+    protected BrownTags() {
+    }
+
     @Override
     public String getReducedTag(String tag) {
         String[] tags = tag.split("[+\\-]");
@@ -300,7 +303,7 @@ public class BrownTags extends TagMap {
          * The reduced tag set for brown does not use the POS label
          */
         reducedTagSet.remove("POS");
-        idxToReducedTag = new HashMap<Integer, String>();
-        setIdxMap(reducedTagSet, idxToReducedTag);
+
         return reducedTagSet;
-    }}
+    }
+}
