@@ -56,6 +56,16 @@ public class TagMapGenerator {
                         break;
                 }
                 break;
+            case USP:
+                switch (level) {
+                    case FULL:
+                        tagMap = new UspTags(modelTagSize);
+                        break;
+                    case REDUCED:
+                        tagMap = new UspTagsCE(modelTagSize);
+                        break;
+                }
+                break;
         }
         tagMap.tagSet = tagSet;
         tagMap.level = level;
