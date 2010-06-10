@@ -21,6 +21,7 @@ import tikka.utils.postags.TagMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import tikka.exceptions.IgnoreTagException;
 
 /**
  *
@@ -41,7 +42,7 @@ public class WordNormalizer {
     public WordNormalizer() {
     }
 
-    public String[] normalize(String[] strings) {
+    public String[] normalize(String[] strings) throws IgnoreTagException {
         this.strings = new String[strings.length];
         try {
             fullTag = strings[1];
@@ -66,6 +67,10 @@ public class WordNormalizer {
         }
         this.strings[0] = word;
 
+        if (tagMap.isIgnoreTag(reducedTag)) {
+            throw new IgnoreTagException(word, reducedTag);
+        }
+
         return this.strings;
     }
 
@@ -86,6 +91,10 @@ public class WordNormalizer {
     }
 
     public String getTag() {
-        return reducedTag;
+        return fullTag;
+    }
+
+    public String getReducedTag() {
+        return tagMap.getReducedTag(fullTag);
     }
 }

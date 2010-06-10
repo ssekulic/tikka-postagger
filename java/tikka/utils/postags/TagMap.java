@@ -128,6 +128,26 @@ public abstract class TagMap extends HashMap<String, Integer> implements
         return tag;
     }
 
+    public boolean isIgnoreTag(String _tag) {
+        if (ignoreSet.contains(_tag)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *
+     * @param tag
+     * @return
+     */
+    public Integer get(String tag) {
+        if (!containsKey(tag)) {
+            System.err.println("\"" + tag + "\" did not exist in the postag lexicon");
+            System.exit(1);
+        }
+        return super.get(tag);
+    }
+
     /**
      *
      * @param _tag

@@ -15,38 +15,25 @@
 //  License along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-package tikka.utils.normalizer;
-
-import tikka.exceptions.IgnoreTagException;
-import tikka.utils.postags.TagMap;
+package tikka.exceptions;
 
 /**
  *
  * @author tsmoon
  */
-public class WordNormalizerToLower extends WordNormalizer {
+public class IgnoreTagException extends Exception {
 
-    public WordNormalizerToLower(TagMap tagMap) {
-        super(tagMap);
+    protected String token;
+    protected String tag;
+    protected String message;
+
+    public IgnoreTagException(String _token, String _tag) {
+        token = _token;
+        tag = _tag;
+        message = String.format("The token \"%s\" will be ignored due to its tag \"%s\".", token, tag);
     }
 
-    @Override
-    public String[] normalize(String[] strings) throws IgnoreTagException {
-        this.strings = new String[strings.length];
-
-        try {
-            fullTag = strings[1];
-            reducedTag = tagMap.getReducedTag(strings[1]);
-
-            word = strings[0].toLowerCase();
-
-            if (tagMap.isIgnoreTag(reducedTag)) {
-                throw new IgnoreTagException(word, reducedTag);
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            reducedTag = null;
-            word = "";
-        }
-        return this.strings;
+    public void printMessage() {
+        System.err.println(message);
     }
 }

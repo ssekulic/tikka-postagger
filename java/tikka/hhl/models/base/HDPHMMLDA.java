@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import tikka.exceptions.IgnoreTagException;
 import tikka.hhl.distributions.AffixStemStateHDP;
 import tikka.hhl.distributions.StemStateDP;
 import tikka.hhl.distributions.StemTopicDP;
@@ -728,14 +729,17 @@ public abstract class HDPHMMLDA {
                 String[][] sentence;
                 while ((sentence = dataReader.nextSequence()) != null) {
                     for (String[] line : sentence) {
-                        String word = wordNormalizer.normalize(line)[0];
-                        if (!word.isEmpty()) {
-                            if (!wordIdx.containsKey(word)) {
-                                wordIdx.put(word, wordIdx.size());
-                                idxToWord.put(idxToWord.size(), word);
+                        try {
+                            String word = wordNormalizer.normalize(line)[0];
+                            if (!word.isEmpty()) {
+                                if (!wordIdx.containsKey(word)) {
+                                    wordIdx.put(word, wordIdx.size());
+                                    idxToWord.put(idxToWord.size(), word);
+                                }
+                                wordVectorT.add(wordIdx.get(word));
+                                documentVectorT.add(documentD);
                             }
-                            wordVectorT.add(wordIdx.get(word));
-                            documentVectorT.add(documentD);
+                        } catch (IgnoreTagException e) {
                         }
                     }
                     wordVectorT.add(EOSi);
