@@ -32,7 +32,8 @@ model_id=""
 data_id=""
 corpus=""
 
-dataline = "model_id,corpus,data_id,function_states,content_states,f1to1,fmto1,r1to1,rmto1"
+dataline = "model.id,corpus,data.id,function.states,content.states,states,f1to1,fmto1,r1to1,rmto1"
+print dataline
 
 for fi in os.listdir(inpath):
     fullpath=os.path.join(inpath,fi)
@@ -46,6 +47,7 @@ for fi in os.listdir(inpath):
         model_id=labs[-3]
         function_states=labs[-5]
         content_states=labs[-4]
+        states = "%d" % (int(function_states) + int(content_states))
         handle = open(fullpath)
         scores = ""
         for line in handle:
@@ -62,7 +64,7 @@ for fi in os.listdir(inpath):
 
             datam = {"model_id":model_id, "data_id":data_id, "corpus":corpus, \
                          "function_states":function_states, "content_states":content_states, \
-                         "f1to1":f1to1, "fmto1":fmto1, "r1to1":r1to1, "rmto1":rmto1}
+                         "f1to1":f1to1, "fmto1":fmto1, "r1to1":r1to1, "rmto1":rmto1,"states":states}
 
-            dataline = "%(model_id)s,%(corpus)s,%(data_id)s,%(function_states)s,%(content_states)s,%(f1to1)s,%(fmto1)s,%(r1to1)s,%(rmto1)s" % datam
+            dataline = "%(model_id)s,%(corpus)s,%(data_id)s,%(function_states)s,%(content_states)s,%(states)s,%(f1to1)s,%(fmto1)s,%(r1to1)s,%(rmto1)s" % datam
             print dataline
