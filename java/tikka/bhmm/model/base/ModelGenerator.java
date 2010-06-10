@@ -22,32 +22,14 @@ public class ModelGenerator {
         BHMM bhmm = null;
         if (modelName.equals("m1")) {
             bhmm = new BHMMm1(options);
-        } else if (modelName.equals("m1t1")) {
-            bhmm = new BHMMm1t1(options);
         } else if (modelName.equals("m2")) {
             bhmm = new BHMMm2(options);
         } else if (modelName.equals("m3")) {
             bhmm = new BHMMm3(options);
         } else if (modelName.equals("m4")) {
             bhmm = new BHMMm4(options);
-        } else if (modelName.equals("m5")) {
-            bhmm = new BHMMm5(options);
-        } else if (modelName.equals("m5s2")) {
-            bhmm = new xBHMMm5s2(options);
         } else if (modelName.equals("m6")) {
             bhmm = new BHMMm6(options);
-        } else if (modelName.equals("m6t1")) {
-            bhmm = new BHMMm6t1(options);
-        } else if (modelName.equals("m7")) {
-            bhmm = new BHMMm7(options);
-        } else if (modelName.equals("sm1")) {
-            bhmm = new sBHMMm1(options);
-        } else if (modelName.equals("sm2")) {
-            bhmm = new sBHMMm2(options);
-        } else if (modelName.equals("sm3")) {
-            bhmm = new sBHMMm3(options);
-        } else if (modelName.equals("sm6")) {
-            bhmm = new sBHMMm6(options);
         }
         return bhmm;
     }
