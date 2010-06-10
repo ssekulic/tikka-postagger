@@ -133,7 +133,9 @@ public class PennTags extends TagMap {
         functionTagSet = pennFunctionTagSet;
         fullTagSet = pennFullTagSet;
         initializeFull(_modelTagSize);
-        reduceTag();
+    }
+
+    protected PennTags() {
     }
 
     @Override
@@ -182,8 +184,6 @@ public class PennTags extends TagMap {
         fullTagToReducedTag.put("WRB", "W");
         fullTagToReducedTag.put("VBN", "VBN");
 
-        idxToReducedTag = new HashMap<Integer, String>();
-        setIdxMap(reducedTagSet, idxToReducedTag);
         return reducedTagSet;
     }
 }

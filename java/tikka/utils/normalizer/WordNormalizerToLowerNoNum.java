@@ -61,8 +61,8 @@ public class WordNormalizerToLowerNoNum extends WordNormalizer {
         }
         this.strings[0] = word;
 
-        if (tagMap.isIgnoreTag(reducedTag)) {
-            throw new IgnoreTagException(word, reducedTag);
+        if (tagMap.isIgnoreTag(fullTag)) {
+            throw new IgnoreTagException(word, fullTag);
         }
 
         return this.strings;
