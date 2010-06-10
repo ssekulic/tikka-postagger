@@ -20,6 +20,9 @@ package tikka.hmm.model.base;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import tikka.exceptions.IgnoreTagException;
 import tikka.hmm.apps.CommandLineOptions;
 
 import tikka.opennlp.io.*;
@@ -425,18 +428,21 @@ public abstract class HMM {
                 String[][] sentence;
                 while ((sentence = dataReader.nextSequence()) != null) {
                     for (String[] line : sentence) {
-                        wordNormalizer.normalize(line);
-                        String word = wordNormalizer.getWord();
-                        String tag = wordNormalizer.getTag();
-                        if (!word.isEmpty() && tag != null) {
-                            if (!wordIdx.containsKey(word)) {
-                                wordIdx.put(word, wordIdx.size());
-                                idxToWord.put(idxToWord.size(), word);
+                        try {
+                            wordNormalizer.normalize(line);
+                            String word = wordNormalizer.getWord();
+                            String tag = wordNormalizer.getTag();
+                            if (!word.isEmpty() && tag != null) {
+                                if (!wordIdx.containsKey(word)) {
+                                    wordIdx.put(word, wordIdx.size());
+                                    idxToWord.put(idxToWord.size(), word);
+                                }
+                                wordVectorT.add(wordIdx.get(word));
+                                sentenceVectorT.add(sentenceS);
+                                documentVectorT.add(documentD);
+                                goldFullTagVectorT.add(tagMap.get(tag));
                             }
-                            wordVectorT.add(wordIdx.get(word));
-                            sentenceVectorT.add(sentenceS);
-                            documentVectorT.add(documentD);
-                            goldFullTagVectorT.add(tagMap.get(tag));
+                        } catch (IgnoreTagException e) {
                         }
                     }
                     sentenceS++;

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import tikka.exceptions.IgnoreTagException;
 import tikka.opennlp.io.DirReader;
 import tikka.utils.annealer.Annealer;
 
@@ -116,20 +117,23 @@ public class HMMLDA extends HMM {
                 String[][] sentence;
                 while ((sentence = dataReader.nextSequence()) != null) {
                     for (String[] line : sentence) {
+                        try {
 //                        String word = wordNormalizer.normalize(line)[0];
-                        wordNormalizer.normalize(line);
-                        String word = wordNormalizer.getWord();
-                        String tag = wordNormalizer.getTag();
-                        if (!word.isEmpty() && tag != null) {
-                            if (!wordIdx.containsKey(word)) {
-                                wordIdx.put(word, wordIdx.size());
-                                idxToWord.put(idxToWord.size(), word);
-                            }
+                            wordNormalizer.normalize(line);
+                            String word = wordNormalizer.getWord();
+                            String tag = wordNormalizer.getTag();
+                            if (!word.isEmpty() && tag != null) {
+                                if (!wordIdx.containsKey(word)) {
+                                    wordIdx.put(word, wordIdx.size());
+                                    idxToWord.put(idxToWord.size(), word);
+                                }
 
-                            wordVectorT.add(wordIdx.get(word));
-                            documentVectorT.add(documentD);
-                            sentenceVectorT.add(sentenceS);
-                            goldFullTagVectorT.add(tagMap.get(tag));
+                                wordVectorT.add(wordIdx.get(word));
+                                documentVectorT.add(documentD);
+                                sentenceVectorT.add(sentenceS);
+                                goldFullTagVectorT.add(tagMap.get(tag));
+                            }
+                        } catch (IgnoreTagException e) {
                         }
                     }
 //                    wordVectorT.add(EOSi);
