@@ -96,7 +96,7 @@ public class Evaluator {
     public void matchTags(int[] _modelTags, int[] _goldTags, TagMap _tagMap,
           IntTagMap _oneToOneTagMap, IntTagMap _manyToOneTagMap) {
         int M = _tagMap.oneToOneTagMap.size();
-        int N = _tagMap.reducedTagSet.size();
+        int N = _tagMap.getTagSetSize();
         int[] cooccurrenceMatrix = new int[M * N];
         double[] costMatrix = new double[M * N];
         int[] modelTagCounts = new int[M];

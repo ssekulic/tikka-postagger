@@ -132,7 +132,7 @@ public class PennTags extends TagMap {
         contentTagSet = pennContentTagSet;
         functionTagSet = pennFunctionTagSet;
         fullTagSet = pennFullTagSet;
-        initialize(_modelTagSize);
+        initializeFull(_modelTagSize);
         reduceTag();
     }
 

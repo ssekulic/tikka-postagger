@@ -5,7 +5,6 @@
 package tikka.bhmm.apps;
 
 import tikka.bhmm.model.base.*;
-import tikka.bhmm.models.*;
 
 import java.io.IOException;
 

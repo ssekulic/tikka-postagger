@@ -24,7 +24,7 @@ import java.util.HashSet;
  *
  * @author Taesun Moon <tsunmoon@gmail.com>
  */
-public class TigerTagMap extends TagMap {
+public class TigerTags extends TagMap {
 
     protected final HashSet<String> tigerContentTagSet = new HashSet<String>(Arrays.asList(
           "ADJA", // adjective, attributive
@@ -65,7 +65,7 @@ public class TigerTagMap extends TagMap {
           "PRELAT", // attributive relative pronoun
           "PRELS", // substituting relative pronoun
           "PRF", // reflexive personal pronoun
-          "PROAV",       // pronominal adverb, quite possibly a bug, doesn't seem to exist in the tiger manual
+          "PROAV", // pronominal adverb, quite possibly a bug, doesn't seem to exist in the tiger manual
           "PTKA", // particle with adjective or adverb
           "PTKANT", // answer particle
           "PTKNEG", // negative particle
@@ -118,7 +118,7 @@ public class TigerTagMap extends TagMap {
           "PRELAT", // attributive relative pronoun
           "PRELS", // substituting relative pronoun
           "PRF", // reflexive personal pronoun
-          "PROAV",       // pronominal adverb, quite possibly a bug, doesn't seem to exist in the tiger manual
+          "PROAV", // pronominal adverb, quite possibly a bug, doesn't seem to exist in the tiger manual
           "PTKA", // particle with adjective or adverb
           "PTKANT", // answer particle
           "PTKNEG", // negative particle
@@ -156,14 +156,16 @@ public class TigerTagMap extends TagMap {
      *
      * @param _modelTagSize
      */
-    public TigerTagMap(int _modelTagSize) {
+    public TigerTags(int _modelTagSize) {
         super(_modelTagSize);
         contentTagSet = tigerContentTagSet;
         functionTagSet = tigerFunctionTagSet;
         fullTagSet = tigerFullTagSet;
         ignoreSet = tigerIgnoreSet;
-        initialize(_modelTagSize);
-        reduceTag();
+        initializeFull(_modelTagSize);
+    }
+
+    protected TigerTags() {
     }
 
     @Override
@@ -198,7 +200,7 @@ public class TigerTagMap extends TagMap {
         fullTagToReducedTag.put("PRELAT", "W");
         fullTagToReducedTag.put("PRELS", "W");
         fullTagToReducedTag.put("PRF", "N");
-        fullTagToReducedTag.put("PROAV","PRT");
+        fullTagToReducedTag.put("PROAV", "PRT");
         fullTagToReducedTag.put("PTKA", "PRT");
         fullTagToReducedTag.put("PTKANT", "INPUNC");
         fullTagToReducedTag.put("PTKNEG", "ADV");
@@ -227,8 +229,6 @@ public class TigerTagMap extends TagMap {
         reducedTagSet.remove("RPUNC");
         reducedTagSet.remove("VBG");
 
-        idxToReducedTag = new HashMap<Integer, String>();
-        setIdxMap(reducedTagSet, idxToReducedTag);
         return reducedTagSet;
     }
 }

@@ -150,7 +150,7 @@ public abstract class BHMM extends BHMMFields {
     }
 
     /**
-     * Randomly initialize parameters for training
+     * Randomly initializeFull parameters for training
      */
     public abstract void initializeParametersRandom();
 

@@ -47,7 +47,14 @@ public class TagMapGenerator {
                 }
                 break;
             case TIGER:
-                tagMap = new TigerTagMap(modelTagSize);
+                switch (level) {
+                    case FULL:
+                        tagMap = new TigerTags(modelTagSize);
+                        break;
+                    case REDUCED:
+                        tagMap = new TigerTagsCE(modelTagSize);
+                        break;
+                }
                 break;
         }
         tagMap.tagSet = tagSet;

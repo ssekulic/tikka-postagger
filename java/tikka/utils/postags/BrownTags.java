@@ -204,7 +204,7 @@ public class BrownTags extends TagMap {
         contentTagSet = brownContentTagSet;
         functionTagSet = brownFunctionTagSet;
         fullTagSet = brownFullTagSet;
-        initialize(_modelTagSize);
+        initializeFull(_modelTagSize);
     }
 
     @Override

@@ -26,4 +26,9 @@ public class BrownTagsCE extends BrownTags {
     public BrownTagsCE(int _modelTagSize) {
         super(_modelTagSize);
     }
+
+    @Override
+    public int getTagSetSize() {
+        return reducedTagSet.size();
+    }
 }
