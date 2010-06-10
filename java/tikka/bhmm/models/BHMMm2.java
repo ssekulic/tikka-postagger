@@ -40,7 +40,7 @@ public class BHMMm2 extends BHMM {
     }
 
     /**
-     * Randomly initialize learning parameters
+     * Randomly initializeFull learning parameters
      */
     @Override
     public void initializeParametersRandom() {

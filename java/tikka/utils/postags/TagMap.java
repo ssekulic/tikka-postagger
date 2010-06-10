@@ -49,7 +49,7 @@ public abstract class TagMap extends HashMap<String, Integer> implements
           "W",//WDT WP$ WP WRB
           "VBN"//VBN
           ));
-    protected HashMap<Integer, String> idxToContentTag, idxToFunctionTag, idxToFullTag, idxToReducedTag;
+    protected HashMap<Integer, String> idxToFullTag, idxToReducedTag;
     protected HashMap<String, String> fullTagToReducedTag;
     protected IntTagMap oneToOneTagMap;
     protected IntTagMap manyToOneTagMap;
@@ -76,23 +76,26 @@ public abstract class TagMap extends HashMap<String, Integer> implements
         for (String tag : fullTagSet) {
             fullTagToReducedTag.put(tag, tag);
         }
+    }
 
+    protected void initializeFull(int _modelTagSize) {
+        initialize(_modelTagSize);
         idxToFullTag = new HashMap<Integer, String>();
         setIdxMap(fullTagSet, idxToFullTag);
-        idxToContentTag = new HashMap<Integer, String>();
-        idxToFunctionTag = new HashMap<Integer, String>();
-        int idx = 0;
-        for (String tag : contentTagSet) {
-            idxToContentTag.put(idx, tag);
-            idxToFullTag.put(idx, tag);
-            idx += 1;
-        }
+        reduceTag();
 
-        for (String tag : functionTagSet) {
-            idxToFunctionTag.put(idx, tag);
-            idxToFullTag.put(idx, tag);
-            idx += 1;
+        idxToReducedTag = new HashMap<Integer, String>();
+        int idx = 0;
+        for (String tag : fullTagToReducedTag.keySet()) {
+            idx = get(tag);
+            String reducedTag = fullTagToReducedTag.get(tag);
+            idxToReducedTag.put(idx, reducedTag);
         }
+    }
+
+    protected void initializeReduced(int _modelTagSize) {
+        initialize(_modelTagSize);
+
     }
 
     /**
@@ -161,6 +164,10 @@ public abstract class TagMap extends HashMap<String, Integer> implements
         }
     }
 
+    public int getTagSetSize() {
+        return fullTagSet.size();
+    }
+
     public String getTagSetName() {
         return tagSet.toString();
     }
@@ -195,29 +202,5 @@ public abstract class TagMap extends HashMap<String, Integer> implements
 
     public String getGoldReducedTagString(int goldid) {
         return idxToReducedTag.get(goldid);
-    }
-
-    public int getContentTagSize() {
-        return contentTagSet.size();
-    }
-
-    public int getFunctionTagSize() {
-        return functionTagSet.size();
-    }
-
-    public boolean isContentTag(String tag) {
-        return contentTagSet.contains(tag);
-    }
-
-    public boolean isFunctionTag(String tag) {
-        return functionTagSet.contains(tag);
-    }
-
-    public boolean isContentTag(int tagid) {
-        return idxToContentTag.containsKey(tagid);
-    }
-
-    public boolean isFunctionTag(int tagid) {
-        return idxToFunctionTag.containsKey(tagid);
     }
 }
