@@ -329,6 +329,8 @@ public class CommandLineOptions {
                             tagSet = TagSetEnum.TagSet.TIGER;
                         } else if (value.equals("u")) {
                             tagSet = TagSetEnum.TagSet.USP;
+                        } else if (value.equals("f")) {
+                            tagSet = TagSetEnum.TagSet.FLORESTA;
                         }
                     } else if (opt.equals("ur")) {
                         int val = Integer.parseInt(value);
