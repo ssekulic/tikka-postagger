@@ -39,7 +39,11 @@ public class TagSetEnum {
         /**
          * Uspanteko
          */
-        USP
+        USP,
+        /**
+         * floresta corpus
+         */
+        FLORESTA
     }
 
     public static enum ReductionLevel {

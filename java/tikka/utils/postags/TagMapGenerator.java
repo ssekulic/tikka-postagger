@@ -66,6 +66,16 @@ public class TagMapGenerator {
                         break;
                 }
                 break;
+            case FLORESTA:
+                switch (level) {
+                    case FULL:
+                        tagMap = new FlorestaTags(modelTagSize);
+                        break;
+                    case REDUCED:
+                        tagMap = new FlorestaTagsCE(modelTagSize);
+                        break;
+                }
+                break;
         }
         tagMap.tagSet = tagSet;
         tagMap.level = level;
