@@ -42,6 +42,7 @@ public class Evaluator {
     protected IntTagMap goldToModelTagMap;
     protected DistanceMeasureEnum.Measure measure;
     protected DistanceMeasure distanceMeasure;
+    protected double pairwisePrecision, pairwiseRecall, pairwiseFScore, variationOfInformation;
 
     /**
      * 
@@ -250,6 +251,123 @@ public class Evaluator {
             }
         }
         return correct / (double) total;
+    }
+
+    protected double pairwiseEvaluation(int[] _modelTags, int[] _goldTags,
+          int _modelK, int _goldK) {
+        int[] confusionMatrix = new int[_modelK * _goldK];
+        int[] rowSum = new int[_modelK];
+        int[] columnSum = new int[_goldK];
+        int N = _modelTags.length;
+
+        for (int i = 0; i < _modelK * _goldK; ++i) {
+            confusionMatrix[i] = 0;
+        }
+        for (int i = 0; i < _modelK; ++i) {
+            rowSum[i] = 0;
+        }
+        for (int i = 0; i < _goldK; ++i) {
+            columnSum[i] = 0;
+        }
+
+        for (int i = 0; i < N; ++i) {
+            int modelidx = _modelTags[i];
+            int goldidx = _goldTags[i];
+            confusionMatrix[modelidx * _goldK + goldidx] += 1;
+        }
+
+        double tp = 0, fp = 0, fn = 0;
+
+        for (int i = 0; i < _modelK; ++i) {
+            for (int j = 0; j < _goldK; ++j) {
+                int val = confusionMatrix[i * _goldK + j];
+                tp += Math.pow(val, 2);
+                columnSum[j] += val;
+                rowSum[i] += val;
+            }
+        }
+
+        for (int i = 0; i < _modelK; ++i) {
+            fp += Math.pow(rowSum[i], 2);
+        }
+
+        for (int j = 0; j < _goldK; ++j) {
+            fn += Math.pow(columnSum[j], 2);
+        }
+
+        tp -= N;
+        tp /= 2;
+        fn -= N;
+        fn /= 2;
+        fp -= N;
+        fp /= 2;
+        fn -= tp;
+        fp -= tp;
+
+        double precision = tp / (tp + fp);
+        double recall = tp / (tp + fn);
+        double fscore = precision * recall / (precision + recall);
+
+        return 0;
+    }
+
+    protected double variationOfInformation(int[] _modelTags, int[] _goldTags,
+          int _modelK, int _goldK) {
+        int[] confusionMatrix = new int[_modelK * _goldK];
+        int[] rowSum = new int[_modelK];
+        int[] columnSum = new int[_goldK];
+        int N = _modelTags.length;
+
+        for (int i = 0; i < _modelK * _goldK; ++i) {
+            confusionMatrix[i] = 0;
+        }
+        for (int i = 0; i < _modelK; ++i) {
+            rowSum[i] = 0;
+        }
+        for (int i = 0; i < _goldK; ++i) {
+            columnSum[i] = 0;
+        }
+
+        for (int i = 0; i < N; ++i) {
+            int modelidx = _modelTags[i];
+            int goldidx = _goldTags[i];
+            confusionMatrix[modelidx * _goldK + goldidx] += 1;
+        }
+
+        for (int i = 0; i < _modelK; ++i) {
+            for (int j = 0; j < _goldK; ++j) {
+                int val = confusionMatrix[i * _goldK + j];
+                columnSum[j] += val;
+                rowSum[i] += val;
+            }
+        }
+
+        double hc = 0;
+        for (int i = 0; i < _modelK; ++i) {
+            double p = rowSum[i] / (double) N;
+            hc -= p * Math.log(p);
+        }
+
+        double hcp = 0;
+        for (int i = 0; i < _goldK; ++i) {
+            double p = columnSum[i] / (double) N;
+            hcp -= p * Math.log(p);
+        }
+
+        double mi = 0;
+        for (int i = 0; i < _modelK; ++i) {
+            for (int j = 0; j < _goldK; ++j) {
+                int val = confusionMatrix[i * _goldK + j];
+                double p = val;
+                double pc = columnSum[j];
+                double pcp = rowSum[i] / (double) N;
+                mi += p * Math.log(p / (pc * pcp));
+            }
+        }
+
+        double vi = hc + hcp - 2 * mi;
+
+        return vi;
     }
 
     /**

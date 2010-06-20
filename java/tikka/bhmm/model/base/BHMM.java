@@ -354,6 +354,9 @@ public abstract class BHMM extends BHMMFields {
               evaluator.getFullManyToOneAccuracy(),
               evaluator.getReducedOneToOneAccuracy(),
               evaluator.getReducedManyToOneAccuracy()));
+        out.write(
+              String.format("\t",
+              ""));
     }
 
     /**
