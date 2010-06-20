@@ -28,6 +28,7 @@ import java.util.HashSet;
  */
 public class Evaluator {
 
+    protected final static double EPSILON = 1e-12;
     protected int[] modelTags;//, modelTagCounts;
     protected int[] fullGoldTags;//, goldTagCounts;
     protected int[] reducedGoldTags;//, reducedGoldTagCounts;
@@ -42,7 +43,7 @@ public class Evaluator {
     protected IntTagMap goldToModelTagMap;
     protected DistanceMeasureEnum.Measure measure;
     protected DistanceMeasure distanceMeasure;
-    protected double pairwisePrecision, pairwiseRecall, pairwiseFScore, variationOfInformation;
+    protected ClusterEvalScore fullClusterEvalScore, reducedClusterEvalScore;
 
     /**
      * 
@@ -60,6 +61,9 @@ public class Evaluator {
         reducedManyToOneTagMap = reducedTagMap.manyToOneTagMap;
 
         measure = _measure;
+
+        fullClusterEvalScore = new ClusterEvalScore();
+        reducedClusterEvalScore = new ClusterEvalScore();
     }
 
     /**
@@ -84,6 +88,9 @@ public class Evaluator {
         matchTags(_modelTags, reducedGoldTags, reducedTagMap, reducedOneToOneTagMap, reducedManyToOneTagMap);
         reducedOneToOneAccuracy = measureAccuracy(_modelTags, reducedGoldTags, reducedOneToOneTagMap);
         reducedManyToOneAccuracy = measureAccuracy(_modelTags, reducedGoldTags, reducedManyToOneTagMap);
+
+        clusterEvaluation(modelTags, fullGoldTags, fullTagMap.getModelTagSize(), fullTagMap.getTagSetSize(), fullClusterEvalScore);
+        clusterEvaluation(modelTags, reducedGoldTags, reducedTagMap.getModelTagSize(), reducedTagMap.getTagSetSize(), reducedClusterEvalScore);
     }
 
     /**
@@ -253,8 +260,8 @@ public class Evaluator {
         return correct / (double) total;
     }
 
-    protected double pairwiseEvaluation(int[] _modelTags, int[] _goldTags,
-          int _modelK, int _goldK) {
+    protected void clusterEvaluation(int[] _modelTags, int[] _goldTags,
+          int _modelK, int _goldK, ClusterEvalScore _clusterEvalScore) {
         int[] confusionMatrix = new int[_modelK * _goldK];
         int[] rowSum = new int[_modelK];
         int[] columnSum = new int[_goldK];
@@ -306,68 +313,45 @@ public class Evaluator {
 
         double precision = tp / (tp + fp);
         double recall = tp / (tp + fn);
-        double fscore = precision * recall / (precision + recall);
+        double fscore = 2 * precision * recall
+              / (precision + recall);
 
-        return 0;
-    }
+        _clusterEvalScore.pairwisePrecision = precision;
+        _clusterEvalScore.pairwiseRecall = recall;
+        _clusterEvalScore.pairwiseFScore = fscore;
 
-    protected double variationOfInformation(int[] _modelTags, int[] _goldTags,
-          int _modelK, int _goldK) {
-        int[] confusionMatrix = new int[_modelK * _goldK];
-        int[] rowSum = new int[_modelK];
-        int[] columnSum = new int[_goldK];
-        int N = _modelTags.length;
-
-        for (int i = 0; i < _modelK * _goldK; ++i) {
-            confusionMatrix[i] = 0;
-        }
-        for (int i = 0; i < _modelK; ++i) {
-            rowSum[i] = 0;
-        }
-        for (int i = 0; i < _goldK; ++i) {
-            columnSum[i] = 0;
-        }
-
-        for (int i = 0; i < N; ++i) {
-            int modelidx = _modelTags[i];
-            int goldidx = _goldTags[i];
-            confusionMatrix[modelidx * _goldK + goldidx] += 1;
-        }
-
-        for (int i = 0; i < _modelK; ++i) {
-            for (int j = 0; j < _goldK; ++j) {
-                int val = confusionMatrix[i * _goldK + j];
-                columnSum[j] += val;
-                rowSum[i] += val;
-            }
-        }
-
-        double hc = 0;
+        double modelEntropy = 0;
         for (int i = 0; i < _modelK; ++i) {
             double p = rowSum[i] / (double) N;
-            hc -= p * Math.log(p);
-        }
-
-        double hcp = 0;
-        for (int i = 0; i < _goldK; ++i) {
-            double p = columnSum[i] / (double) N;
-            hcp -= p * Math.log(p);
-        }
-
-        double mi = 0;
-        for (int i = 0; i < _modelK; ++i) {
-            for (int j = 0; j < _goldK; ++j) {
-                int val = confusionMatrix[i * _goldK + j];
-                double p = val;
-                double pc = columnSum[j];
-                double pcp = rowSum[i] / (double) N;
-                mi += p * Math.log(p / (pc * pcp));
+            if (p > EPSILON) {
+                modelEntropy -= p * Math.log(p);
             }
         }
 
-        double vi = hc + hcp - 2 * mi;
+        double goldEntropy = 0;
+        for (int i = 0; i < _goldK; ++i) {
+            double p = columnSum[i] / (double) N;
+            if (p > EPSILON) {
+                goldEntropy -= p * Math.log(p);
+            }
+        }
 
-        return vi;
+        double mutualInformation = 0;
+        for (int i = 0; i < _modelK; ++i) {
+            for (int j = 0; j < _goldK; ++j) {
+                int val = confusionMatrix[i * _goldK + j];
+                double jointClusterProb = val / (double) N;
+                double goldClusterProb = columnSum[j] / (double) N;
+                double modelClusterProb = rowSum[i] / (double) N;
+                double ratio = jointClusterProb / (goldClusterProb * modelClusterProb);
+                if (ratio > EPSILON) {
+                    mutualInformation += jointClusterProb * Math.log(ratio);
+                }
+            }
+        }
+
+        double variationOfInformation = modelEntropy + goldEntropy - 2 * mutualInformation;
+        _clusterEvalScore.variationOfInformation = variationOfInformation;
     }
 
     /**
@@ -396,5 +380,45 @@ public class Evaluator {
      */
     public double getReducedManyToOneAccuracy() {
         return reducedManyToOneAccuracy;
+    }
+
+    public double getFullPairwiseFScore() {
+        return fullClusterEvalScore.pairwiseFScore;
+    }
+
+    public double getFullPairwisePrecision() {
+        return fullClusterEvalScore.pairwisePrecision;
+    }
+
+    public double getFullPairwiseRecall() {
+        return fullClusterEvalScore.pairwiseRecall;
+    }
+
+    public double getFullVariationOfInformation() {
+        return fullClusterEvalScore.variationOfInformation;
+    }
+
+    public double getReducedPairwiseFScore() {
+        return reducedClusterEvalScore.pairwiseFScore;
+    }
+
+    public double getReducedPairwisePrecision() {
+        return reducedClusterEvalScore.pairwisePrecision;
+    }
+
+    public double getReducedPairwiseRecall() {
+        return reducedClusterEvalScore.pairwiseRecall;
+    }
+
+    public double getReducedVariationOfInformation() {
+        return reducedClusterEvalScore.variationOfInformation;
+    }
+
+    protected class ClusterEvalScore {
+
+        public double pairwisePrecision = 0,
+              pairwiseRecall = 0,
+              pairwiseFScore = 0,
+              variationOfInformation = 0;
     }
 }

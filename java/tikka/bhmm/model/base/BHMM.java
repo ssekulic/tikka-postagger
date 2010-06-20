@@ -339,11 +339,23 @@ public abstract class BHMM extends BHMMFields {
     public void evaluate() {
         evaluator = new Evaluator(tagMap, DistanceMeasureEnum.Measure.JACCARD);
         evaluator.evaluateTags(stateVector, goldTagVector);
-        System.err.println(
+        System.err.print(
               String.format("%f\t%f\t%f\t%f", evaluator.getFullOneToOneAccuracy(),
               evaluator.getFullManyToOneAccuracy(),
               evaluator.getReducedOneToOneAccuracy(),
               evaluator.getReducedManyToOneAccuracy()));
+        System.err.print(
+              String.format("\t%f\t%f\t%f\t%f",
+              evaluator.getFullPairwisePrecision(),
+              evaluator.getFullPairwiseRecall(),
+              evaluator.getFullPairwiseFScore(),
+              evaluator.getFullVariationOfInformation()));
+        System.err.println(
+              String.format("\t%f\t%f\t%f\t%f",
+              evaluator.getReducedPairwisePrecision(),
+              evaluator.getReducedPairwiseRecall(),
+              evaluator.getReducedPairwiseFScore(),
+              evaluator.getReducedVariationOfInformation()));
     }
 
     public void printEvaluationScore(BufferedWriter out) throws IOException {
@@ -355,8 +367,17 @@ public abstract class BHMM extends BHMMFields {
               evaluator.getReducedOneToOneAccuracy(),
               evaluator.getReducedManyToOneAccuracy()));
         out.write(
-              String.format("\t",
-              ""));
+              String.format("\t%f\t%f\t%f\t%f",
+              evaluator.getFullPairwisePrecision(),
+              evaluator.getFullPairwiseRecall(),
+              evaluator.getFullPairwiseFScore(),
+              evaluator.getFullVariationOfInformation()));
+        out.write(
+              String.format("\t%f\t%f\t%f\t%f",
+              evaluator.getReducedPairwisePrecision(),
+              evaluator.getReducedPairwiseRecall(),
+              evaluator.getReducedPairwiseFScore(),
+              evaluator.getReducedVariationOfInformation()));
     }
 
     /**
