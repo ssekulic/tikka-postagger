@@ -6,7 +6,7 @@ LCURVE_TUPLE=[ "learningcurve0008", "learningcurve0016", "learningcurve0032", \
                  "learningcurve0064", "learningcurve0128", "learningcurve0256", \
                  "learningcurve0512", "learningcurve1024" ]
 
-score_finder=re.compile(r"^(0\.\d+\s*)+$")
+score_finder=re.compile(r"^(\d\.\d+\s*)+$")
 
 data_id_map = {}
 
@@ -51,7 +51,7 @@ for fi in os.listdir(inpath):
         content_states=labs[-4]
         states = "%d" % (int(function_states) + int(content_states))
         handle = open(fullpath)
-        scores = []
+        scores = ""
         for line in handle:
             m = score_finder.search(line)
             if m:
@@ -59,11 +59,11 @@ for fi in os.listdir(inpath):
                 break
         if len(scores) > 0:
             scores = scores.split()
+            if len(scores) == 12:
+                datam = {"model_id":model_id, "data_id":data_id, "corpus":corpus, \
+                             "function_states":function_states, "content_states":content_states, \
+                             "states":states}
 
-            datam = {"model_id":model_id, "data_id":data_id, "corpus":corpus, \
-                         "function_states":function_states, "content_states":content_states, \
-                         "states":states}
-
-            dataline = "%(model_id)s,%(corpus)s,%(data_id)s,%(function_states)s,%(content_states)s,%(states)s" % datam
-            dataline= ",".join([dataline] + scores)
-            print dataline
+                dataline = "%(model_id)s,%(corpus)s,%(data_id)s,%(function_states)s,%(content_states)s,%(states)s" % datam
+                dataline= ",".join([dataline] + scores)
+                print dataline
