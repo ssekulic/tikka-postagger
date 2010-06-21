@@ -283,7 +283,7 @@ public class Evaluator {
             confusionMatrix[modelidx * _goldK + goldidx] += 1;
         }
 
-        int tp = 0, fp = 0, fn = 0;
+        double tp = 0, fp = 0, fn = 0;
 
         for (int i = 0; i < _modelK; ++i) {
             for (int j = 0; j < _goldK; ++j) {
@@ -311,8 +311,8 @@ public class Evaluator {
         fn -= tp;
         fp -= tp;
 
-        double precision = tp / (tp + fp + 0.0);
-        double recall = tp / (tp + fn + 0.0);
+        double precision = tp / (tp + fp);
+        double recall = tp / (tp + fn);
         double fscore = 2 * precision * recall
               / (precision + recall);
 
