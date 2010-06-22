@@ -1,47 +1,23 @@
 #! /usr/bin/python
 
 import os, sys, re
+from tikka_out_processor import *
 
-def sufstat(array):
-    ave = 0
-    stdev = 0
-    if len(array) > 0:
-        ave = sum(array) / len(array)
-        stdev = (sum([(i - ave)**2 for i in array]) / (len(array) - 1)) ** 0.5
-    return (ave, stdev, len(array), len(array) == 10)
-
-score_finder=re.compile(r"^(0\.\d+\s*)+$")
-
-models=("m1","m2","m3","m4","m6")
-evals=("f1to1","fmto1","r1to1","rmto1")
-
-inpath=os.path.abspath(os.path.expanduser(sys.argv[1]))
-
-content_states=0
-function_states=0
-model_id=""
-data_id=""
-corpus=""
-
-table = {"brown":{}, "wsj":{}}
-for corp, subt in table.iteritems():
-    for model in models:
-        subt[model] = {20:{}, 30:{}, 40:{}, 50:{}}
-        for states,scores in subt[model].iteritems():
-            for ev in evals:
-                scores[ev] = []
+data_id_map = get_data_id_map(sys.argv[1])
+score_finder = get_score_finder()
+inpath = get_abs_path(sys.argv[1])
+stat_table = {}
 
 for fi in os.listdir(inpath):
     fullpath=os.path.join(inpath,fi)
     if os.path.isfile(fullpath):
         labs = fi.split(".")
         corpus=labs[0]
-        if labs[-2] != "full":
-                continue
+        iter_id = int(labs[1])
+        data_id = data_id_map[corpus][labs[-2]]
         model_id=labs[-3]
-        function_states=int(labs[-5])
-        content_states=int(labs[-4])
-        states=function_states+content_states
+        function_states=int(labs[-4])
+        content_states=int(labs[-5])
         handle = open(fullpath)
         scores = ""
         for line in handle:
@@ -51,49 +27,63 @@ for fi in os.listdir(inpath):
                 break
         if len(scores) > 0:
             scores = scores.split()
-            f1to1 = float(scores[0])
-            fmto1 = float(scores[1])
-            r1to1 = float(scores[2])
-            rmto1 = float(scores[3])
-            table[corpus][model_id][states]["f1to1"].append(f1to1)
-            table[corpus][model_id][states]["fmto1"].append(fmto1)
-            table[corpus][model_id][states]["r1to1"].append(r1to1)
-            table[corpus][model_id][states]["rmto1"].append(rmto1)
+            if len(scores) == 12:
+                if not stat_table.has_key(corpus):
+                    stat_table[corpus] = { \
+                        data_id : {\
+                            model_id: { \
+                                function_states : { \
+                                    content_states :
+                                        []
+                                    } \
+                                    } \
+                                } \
+                            }
+                elif not stat_table[corpus].has_key(data_id):
+                    stat_table[corpus][data_id] = { \
+                        model_id: { \
+                            function_states : { \
+                                content_states :
+                                    []
+                                } \
+                                } \
+                            } 
+                elif not stat_table[corpus][data_id].has_key(model_id):
+                    stat_table[corpus][data_id][model_id] = { \
+                        function_states : { \
+                            content_states :
+                                []
+                            } \
+                            }
+                elif not stat_table[corpus][data_id][model_id].has_key(function_states):
+                    stat_table[corpus][data_id][model_id][function_states] = { \
+                        content_states :
+                            []
+                        }
+                elif not stat_table[corpus][data_id][model_id][function_states].has_key(content_states):
+                    stat_table[corpus][data_id][model_id][function_states][content_states] = []
 
-addendum = "The following exps are not yet done:\n"
+                stat_table[corpus][data_id][model_id][function_states][content_states].append([float(x) for x in scores])
 
-stringscore = {}
-for mod in models:
-    stringscore[mod] = {20:[0]*8,30:[0]*8,40:[0]*8,50:[0]*8}
-    
-mapper = {}
-mapper["brown"] = {}
-mapper["wsj"] = {}
-mapper["wsj"]["f1to1"] = 0
-mapper["wsj"]["fmto1"] = 1
-mapper["wsj"]["r1to1"] = 2
-mapper["wsj"]["rmto1"] = 3
-mapper["brown"]["f1to1"] = 4
-mapper["brown"]["fmto1"] = 5
-mapper["brown"]["r1to1"] = 6
-mapper["brown"]["rmto1"] = 7
+for corpus, data_id_table in stat_table.iteritems():
+    for data_id, model_id_table in data_id_table.iteritems():
+        for model_id, function_state_table in model_id_table.iteritems():
+            for function_states, content_state_table in function_state_table.iteritems():
+                for content_states, array_array in content_state_table.iteritems():
+                    content_state_table[content_states] = sufstat(array_array)
 
-for corpus, subt in table.iteritems():
-    for mid, subsubt in subt.iteritems():
-        for states, subsubsubt in subsubt.iteritems():
-            for evals, scores in subsubsubt.iteritems():
-                score = sufstat(scores)
-                stringscore[mid][states][mapper[corpus][evals]] = "%.2f (%.2f)" % score[:2]
-                if not score[3]:
-                    addendum += "\t%s, %s, %d, %s\n" % (corpus, mid, states, evals)
-
-for mid, subt in stringscore.iteritems():
-    print mid, ":"
-    print "%%"
-    for states in [20, 30, 40, 50]:
-        line = "\t & %d & " % states
-        line += " & ".join(subt[states]) + r" \\ \cline{2-10}"
-        print line
-        print "%%"
-
-print addendum
+for corpus, data_id_table in stat_table.iteritems():
+    for data_id, model_id_table in data_id_table.iteritems():
+        for model_id, function_state_table in model_id_table.iteritems():
+            for function_states, content_state_table in function_state_table.iteritems():
+                for content_states, ave_stdev in content_state_table.iteritems():
+                    ave = ave_stdev[0]
+                    stdev = ave_stdev[1]
+                    if data_id == data_id_map[corpus]["full"] and corpus == "floresta":
+#                    if data_id == data_id_map[corpus]["full"] and (function_states+content_states) >= 50:
+#                        try:
+                        print corpus, model_id, content_states, function_states,
+                        print " & ".join("%.2f (%.2f)" % tup for tup in zip(ave, stdev))
+#                        except TypeError:
+#                            print ave
+#                            print stdev
