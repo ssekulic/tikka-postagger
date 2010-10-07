@@ -503,7 +503,10 @@ public abstract class BHMM extends BHMMFields {
             bufferedWriter.write("\t");
             int stateid = stateVector[i];
             int goldid = goldTagVector[i];
-            String tag = String.format("F:%s", tagMap.getOneToOneTagString(stateid));
+            String tag = String.format("N:%d", stateid);
+            bufferedWriter.write(tag);
+            bufferedWriter.write("\t");
+            tag = String.format("F:%s", tagMap.getOneToOneTagString(stateid));
             bufferedWriter.write(tag);
             bufferedWriter.write("\t");
             tag = String.format("R:%s", tagMap.getManyToOneTagString(stateid));
