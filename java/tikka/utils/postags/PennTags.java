@@ -55,6 +55,7 @@ public class PennTags extends TagMap {
           //              "-- ", //dash --
           ".", //sentence terminator . ! ?
           ":", //colon or ellipsis : ; ...
+          "$", //dollar sign
           "-RRB-", // Right braces/brackets
           "-LRB-", // Left braces/brackets
           "CC", //Coordinating conjunction
@@ -87,6 +88,7 @@ public class PennTags extends TagMap {
           //              "-- ", //dash --
           ".", //sentence terminator . ! ?
           ":", //colon or ellipsis : ; ...
+          "$", //dollar sign
           "-RRB-", // Right braces/brackets
           "-LRB-", // Left braces/brackets
           "CC", //Coordinating conjunction
@@ -126,6 +128,9 @@ public class PennTags extends TagMap {
           "WP$", //Possessive wh-pronoun
           "WRB" //Wh-adverb
           ));
+    protected final HashSet<String> pennIgnoreSet = new HashSet<String>(Arrays.asList(
+          "-NONE-"
+          ));
 
     public PennTags(int _modelTagSize) {
         super(_modelTagSize);
@@ -133,6 +138,7 @@ public class PennTags extends TagMap {
         functionTagSet = pennFunctionTagSet;
         fullTagSet = pennFullTagSet;
         initializeFull(_modelTagSize);
+        ignoreSet = pennIgnoreSet;
     }
 
     protected PennTags() {
@@ -149,6 +155,7 @@ public class PennTags extends TagMap {
         fullTagToReducedTag.put(".", "ENDPUNC");
         fullTagToReducedTag.put("-LRB-", "LPUNC");
         fullTagToReducedTag.put("``", "LPUNC");
+        fullTagToReducedTag.put("$", "LPUNC");
         fullTagToReducedTag.put("POS", "POS");
         fullTagToReducedTag.put("RP", "PRT");
         fullTagToReducedTag.put("TO", "TO");

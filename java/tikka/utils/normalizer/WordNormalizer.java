@@ -58,7 +58,7 @@ public class WordNormalizer {
             if (!matcher.find()) {
                 pattern = Pattern.compile("(^\\W*(\\w.*\\w)\\W*$|(^\\w+$)|.*)");
                 matcher = pattern.matcher(word);
-                word = matcher.replaceAll("$2$3");
+                word = matcher.replaceAll("$2$3").toLowerCase();
             } else {
                 word = "";
             }
@@ -67,8 +67,8 @@ public class WordNormalizer {
         }
         this.strings[0] = word;
 
-        if (tagMap.isIgnoreTag(reducedTag)) {
-            throw new IgnoreTagException(word, reducedTag);
+        if (tagMap.isIgnoreTag(fullTag)) {
+            throw new IgnoreTagException(word, fullTag);
         }
 
         return this.strings;
