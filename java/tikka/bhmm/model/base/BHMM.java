@@ -136,7 +136,14 @@ public abstract class BHMM extends BHMMFields {
         }
 
         tagMap = TagMapGenerator.generate(options.getTagSet(), options.getReductionLevel(), stateS);
-        wordNormalizer = new WordNormalizerToLower(tagMap);
+        switch (options.getTagSet()) {
+            case PTB:
+            case BROWN:
+                wordNormalizer = new WordNormalizer(tagMap);
+                break;
+            default:
+                wordNormalizer = new WordNormalizerToLower(tagMap);
+        }
 
         modelName = options.getExperimentModel();
     }
