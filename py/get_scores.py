@@ -7,7 +7,7 @@ data_id_map = get_data_id_map(sys.argv[1])
 score_finder = get_score_finder()
 inpath = get_abs_path(sys.argv[1])
 
-dataline = "model.id,corpus,data.id,function.states,content.states,states,f1to1,fmto1,r1to1,rmto1,fprecision,frecall,ffscore,fvi,rprecision,rrecall,rfscore,rvi"
+dataline = "model.id,corpus,data.id,function.states,content.states,states,f1to1,fmto1,r1to1,rmto1,fprecision,frecall,ffscore,fvi,rprecision,rrecall,rfscore,rvi,is.last"
 print dataline
 
 for fi in os.listdir(inpath):
@@ -35,7 +35,10 @@ for fi in os.listdir(inpath):
                 datam = {"model_id":model_id, "data_id":data_id, "corpus":corpus, \
                              "function_states":function_states, "content_states":content_states, \
                              "states":states}
-
+                islast = "0"
+                if data_id_map[corpus]["full"] == data_id:
+                    islast = "1"
+                scores.append(islast)
                 dataline = "%(model_id)s,%(corpus)s,%(data_id)s,%(function_states)s,%(content_states)s,%(states)s" % datam
                 dataline= ",".join([dataline] + scores)
                 print dataline
