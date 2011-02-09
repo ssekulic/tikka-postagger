@@ -76,6 +76,9 @@ public class TagMapGenerator {
                         break;
                 }
                 break;
+            case NONE:
+                tagMap = new NoneTags();
+                break;
         }
         tagMap.tagSet = tagSet;
         tagMap.level = level;

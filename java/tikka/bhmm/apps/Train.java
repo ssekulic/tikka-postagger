@@ -49,7 +49,7 @@ public class Train extends MainBase {
 
             CommandLineOptions modelOptions = new CommandLineOptions(cline);
 
-            BHMM bhmm = ModelGenerator.generator(modelOptions);
+            HMMBase bhmm = ModelGenerator.generator(modelOptions);
 
             System.err.println("Randomly initializing values!");
             bhmm.initializeFromTrainingData();

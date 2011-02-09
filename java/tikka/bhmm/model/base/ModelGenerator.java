@@ -13,23 +13,23 @@ import tikka.bhmm.models.*;
  */
 public class ModelGenerator {
 
-    public static BHMM generator(CommandLineOptions options) {
+    public static HMMBase generator(CommandLineOptions options) {
         String modelName = options.getExperimentModel();
         return generator(modelName, options);
     }
 
-    public static BHMM generator(String modelName, CommandLineOptions options) {
-        BHMM bhmm = null;
+    public static HMMBase generator(String modelName, CommandLineOptions options) {
+        HMMBase bhmm = null;
         if (modelName.equals("m1")) {
-            bhmm = new BHMMm1(options);
+            bhmm = new CDHMMS(options);
         } else if (modelName.equals("m2")) {
-            bhmm = new BHMMm2(options);
+            bhmm = new HMM(options);
         } else if (modelName.equals("m3")) {
-            bhmm = new BHMMm3(options);
+            bhmm = new HMMP(options);
         } else if (modelName.equals("m4")) {
-            bhmm = new BHMMm4(options);
+            bhmm = new LDAHMM(options);
         } else if (modelName.equals("m6")) {
-            bhmm = new BHMMm6(options);
+            bhmm = new CDHMMD(options);
         }
         return bhmm;
     }
