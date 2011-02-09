@@ -43,7 +43,11 @@ public class TagSetEnum {
         /**
          * floresta corpus
          */
-        FLORESTA
+        FLORESTA,
+        /**
+         * no tagset
+         */
+        NONE
     }
 
     public static enum ReductionLevel {

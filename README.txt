@@ -30,9 +30,14 @@ the model from unlabeled text and tagging this text with model
 tags. The script for training is cdhmm-train.sh and the script for
 tagging is cdhmm-tag.sh.
 
-Unfortunately, the system is currently only configured to run with
-tagged texts of specific format to allow evaluation so only the
-following corpora can be used with the model:
+The system can run with a raw untagged corpus. In such cases, each
+token (including punctuation) should be on a separate
+line. Furthermore, for models where document boundaries are relevant,
+each file should correspond to a single document.
+
+It can also run with tagged texts of specific format to allow direct
+evaluation. In such cases the following corpora can be used with the
+model:
 
 * Penn Treebank WSJ
 * Brown corpus
@@ -42,7 +47,7 @@ following corpora can be used with the model:
 These texts must be converted to CONLL format (i.e. one token per
 line, token tab separated by tag on each line, and empty lines between
 sentences) and separate documents must be kept in separate
-formats.
+files.
 
 Let's call the directory where all the converted documents have been
 placed $TRAIN. Then the model used in the paper (see "Reference"
@@ -56,8 +61,9 @@ Besides -d $TRAIN, the commandline options that need to be set are:
   will be run. The values are "m2" for HMM, "m3" for HMM+, "m4" for
   LDAHMM and "m6" for CDHMM.
 * $PATH_TO_MODEL: Path to store the binary model file.
-* $TAG_SET: The tagset of the data you are using. This can be "b" for
-  Brown, "p" for Penn Treebank, "t" for Tiger or "f" for floresta.
+* $TAG_SET: The tagset of the data you are using. This can be "n" for
+  none/raw, "b" for Brown, "p" for Penn Treebank, "t" for Tiger or "f"
+  for floresta.
 
 To replicate the experiments in the paper, run:
 

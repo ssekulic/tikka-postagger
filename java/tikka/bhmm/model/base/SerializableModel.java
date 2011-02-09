@@ -89,7 +89,7 @@ public class SerializableModel implements Serializable {
      * 
      * @param bhmm Model to be saved
      */
-    public SerializableModel(BHMM m) {
+    public SerializableModel(HMMBase m) {
         alpha = m.alpha;
         beta = m.beta;
         dataFormat = m.dataFormat;
@@ -137,7 +137,7 @@ public class SerializableModel implements Serializable {
      * @throws IOException
      * @throws FileNotFoundException
      */
-    public BHMM loadModel(CommandLineOptions options, String filename)
+    public HMMBase loadModel(CommandLineOptions options, String filename)
           throws IOException,
           FileNotFoundException {
         ObjectInputStream modelIn =
@@ -153,7 +153,7 @@ public class SerializableModel implements Serializable {
         loadBuffer = null;
         modelIn.close();
 
-        BHMM bhmm = ModelGenerator.generator(modelName, options);
+        HMMBase bhmm = ModelGenerator.generator(modelName, options);
 
         return copy(bhmm);
     }
@@ -206,7 +206,7 @@ public class SerializableModel implements Serializable {
         wordW = sm.wordW;
     }
 
-    protected BHMM copy(BHMM hmm) {
+    protected HMMBase copy(HMMBase hmm) {
         hmm.alpha = alpha;
         hmm.beta = beta;
         hmm.dataFormat = dataFormat;

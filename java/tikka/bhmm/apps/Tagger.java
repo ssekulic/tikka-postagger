@@ -33,7 +33,7 @@ public class Tagger extends MainBase {
 
             CommandLineOptions modelOptions = new CommandLineOptions(cline);
 
-            BHMM bhmm = null;
+            HMMBase bhmm = null;
 
             String modelInputPath = modelOptions.getModelInputPath();
 
