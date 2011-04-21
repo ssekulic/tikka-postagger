@@ -85,6 +85,34 @@ The arguments are:
 * $PATH_TO_OUTPUT: This must be a directory. Path to store the model
   tagged output
 
+Interpreting the Output
+=======================
+
+If the model is run on a text, it will generate output such as follows
+(the Brown corpus in this case):
+
+it      N:0     F:nn    R:nn    GF:pps  	GR:N
+wasn't  N:0     F:nn    R:nn    GF:bedz*        GR:V
+just    N:0     F:nn    R:nn    GF:rb   	GR:ADV
+the     N:7     F:at    R:at    GF:at   	GR:DET
+
+The first column (labeled N) is the index of the state assigned by the
+(CD)HMM model. If it has been specified that there are to be C content
+tags and U function word tags, then the indexes 0 to C-1 are content
+words and the remaining C to C+U-1 are function words. The F column is
+based on the "one-to-one mapping" in the field (see Mark Johnson's
+2007 paper "Why doesn't EM find good HMM POS-taggers") and it's the
+tag assigned to the numerical index in N during the eval process. The
+R column is based on the many-to-one mapping and again, it's the tag
+assigned to the numerical index in N. The GF is the original Brown tag
+and GR is a reduced tag based on the 17 tag set reduction used by Noah
+Smith in "Contrastive estimation: Training log-linear models on
+unlabeled data" (2005). If you're curious about the details of the
+mappings between some English tag set and the reduced tags, the
+relevant portion of the code is in
+$TIKKA_DIR/java/tikka/utils/postags/BrownTags.java and
+$TIKKA_DIR/java/tikka/utils/postags/PennTags.java.
+
 Questions and bug reports
 =========================
 
